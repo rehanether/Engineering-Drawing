@@ -1,0 +1,33 @@
+/* Header.css */
+
+header {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #1a1a1a;
+    color: #fff;
+    justify-content: space-between;
+  }
+  
+  .logo {
+    width: 50px;
+    height: auto;
+  }
+  
+  nav {
+    display: flex;
+    gap: 15px;
+  }
+  
+  nav a {
+    color: #ffffff;
+    text-decoration: none;
+    padding: 5px 10px;
+    transition: background 0.3s ease;
+  }
+  
+  nav a:hover {
+    background-color: #333;
+    border-radius: 4px;
+  }
+  

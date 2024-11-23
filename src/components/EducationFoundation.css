@@ -1,0 +1,90 @@
+/* Education Foundation CSS */
+
+.education-container {
+    padding: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .education-header {
+    text-align: center;
+    font-size: 2.5rem;
+    color: #0046b8;
+    margin-bottom: 20px;
+  }
+  
+  .education-content {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  .education-image {
+    flex: 1;
+    max-width: 500px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .education-details {
+    flex: 2;
+    font-size: 1.1rem;
+    color: #333;
+    line-height: 1.6;
+  }
+  
+  .education-details .highlight {
+    font-weight: bold;
+    color: #007acc;
+    margin-top: 10px;
+  }
+  
+  .program-details {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .program-details h3 {
+    font-size: 1.8rem;
+    color: #0046b8;
+    margin-bottom: 10px;
+  }
+  
+  .program-details ul {
+    list-style-type: disc;
+    padding-left: 20px;
+    color: #444;
+  }
+  
+  .join-program {
+    margin-top: 40px;
+    text-align: center;
+  }
+  
+  .join-program h3 {
+    font-size: 1.8rem;
+    color: #0046b8;
+    margin-bottom: 10px;
+  }
+  
+  .join-button {
+    padding: 10px 20px;
+    font-size: 1.2rem;
+    color: #fff;
+    background-color: #007acc;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .join-button:hover {
+    background-color: #005fa3;
+  }

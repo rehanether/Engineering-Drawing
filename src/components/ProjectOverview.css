@@ -1,0 +1,115 @@
+.project-overview {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.hero-section {
+  text-align: center;
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.hero-section h1 {
+  font-size: 2.8rem;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.hero-section p {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 20px;
+  position: relative;
+  padding: 15px;
+  max-width: 600px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 10px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.hero-image {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  max-height: 500px;
+}
+
+.core-focus {
+  display: flex;
+  justify-content: space-around;
+  gap: 20px;
+  margin-top: 40px;
+  flex-wrap: nowrap; /* Ensure horizontal alignment */
+}
+
+.focus-card {
+  width: 30%;
+  text-align: center;
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.focus-card img {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 10px;
+}
+
+.focus-card h3 {
+  font-size: 1.5rem;
+  color: #007bff;
+}
+
+.focus-card p {
+  font-size: 1rem;
+  color: #333;
+}
+
+.industry-focus {
+  margin-top: 50px;
+}
+
+.industry-card {
+  text-align: left;
+  margin-bottom: 20px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.call-to-action {
+  margin-top: 50px;
+  text-align: center;
+}
+
+.contact-button, .download-button {
+  margin: 10px;
+  padding: 15px 30px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  color: white;
+}
+
+.contact-button {
+  background-color: #007bff;
+}
+
+.contact-button:hover {
+  background-color: #0056b3;
+}
+
+.download-button {
+  background-color: #28a745;
+}
+
+.download-button:hover {
+  background-color: #218838;
+}
