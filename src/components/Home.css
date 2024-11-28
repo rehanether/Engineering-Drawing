@@ -1,5 +1,5 @@
 .homepage {
-  width: 100%;
+  width: 90%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
@@ -7,22 +7,18 @@
 
 .hero-section {
   position: relative;
-  height: 75vh; /* Increase height for better visual spacing */
+  height: 75vh; /* Height to visually balance text and video */
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  padding: 20px;
   overflow: hidden;
-  background-color: #ffffff; /* White background for a clean look */
 }
 
 .introduction-text {
-  position: absolute;
-  top: 15%;
-  left: 10%;
-  color: #333; /* Darker color for contrast */
+  flex-basis: 40%;
   z-index: 2;
-  max-width: 450px;
-  background: rgba(255, 255, 255, 0.9); /* More opaque background for better readability */
+  background: rgba(255, 255, 255, 0.9);
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
@@ -54,34 +50,44 @@
 }
 
 .video-container {
+  flex-basis: 55%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.background-video {
   width: 100%;
   height: 100%;
-  position: relative;
-  z-index: 1;
+  object-fit: fill; /* Fit the container without cropping */
+  border-radius: 10px;
 }
 
 .categories-section {
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   margin-top: 50px;
-  gap: 20px; /* Add gap for spacing between elements */
-  flex-wrap: nowrap; /* Ensure horizontal alignment */
+  gap: 20px;
+  flex-wrap: nowrap;
 }
 
 .category {
   text-align: center;
-  margin-bottom: 20px;
-  flex-basis: 30%;
+  flex-basis: 32%;
   padding: 15px;
-  background-color: #f8f9fa; /* Light background color for distinction */
+  background-color: #f8f9fa;
   border-radius: 10px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .category img {
-  width: 100px;
-  height: 100px;
-  object-fit: contain;
+  width: 100%;
+  height: 200px;
+  object-fit: cover; /* Fit the GIF container properly */
+  border-radius: 10px;
 }
 
 .category button {

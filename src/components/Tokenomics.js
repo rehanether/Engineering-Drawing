@@ -1,7 +1,31 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './Tokenomics.css';
 
 const Tokenomics = () => {
+  const [timeLeft, setTimeLeft] = useState("");
+
+  useEffect(() => {
+    // Countdown Timer Logic
+    const countdownDate = new Date("2024-12-31T00:00:00").getTime();
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const distance = countdownDate - now;
+
+      if (distance < 0) {
+        setTimeLeft("Presale Ended");
+      } else {
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        setTimeLeft(`${days}d ${hours}h ${minutes}m ${seconds}s`);
+      }
+    };
+
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="tokenomics-page container">
       {/* Hero Section */}
@@ -10,25 +34,12 @@ const Tokenomics = () => {
         <p>Empowering transparency, sustainability, and community through the EDG token on the BNB blockchain.</p>
       </div>
 
-      {/* Token Allocation Overview Section */}
-      <div className="token-allocation-section">
-        <h2>Token Allocation Overview</h2>
-        <div className="allocation-chart-container">
-          <canvas id="tokenChart"></canvas>
-        </div>
-        <div className="token-details">
-          <div className="detail">
-            <strong>Total Supply:</strong> 10 Million EDG
-          </div>
-          <div className="detail">
-            <strong>Blockchain:</strong> Binance Smart Chain (BSC)
-          </div>
-        </div>
-      </div>
-
       {/* Presale Stages Section */}
       <div className="presale-section">
         <h2>Presale Stages</h2>
+        <div className="countdown-timer">
+          <p>Presale Countdown: <span>{timeLeft}</span></p>
+        </div>
         <div className="stages-container">
           <div className="stage-card">
             <h3>Stage 1: 5% Tokens</h3>
@@ -45,9 +56,6 @@ const Tokenomics = () => {
             <p>Price: 0.03 USDT/USD</p>
             <progress value="0" max="100"></progress>
           </div>
-        </div>
-        <div className="countdown-timer">
-          <p>Presale Countdown: <span id="countdown-timer"></span></p>
         </div>
       </div>
 
@@ -82,37 +90,8 @@ const Tokenomics = () => {
           </div>
         </div>
       </div>
-
-      {/* Timeline Section */}
-      <div className="timeline-section">
-        <h2>Project Timeline</h2>
-        <div className="timeline-container">
-          <div className="timeline-event">
-            <h4>Presale Begins</h4>
-            <p>Get in early and participate in our token presale for community growth and development.</p>
-          </div>
-          <div className="timeline-event">
-            <h4>Stage Completion & Binance Listing</h4>
-            <p>With each presale stage completed, we get closer to listing EDG on Binance.</p>
-          </div>
-          <div className="timeline-event">
-            <h4>Binance Listing (6 Months)</h4>
-            <p>Our goal is to list EDG on Binance, with an estimated price of 0.05 USDT/USD after 6 months.</p>
-          </div>
-          <div className="timeline-event">
-            <h4>Unlock Schedule for Team & Skills Program</h4>
-            <p>Token unlocking begins gradually post-listing, encouraging long-term project commitment.</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Call to Action */}
-      <div className="cta-section">
-        <button className="join-presale-button">Join the Presale Now</button>
-      </div>
     </div>
   );
 };
 
 export default Tokenomics;
-

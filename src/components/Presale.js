@@ -93,7 +93,7 @@ const Presale = () => {
       const tokenPrice = STAGE_PRICES[`stage${getCurrentStage()}`];
       setEstimatedTokens((parseFloat(inputAmount) * parseFloat(ethToUsdtPrice)) / tokenPrice);
     }
-  }, [inputAmount, ethToUsdtPrice, STAGE_PRICES]);
+  }, [inputAmount, ethToUsdtPrice, STAGE_PRICES, getCurrentStage]);
 
   const getCurrentStage = () => {
     if (tokensSold.stage1 < STAGE_SUPPLIES.stage1) return 1;

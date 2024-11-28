@@ -24,9 +24,6 @@ const Home = () => {
             Your browser does not support the video tag.
           </video>
         </div>
-        <div className="overlay-text">
-          <h2>Industry 4.0 Solutions</h2>
-        </div>
       </div>
 
       {/* Categories Section */}
