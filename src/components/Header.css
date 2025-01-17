@@ -1,33 +1,56 @@
-/* Header.css */
-
 header {
-    display: flex;
+  display: flex;
+  justify-content: space-between; /* Space between logo and nav */
+  align-items: center; /* Center items vertically */
+  background-color: #000; /* Navbar background color */
+  color: #fff; /* Text color */
+  padding: 10px 20px; /* Space inside the header */
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000; /* Stay above content */
+}
+
+.logo-container {
+  display: flex;
+  align-items: center; /* Vertically align logo and text */
+}
+
+.logo {
+  max-height: 50px; /* Adjust logo size */
+  margin-right: 10px; /* Space between logo and title */
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  gap: 20px; /* Space between nav items */
+  margin: 0;
+  padding: 0;
+}
+
+nav a {
+  color: #fff;
+  text-decoration: none; /* Remove underline */
+  font-weight: bold;
+}
+
+nav a:hover {
+  text-decoration: underline; /* Underline on hover */
+}
+
+@media (max-width: 768px) {
+  header {
+    flex-direction: column; /* Stack logo and nav vertically */
     align-items: center;
-    padding: 10px 20px;
-    background-color: #1a1a1a;
-    color: #fff;
-    justify-content: space-between;
   }
-  
-  .logo {
-    width: 50px;
-    height: auto;
+
+  nav ul {
+    flex-direction: column; /* Stack nav links vertically */
+    gap: 10px;
   }
-  
-  nav {
-    display: flex;
-    gap: 15px;
+
+  .logo-container {
+    margin-bottom: 10px; /* Add space below logo */
   }
-  
-  nav a {
-    color: #ffffff;
-    text-decoration: none;
-    padding: 5px 10px;
-    transition: background 0.3s ease;
-  }
-  
-  nav a:hover {
-    background-color: #333;
-    border-radius: 4px;
-  }
-  
+}

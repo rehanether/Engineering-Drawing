@@ -1,39 +1,80 @@
-/* App.css */
-
-header {
-  display: flex;
-  align-items: center;
-  padding: 10px;
-  background-color: #f5f5f5; /* Light background color */
-}
-
-header img {
-  width: 50px; /* Adjust as needed */
-  height: auto;
-  margin-right: 15px;
-}
-
-header h1 {
-  font-size: 1.5em;
-  color: #333;
-}
-
-
-/* App.css */
-
+/* General Styling */
 body {
   margin: 0;
+  padding: 0;
   font-family: Arial, sans-serif;
+  scroll-behavior: smooth; /* Smooth scrolling */
+  overflow-x: hidden; /* Prevent horizontal scrolling */
 }
 
-#root {
+.app-container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
-main {
-  flex: 1;
-  padding: 20px;
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.8); /* Transparent black background */
+  color: white;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+.navbar ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 20px;
+}
+
+.navbar a {
+  color: white;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: color 0.3s;
+}
+
+.navbar a:hover {
+  color: #007bff;
+}
+
+.content {
+  margin-top: 70px; /* Offset for fixed navbar */
+  flex: 1;
+}
+
+section {
+  min-height: 100vh; /* Each section takes full viewport height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+footer {
+  background-color: #f5f5f5;
+  text-align: center;
+  padding: 10px;
+  margin-top: auto; /* Ensures footer stays at the bottom */
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo {
+  max-height: 50px;
+  width: auto;
+}

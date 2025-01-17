@@ -1,90 +1,140 @@
 /* Education Foundation CSS */
 
 .education-container {
-    padding: 40px;
-    max-width: 1200px;
-    margin: 0 auto;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .education-header {
-    text-align: center;
-    font-size: 2.5rem;
-    color: #0046b8;
-    margin-bottom: 20px;
-  }
-  
+  padding: 20px; /* Reduced padding for compact layout */
+  max-width: 1200px;
+  margin: 0 auto;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+.education-header {
+  text-align: center;
+  font-size: 2rem; /* Reduced font size for better compactness */
+  color: #0046b8;
+  margin-bottom: 15px; /* Reduced margin for compact layout */
+}
+
+.education-content {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap; /* Keep the image and details on the same row */
+  align-items: center;
+  gap: 20px;
+  justify-content: space-between; /* Ensure even distribution between elements */
+  margin-bottom: 20px; /* Reduce margin for compactness */
+}
+
+.education-image {
+  flex: 1;
+  max-width: 350px; /* Reduce image size for a more compact layout */
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.education-details {
+  flex: 2;
+  font-size: 1rem; /* Slightly smaller font size for compactness */
+  color: #333;
+  line-height: 1.5;
+}
+
+.education-details .highlight {
+  font-weight: bold;
+  color: #007acc;
+  margin-top: 8px;
+}
+
+.program-details {
+  margin-top: 20px; /* Reduced margin for compactness */
+  padding: 15px; /* Reduced padding for compact look */
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.program-details h3 {
+  font-size: 1.6rem; /* Reduced font size for compact layout */
+  color: #0046b8;
+  margin-bottom: 10px;
+}
+
+.program-details ul {
+  list-style-type: disc;
+  padding-left: 20px;
+  color: #444;
+  font-size: 0.95rem; /* Reduced font size to save space */
+}
+
+.join-program {
+  margin-top: 30px; /* Reduced margin for a compact layout */
+  text-align: center;
+}
+
+.join-program h3 {
+  font-size: 1.6rem; /* Reduced font size for compactness */
+  color: #0046b8;
+  margin-bottom: 10px;
+}
+
+.join-button {
+  padding: 8px 18px; /* Reduced padding for compactness */
+  font-size: 1.1rem; /* Reduced button font size */
+  color: #fff;
+  background-color: #007acc;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.join-button:hover {
+  background-color: #005fa3;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
   .education-content {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 20px;
+      flex-direction: column; /* Stack elements vertically on smaller screens */
+      align-items: center;
   }
-  
+
   .education-image {
-    flex: 1;
-    max-width: 500px;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      max-width: 80%;
+      margin-bottom: 15px; /* Added margin to separate stacked elements */
   }
-  
+
   .education-details {
-    flex: 2;
-    font-size: 1.1rem;
-    color: #333;
-    line-height: 1.6;
+      text-align: center;
   }
-  
-  .education-details .highlight {
-    font-weight: bold;
-    color: #007acc;
-    margin-top: 10px;
-  }
-  
+
   .program-details {
-    margin-top: 30px;
-    padding: 20px;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      padding: 10px; /* Reduce padding for smaller screens */
   }
-  
-  .program-details h3 {
-    font-size: 1.8rem;
-    color: #0046b8;
-    margin-bottom: 10px;
-  }
-  
-  .program-details ul {
-    list-style-type: disc;
-    padding-left: 20px;
-    color: #444;
-  }
-  
-  .join-program {
-    margin-top: 40px;
-    text-align: center;
-  }
-  
-  .join-program h3 {
-    font-size: 1.8rem;
-    color: #0046b8;
-    margin-bottom: 10px;
-  }
-  
+
   .join-button {
-    padding: 10px 20px;
-    font-size: 1.2rem;
-    color: #fff;
-    background-color: #007acc;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
+      padding: 10px 20px; /* Increase padding slightly for mobile use */
   }
-  
-  .join-button:hover {
-    background-color: #005fa3;
+}
+
+@media (max-width: 480px) {
+  .education-header {
+      font-size: 1.8rem; /* Smaller header size for mobile */
   }
+
+  .program-details h3 {
+      font-size: 1.4rem; /* Reduced font size for mobile */
+  }
+
+  .program-details ul {
+      font-size: 0.9rem; /* Further reduce list font size for mobile */
+  }
+
+  .join-button {
+      font-size: 1rem; /* Adjust button font size for mobile */
+      padding: 8px 16px; /* Compact button padding for mobile */
+  }
+}

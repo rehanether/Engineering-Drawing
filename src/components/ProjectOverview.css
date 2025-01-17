@@ -1,96 +1,90 @@
+/* ProjectOverview.css */
+
 .project-overview {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1200px; /* Constrain width */
   margin: 0 auto;
-  padding: 20px;
+  padding: 10px 20px; /* Compact padding for better alignment */
+  box-sizing: border-box;
 }
 
 .hero-section {
-  text-align: center;
-  margin-bottom: 30px;
   position: relative;
+  display: flex;
+  align-items: center; /* Align vertically */
+  justify-content: space-between; /* Spread out text and image */
+  height: 60vh; /* Set height similar to home page */
+  padding: 30px;
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .hero-section h1 {
-  font-size: 2.8rem;
+  font-size: 2.4rem; /* Set similar font size as home page */
   color: #333;
-  margin-bottom: 15px;
+  line-height: 1.3;
+  width: 50%; /* Adjusted width for better alignment with image */
 }
 
 .hero-section p {
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: #666;
-  margin-bottom: 20px;
-  position: relative;
-  padding: 15px;
-  max-width: 600px;
-  margin: 0 auto;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 10px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 10px;
 }
 
 .hero-image {
-  width: 100%;
+  width: 45%; /* Similar height ratio to hero text */
   height: auto;
-  object-fit: cover;
-  max-height: 500px;
+  object-fit: contain; /* Maintain aspect ratio */
+  max-height: 300px; /* Ensure consistent sizing */
 }
 
 .core-focus {
   display: flex;
-  justify-content: space-around;
-  gap: 20px;
-  margin-top: 40px;
-  flex-wrap: nowrap; /* Ensure horizontal alignment */
+  justify-content: space-between; /* Make sure all three cards are evenly distributed */
+  gap: 20px; /* Even gap between cards for consistency */
+  margin-top: 30px;
+  flex-wrap: nowrap; /* Prevent wrapping to keep all cards in one row */
+  padding: 0 20px;
 }
 
 .focus-card {
-  width: 30%;
   text-align: center;
   background-color: #ffffff;
-  padding: 20px;
+  padding: 20px; /* Balanced padding for a neat look */
   border-radius: 10px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  width: calc(33% - 20px); /* Ensure the cards divide space evenly */
+  max-width: 350px; /* Set max width for consistency */
+  box-sizing: border-box;
 }
 
 .focus-card img {
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   margin-bottom: 10px;
 }
 
 .focus-card h3 {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   color: #007bff;
+  margin-bottom: 10px;
 }
 
 .focus-card p {
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: #333;
-}
-
-.industry-focus {
-  margin-top: 50px;
-}
-
-.industry-card {
-  text-align: left;
-  margin-bottom: 20px;
-  padding: 20px;
-  background-color: #f8f9fa;
-  border-radius: 10px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  line-height: 1.4;
 }
 
 .call-to-action {
-  margin-top: 50px;
+  margin-top: 30px; /* Reduce space */
   text-align: center;
 }
 
-.contact-button, .download-button {
-  margin: 10px;
-  padding: 15px 30px;
+.contact-button,
+.download-button {
+  margin: 5px;
+  padding: 12px 25px; /* Keep consistent button padding */
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -112,4 +106,56 @@
 
 .download-button:hover {
   background-color: #218838;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .hero-section {
+    flex-direction: column; /* Stack content vertically on smaller screens */
+    text-align: center; /* Center text for better presentation */
+    height: auto; /* Adjust height for smaller screens */
+  }
+
+  .hero-section h1 {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .hero-image {
+    width: 80%;
+    max-height: 200px;
+    margin-bottom: 20px;
+  }
+
+  .core-focus {
+    flex-direction: column; /* Stack the cards vertically on smaller screens */
+    align-items: center;
+    padding: 0 10px;
+  }
+
+  .focus-card {
+    width: 90%;
+    margin-bottom: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section h1 {
+    font-size: 1.8rem; /* Reduce heading size for better readability */
+  }
+
+  .focus-card img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .focus-card p {
+    font-size: 0.9rem; /* Smaller font for mobile */
+  }
+
+  .contact-button,
+  .download-button {
+    padding: 10px 20px;
+    font-size: 0.9rem; /* Adjust button text size for mobile */
+  }
 }

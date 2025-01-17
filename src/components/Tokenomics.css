@@ -1,125 +1,165 @@
 /* General Page Styling */
 .tokenomics-page {
-    font-family: Arial, sans-serif;
-    max-width: 1200px;
-    margin: auto;
-    padding: 20px;
-  }
-  
-  /* Hero Section Styling */
-  .hero-section {
-    text-align: center;
-    margin-bottom: 40px;
-  }
-  
-  .hero-section h1 {
-    font-size: 2.5em;
-    color: #333;
-  }
-  
-  .hero-section p {
-    font-size: 1.2em;
-    color: #777;
-  }
-  
-  /* Presale Stages Section */
-  .presale-section {
-    margin-bottom: 50px;
-    text-align: center;
-  }
-  
-  .presale-section h2 {
-    font-size: 2em;
-    color: #ffc107;
-    margin-bottom: 20px;
-  }
-  
-  .countdown-timer {
-    font-size: 1.5em;
-    color: #dc3545;
-    font-weight: bold;
-    margin-bottom: 20px;
-  }
-  
+  font-family: Arial, sans-serif;
+  max-width: 1200px;
+  margin: auto;
+  padding: 10px 20px; /* Reduced padding for a compact layout */
+  box-sizing: border-box;
+}
+
+/* Hero Section Styling */
+.hero-section {
+  text-align: center;
+  margin-bottom: 20px; /* Reduced margin for better compactness */
+}
+
+.hero-section h1 {
+  font-size: 2.2em; /* Reduced font size for compact look */
+  color: #333;
+}
+
+.hero-section p {
+  font-size: 1em; /* Adjusted font size to fit better */
+  color: #777;
+  margin-bottom: 15px; /* Reduced margin for better fit */
+}
+
+/* Presale Stages Section */
+.presale-section {
+  margin-bottom: 30px; /* Reduced margin for compact view */
+  text-align: center;
+}
+
+.presale-section h2 {
+  font-size: 1.8em; /* Reduced font size for better fit */
+  color: #ffc107;
+  margin-bottom: 15px;
+}
+
+.countdown-timer {
+  font-size: 1.3em; /* Reduced font size for a more compact view */
+  color: #dc3545;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.stages-container {
+  display: flex;
+  justify-content: space-between; /* Ensure cards spread evenly */
+  gap: 15px; /* Reduce gap for a compact layout */
+  flex-wrap: nowrap; /* Keep cards in one row */
+  margin-bottom: 20px; /* Reduce margin for compact view */
+}
+
+.stage-card {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 15px; /* Reduce padding to make cards more compact */
+  width: calc(33% - 15px); /* Ensure cards fit into one row */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transition: transform 0.3s ease;
+  max-width: 300px; /* Set a max-width for better fit */
+}
+
+.stage-card h3 {
+  color: #333;
+  font-size: 1.2em; /* Reduce font size for compactness */
+  margin-bottom: 8px;
+}
+
+.stage-card p {
+  font-size: 0.95em; /* Reduced font size for better fit */
+  margin-bottom: 10px;
+}
+
+.stage-card progress {
+  width: 100%;
+  height: 15px; /* Reduced height for a more compact look */
+}
+
+/* Token Allocation Breakdown Section */
+.allocation-details-section {
+  margin-bottom: 30px; /* Reduced margin for a compact layout */
+  text-align: center;
+}
+
+.allocation-details-section h2 {
+  font-size: 1.8em; /* Reduced font size to better match the compact layout */
+  color: #28a745;
+  margin-bottom: 15px;
+}
+
+.allocation-cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Adjusted grid for better fit */
+  gap: 15px; /* Reduced gap for compactness */
+  margin-bottom: 20px; /* Reduced margin for compact view */
+}
+
+.allocation-card {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 15px; /* Reduce padding for compactness */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.allocation-card:hover {
+  transform: translateY(-5px);
+}
+
+.allocation-card img {
+  max-width: 50px; /* Reduced size for better fit */
+  margin-bottom: 10px;
+}
+
+.allocation-card h3 {
+  color: #333;
+  font-size: 1.2em; /* Reduced font size for a more compact view */
+  margin-bottom: 8px;
+}
+
+.allocation-card p {
+  color: #777;
+  font-size: 0.9em; /* Reduced font size for compact view */
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
   .stages-container {
-    display: flex;
-    justify-content: space-around;
-    gap: 20px;
-    flex-wrap: wrap;
+      flex-direction: column; /* Stack the cards vertically for smaller screens */
+      align-items: center;
+      gap: 20px; /* Add space for better readability on smaller screens */
   }
-  
-  .stage-card {
-    background: #f8f9fa;
-    border-radius: 10px;
-    padding: 20px;
-    width: 30%;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    transition: transform 0.3s ease;
-  }
-  
-  .stage-card:hover {
-    transform: translateY(-5px);
-  }
-  
-  .stage-card h3 {
-    color: #333;
-    margin-bottom: 10px;
-  }
-  
-  .stage-card p {
-    font-size: 1em;
-    margin-bottom: 15px;
-  }
-  
-  .stage-card progress {
-    width: 100%;
-    height: 20px;
-  }
-  
-  /* Token Allocation Breakdown Section */
-  .allocation-details-section {
-    margin-bottom: 40px;
-    text-align: center;
-  }
-  
-  .allocation-details-section h2 {
-    font-size: 2em;
-    color: #28a745;
-    margin-bottom: 20px;
-  }
-  
+
   .allocation-cards-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
+      grid-template-columns: 1fr; /* Stack allocation cards for smaller screens */
   }
-  
-  .allocation-card {
-    background: #ffffff;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    transition: transform 0.3s ease;
+
+  .stage-card, .allocation-card {
+      width: 90%; /* Ensure cards expand to full width on mobile */
+      max-width: 100%;
+      margin: 0 auto 15px; /* Add bottom margin for spacing */
   }
-  
-  .allocation-card:hover {
-    transform: translateY(-5px);
+}
+
+@media (max-width: 480px) {
+  .hero-section h1 {
+      font-size: 1.8em; /* Smaller heading size for mobile */
   }
-  
-  .allocation-card img {
-    max-width: 60px;
-    margin-bottom: 15px;
+
+  .stage-card h3, .allocation-card h3 {
+      font-size: 1.1em; /* Reduced font size for mobile */
   }
-  
-  .allocation-card h3 {
-    color: #333;
-    margin-bottom: 10px;
+
+  .stage-card p, .allocation-card p {
+      font-size: 0.85em; /* Smaller font for mobile */
   }
-  
-  .allocation-card p {
-    color: #777;
+
+  .countdown-timer {
+      font-size: 1.1em; /* Smaller countdown timer text */
   }
-  
+}

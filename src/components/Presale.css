@@ -1,92 +1,168 @@
+/* General Page Styling */
 .presale-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
   background: #f8f9fa;
-  border-radius: 8px;
+  border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Header Styling */
 .presale-header {
   text-align: center;
   margin-bottom: 20px;
 }
 
-.presale-details {
-  text-align: center;
-  margin-bottom: 20px;
-  font-size: 1.1em;
+.presale-header h1 {
+  font-size: 2.2rem; 
+  color: #333;
+  margin-bottom: 10px;
 }
 
+.presale-details {
+  text-align: center;
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+/* Presale Stages Section */
 .presale-stages {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 30px;
+  gap: 20px;
+  flex-wrap: nowrap; /* Ensure stages are in a row */
+  margin-bottom: 20px;
 }
 
 .stage-card {
   background: #ffffff;
   border: 1px solid #ddd;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 15px;
-  width: 30%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: calc(33% - 20px); 
   text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.progress-bar {
+.stage-card h3 {
+  color: #007bff;
+  font-size: 1.4rem;
+  margin-bottom: 8px;
+}
+
+.stage-card p {
+  font-size: 1rem;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.stage-card progress {
   width: 100%;
-  background: #e9ecef;
-  height: 10px;
+  height: 10px; 
   border-radius: 5px;
   margin-top: 10px;
-  position: relative;
+  background-color: #e9ecef;
 }
 
-.progress {
-  background: #28a745;
-  height: 100%;
-  border-radius: 5px;
-  transition: width 0.3s ease;
+.stage-card progress::-webkit-progress-value {
+  background-color: #28a745;
 }
 
-/* Added dynamic width for progress indicator based on tokens sold */
-.stage-card .progress {
-  width: calc(var(--progress-percentage, 0) * 1%);
-}
-
+/* Wallet Actions Section */
 .wallet-actions {
   text-align: center;
   margin-top: 20px;
 }
 
-input[type="number"] {
+.wallet-actions input[type="text"] {
   padding: 10px;
   width: 60%;
-  margin-bottom: 10px;
+  margin: 10px 0;
   border-radius: 5px;
   border: 1px solid #ccc;
+  font-size: 1rem;
 }
 
-button {
-  padding: 10px 20px;
+.wallet-actions button {
+  padding: 10px 25px;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  font-size: 1em;
-  margin: 5px;
+  font-size: 1rem;
+  margin-top: 10px;
 }
 
 .connect-button {
   background: #007bff;
   color: #ffffff;
+  transition: background 0.3s ease;
 }
 
-.disconnect-button {
-  background: #dc3545;
+.connect-button:hover {
+  background: #0056b3;
+}
+
+.buy-tokens-button {
+  background: #28a745;
   color: #ffffff;
+  transition: background 0.3s ease;
 }
 
-button:hover {
-  opacity: 0.9;
+.buy-tokens-button:hover {
+  background: #218838;
+}
+
+/* Error Message Styling */
+.error-message {
+  color: #dc3545;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+/* Footer Styling */
+.presale-footer {
+  text-align: center;
+  margin-top: 30px;
+  font-size: 0.9rem;
+  color: #777;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .presale-stages {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .stage-card {
+    width: 90%;
+    margin-bottom: 15px;
+  }
+
+  .wallet-actions input[type="text"] {
+    width: 80%;
+  }
+}
+
+@media (max-width: 480px) {
+  .presale-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .stage-card h3 {
+    font-size: 1.2rem;
+  }
+
+  .wallet-actions input[type="text"] {
+    width: 90%;
+  }
+
+  .wallet-actions button {
+    padding: 8px 20px;
+    font-size: 0.9rem;
+  }
 }
