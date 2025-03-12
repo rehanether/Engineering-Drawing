@@ -35,7 +35,7 @@ const Home = () => {
         <div className="category industrial">
           <img src="/assets/industrial.gif" alt="Industrial GIF" />
           <h3>Industrial Design</h3>
-          <Link to="/distillery">
+          <Link to="/IndustrialDesign">
             <button>Learn More</button>
           </Link>
         </div>
