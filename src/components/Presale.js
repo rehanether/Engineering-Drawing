@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { BigNumber, utils } from "ethers";
-import TOKEN_CONFIG from '../tokenConfig'; // Import your token configuration correctly
-import './Presale.css'; // Assuming you have a CSS file to style the progress bars
-
+import { ethers } from 'ethers';
+import TOKEN_CONFIG from '../tokenConfig'; // Ensure correct token configuration
+import './Presale.css'; // Import CSS for styling
 
 function Presale() {
   const [presaleContract, setPresaleContract] = useState(null);
@@ -15,213 +14,144 @@ function Presale() {
   const [error, setError] = useState(null);
   const [currentStage, setCurrentStage] = useState(0);
   const [presaleOpen, setPresaleOpen] = useState(true);
+
   const stageSupply = { stage1: 500000, stage2: 1000000, stage3: 1500000 };
 
   const TOKEN_ADDRESS = TOKEN_CONFIG.TOKEN_ADDRESS;
   const TOKEN_ABI = TOKEN_CONFIG.TOKEN_ABI;
 
-  // Setup presale contract on page load
+  // Setup Ethereum provider and contract
   useEffect(() => {
     const setupProvider = async () => {
       try {
         if (window.ethereum) {
-          const provider = new ethers.BrowserProvider(window.ethereum);
-          await window.ethereum.request({ method: 'eth_requestAccounts' }); // Request account access
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
+          await window.ethereum.request({ method: 'eth_requestAccounts' }); // Request user wallet access
           const signer = provider.getSigner();
           const contractInstance = new ethers.Contract(TOKEN_ADDRESS, TOKEN_ABI, signer);
+
           setPresaleContract(contractInstance);
+
+          // Fetch connected account
+          const accounts = await provider.listAccounts();
+          if (accounts.length > 0) {
+            setConnectedAccount(accounts[0]);
+          }
         } else {
           setError('Please install MetaMask to use this presale feature.');
         }
       } catch (setupError) {
         console.error('Setup error:', setupError);
-        setError('Failed to initialize the provider or signer.');
+        setError('Failed to initialize provider or contract.');
       }
     };
     setupProvider();
   }, [TOKEN_ADDRESS, TOKEN_ABI]);
 
-  // Fetch initial presale data, such as token prices, current stage, etc.
-  const fetchInitialData = async () => {
-    try {
-      if (presaleContract) {
-        // Fetch ETH to USDT and BNB to USDT prices
-        const ethPrice = await presaleContract.getETHPrice();
-        const bnbPrice = await presaleContract.getBNBPrice();
-        const stage = await presaleContract.currentStage();
-        const open = await presaleContract.presaleOpen();
+  // Fetch initial presale data (token prices, stage, etc.)
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      if (!presaleContract) return;
 
-        setEthToUsdtPrice(parseFloat(ethers.utils.formatUnits(ethPrice, 18))); // Assuming price feed uses 18 decimals
+      try {
+        const ethPrice = await presaleContract.getEthToUsdtPrice();
+        const bnbPrice = await presaleContract.getBnbToUsdtPrice();
+        const currentStage = await presaleContract.getCurrentStage();
+        const tokensSoldStage1 = await presaleContract.getTokensSold(1);
+        const tokensSoldStage2 = await presaleContract.getTokensSold(2);
+        const tokensSoldStage3 = await presaleContract.getTokensSold(3);
+        const isPresaleOpen = await presaleContract.isPresaleOpen();
+
+        setEthToUsdtPrice(parseFloat(ethers.utils.formatUnits(ethPrice, 18)));
         setBnbToUsdtPrice(parseFloat(ethers.utils.formatUnits(bnbPrice, 18)));
-        setCurrentStage(stage);
-        setPresaleOpen(open);
-
-        // Fetch tokens sold for each stage
-        const totalTokensSold = await presaleContract.tokensSold();
-        const stage1MaxSupply = stageSupply.stage1;
-        const stage2MaxSupply = stageSupply.stage2;
-
-        let stage1Sold, stage2Sold, stage3Sold;
-
-        if (totalTokensSold <= stage1MaxSupply) {
-          stage1Sold = totalTokensSold;
-          stage2Sold = 0;
-          stage3Sold = 0;
-        } else if (totalTokensSold <= stage1MaxSupply + stage2MaxSupply) {
-          stage1Sold = stage1MaxSupply;
-          stage2Sold = totalTokensSold - stage1MaxSupply;
-          stage3Sold = 0;
-        } else {
-          stage1Sold = stage1MaxSupply;
-          stage2Sold = stage2MaxSupply;
-          stage3Sold = totalTokensSold - stage1MaxSupply - stage2MaxSupply;
-        }
-
+        setCurrentStage(parseInt(currentStage));
         setTokensSold({
-          stage1: parseFloat(ethers.utils.formatUnits(stage1Sold, 18)),
-          stage2: parseFloat(ethers.utils.formatUnits(stage2Sold, 18)),
-          stage3: parseFloat(ethers.utils.formatUnits(stage3Sold, 18)),
+          stage1: parseInt(tokensSoldStage1),
+          stage2: parseInt(tokensSoldStage2),
+          stage3: parseInt(tokensSoldStage3),
         });
-      }
-    } catch (dataError) {
-      console.error('Data fetch error:', dataError);
-      setError('Failed to fetch initial presale data.');
-    }
-  };
-
-  // Use effect to fetch the initial data after the contract is set
-  useEffect(() => {
-    if (presaleContract) {
-      fetchInitialData();
-    }
-  }, [presaleContract]);
-
-  // Calculate estimated tokens
-  useEffect(() => {
-    const calculateEstimate = () => {
-      if (bnbAmount && bnbToUsdtPrice > 0) {
-        let currentTokenPrice;
-        switch (currentStage) {
-          case 1:
-            currentTokenPrice = 0.02;
-            break;
-          case 2:
-            currentTokenPrice = 0.03;
-            break;
-          case 3:
-            currentTokenPrice = 0.04;
-            break;
-          default:
-            currentTokenPrice = 0;
-        }
-        const bnbInUsd = bnbAmount * bnbToUsdtPrice;
-        const estimated = bnbInUsd / currentTokenPrice;
-        setEstimatedTokens(estimated);
-      } else {
-        setEstimatedTokens(0);
+        setPresaleOpen(isPresaleOpen);
+      } catch (fetchError) {
+        console.error('Error fetching presale data:', fetchError);
+        setError('Failed to load presale data.');
       }
     };
-    calculateEstimate();
-  }, [bnbAmount, bnbToUsdtPrice, currentStage]);
 
-  // Connect MetaMask wallet
-  const connectWallet = async () => {
-    try {
-      if (window.ethereum) {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        setConnectedAccount(accounts[0]);
-      } else {
-        setError('Please install MetaMask to use this feature.');
-      }
-    } catch (walletError) {
-      console.error('Wallet connection error:', walletError);
-      setError('Failed to connect wallet.');
+    fetchInitialData();
+  }, [presaleContract]);
+
+  // Handle BNB amount input change
+  const handleBnbAmountChange = (e) => {
+    const value = e.target.value;
+    setBnbAmount(value);
+    if (!isNaN(value) && bnbToUsdtPrice > 0) {
+      setEstimatedTokens((value * bnbToUsdtPrice) / 0.1); // Assuming 0.1 USDT per token
     }
   };
 
-  // Handle token purchase
-  const handleTokenPurchase = async () => {
-    try {
-      if (!bnbAmount) {
-        setError('Please enter an amount to buy.');
-        return;
-      }
-      if (!connectedAccount) {
-        setError('Please connect your wallet first.');
-        return;
-      }
-      if (!presaleContract) {
-        setError('Presale contract is not loaded.');
-        return;
-      }
-      if (!presaleOpen) {
-        setError('Presale is not open.');
-        return;
-      }
+  // Buy tokens function
+  const buyTokens = async () => {
+    if (!presaleContract || !connectedAccount) {
+      setError('Please connect your wallet.');
+      return;
+    }
+    if (!bnbAmount || isNaN(bnbAmount) || bnbAmount <= 0) {
+      setError('Enter a valid BNB amount.');
+      return;
+    }
 
-      const transaction = await presaleContract.buyTokens(ethers.BigNumber.from(1), {
-        value: ethers.utils.parseEther(bnbAmount), // Assuming BNB is used for the transaction
-        gasLimit: 300000,
+    try {
+      const tx = await presaleContract.buyTokens({
+        value: ethers.utils.parseEther(bnbAmount),
       });
-      await transaction.wait();
-      setError(null);
+      await tx.wait();
       alert('Purchase successful!');
-
-      // Refetch the presale data to update the stage and tokens sold
-      await fetchInitialData();
-    } catch (purchaseError) {
-      console.error('Purchase error:', purchaseError);
-      setError('Failed to purchase tokens. Please try again.');
+      setBnbAmount('');
+    } catch (txError) {
+      console.error('Transaction error:', txError);
+      setError('Transaction failed.');
     }
-  };
-
-  // Helper function to calculate percentage
-  const calculatePercentage = (sold, supply) => {
-    return ((sold / supply) * 100).toFixed(2);
   };
 
   return (
     <div className="presale-container">
-      <h1>Engineering Drawing Presale Page</h1>
-      {error && <div className="error-message">{error}</div>}
-      <div className="connected-account">
-        Connected Account: {connectedAccount ? connectedAccount : 'Not connected'}
-      </div>
-      <div>ETH to USDT Price: {ethToUsdtPrice} USDT</div>
-      <div>BNB to USDT Price: {bnbToUsdtPrice} USDT</div>
+      <h1>Presale Dashboard</h1>
 
-      <div className="stage-info">
-        <h3>Presale Stages</h3>
-        {['stage1', 'stage2', 'stage3'].map((stage, index) => (
-          <div key={stage} className="stage">
-            <h4>Stage {index + 1}</h4>
-            <p>Price: {index === 0 ? '0.02' : index === 1 ? '0.03' : '0.04'} USDT per Token</p>
-            <p>Tokens Sold: {tokensSold[stage]}</p>
-            <div className="progress-bar">
-              <div
-                className="progress"
-                style={{
-                  width: `${calculatePercentage(tokensSold[stage], stageSupply[stage])}%`,
-                }}
-              >
-                {calculatePercentage(tokensSold[stage], stageSupply[stage])}%
-              </div>
-            </div>
-          </div>
-        ))}
+      {error && <p className="error-message">{error}</p>}
+
+      <div>
+        <p>Connected Wallet: {connectedAccount || 'Not Connected'}</p>
+        <p>ETH to USDT Price: {ethToUsdtPrice} USDT</p>
+        <p>BNB to USDT Price: {bnbToUsdtPrice} USDT</p>
+        <p>Current Stage: {currentStage}</p>
+        <p>Presale Status: {presaleOpen ? 'Open' : 'Closed'}</p>
       </div>
 
-      <div className="buy-tokens-section">
+      <div className="progress-bars">
+        <div>
+          <p>Stage 1 Sold: {tokensSold.stage1} / {stageSupply.stage1}</p>
+          <progress value={tokensSold.stage1} max={stageSupply.stage1}></progress>
+        </div>
+        <div>
+          <p>Stage 2 Sold: {tokensSold.stage2} / {stageSupply.stage2}</p>
+          <progress value={tokensSold.stage2} max={stageSupply.stage2}></progress>
+        </div>
+        <div>
+          <p>Stage 3 Sold: {tokensSold.stage3} / {stageSupply.stage3}</p>
+          <progress value={tokensSold.stage3} max={stageSupply.stage3}></progress>
+        </div>
+      </div>
+
+      <div className="purchase-section">
         <input
-          type="text"
-          placeholder="Enter amount in BNB"
+          type="number"
+          placeholder="Enter BNB amount"
           value={bnbAmount}
-          onChange={(e) => setBnbAmount(e.target.value)}
+          onChange={handleBnbAmountChange}
         />
-        <button onClick={handleTokenPurchase}>Buy Tokens</button>
-        <div>Estimated EDG Tokens: {estimatedTokens.toFixed(2)}</div>
+        <p>Estimated Tokens: {estimatedTokens}</p>
+        <button onClick={buyTokens} disabled={!presaleOpen}>Buy Tokens</button>
       </div>
-      {!connectedAccount && <button onClick={connectWallet}>Connect Wallet</button>}
     </div>
   );
 }
