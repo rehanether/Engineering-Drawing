@@ -1,56 +1,132 @@
+/* Improved Header Styles */
+
 header {
   display: flex;
-  justify-content: space-between; /* Space between logo and nav */
-  align-items: center; /* Center items vertically */
-  background-color: #000; /* Navbar background color */
-  color: #fff; /* Text color */
-  padding: 10px 20px; /* Space inside the header */
+  justify-content: space-between;
+  align-items: center;
+  background-color: #000;
+  color: #fff;
+  padding: 10px 20px;
   position: fixed;
   top: 0;
   width: 100%;
-  z-index: 1000; /* Stay above content */
+  max-width: 1200px;
+  margin: 0 auto;
+  z-index: 1000;
+  height: 60px;
+  padding-left: 20px;
 }
 
 .logo-container {
   display: flex;
-  align-items: center; /* Vertically align logo and text */
+  align-items: center;
+  width: auto;
+  margin-left: -10px; /* Shift logo slightly left */
 }
 
 .logo {
-  max-height: 50px; /* Adjust logo size */
-  margin-right: 10px; /* Space between logo and title */
+  max-height: 40px;
+}
+
+.menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  position: absolute;
+  right: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 5px 10px;
+}
+
+nav {
+  display: flex;
+  gap: 20px;
 }
 
 nav ul {
   list-style: none;
   display: flex;
-  gap: 20px; /* Space between nav items */
+  gap: 20px;
   margin: 0;
   padding: 0;
 }
 
 nav a {
   color: #fff;
-  text-decoration: none; /* Remove underline */
+  text-decoration: none;
   font-weight: bold;
+  padding: 10px;
 }
 
 nav a:hover {
-  text-decoration: underline; /* Underline on hover */
+  text-decoration: underline;
 }
 
+/* Mobile view improvements */
 @media (max-width: 768px) {
-  header {
-    flex-direction: column; /* Stack logo and nav vertically */
-    align-items: center;
-  }
-
-  nav ul {
-    flex-direction: column; /* Stack nav links vertically */
-    gap: 10px;
+  .menu-toggle {
+    display: block;
   }
 
   .logo-container {
-    margin-bottom: 10px; /* Add space below logo */
+    margin-left: -15px; /* Adjust logo position */
+  }
+
+  nav {
+    display: none;
+    position: absolute;
+    top: 60px;
+    left: 0;
+    background: #000;
+    text-align: center;
+    padding: 10px 0;
+    width: 100%;
+    white-space: nowrap;
+    overflow-x: auto; /* ✅ Allow horizontal scrolling */
+    z-index: 1000; /* Ensure menu appears above content */
+  }
+
+  .nav-open {
+    display: flex;
+    flex-direction: row; /* ✅ Keep menu horizontal */
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+    overflow-x: auto; /* ✅ Enables scrolling */
+    padding: 10px 15px;
+    scrollbar-width: thin; /* ✅ Makes scrollbar thinner */
+    scrollbar-color: #888 #000; /* ✅ Custom scrollbar */
+  }
+
+  .nav-open::-webkit-scrollbar {
+    height: 5px; /* ✅ Scrollbar height */
+  }
+
+  .nav-open::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 10px;
+  }
+
+  nav ul {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 15px;
+    margin: 0;
+    padding: 0;
+    width: max-content; /* ✅ Prevents menu from shrinking */
+  }
+
+  nav a {
+    white-space: nowrap; /* ✅ Prevents wrapping */
+    padding: 10px 15px;
+    color: #fff;
+    text-decoration: none;
   }
 }
+
+
