@@ -1,7 +1,58 @@
+import React, { useState, useEffect } from 'react';
+import './Presale.css';
+
+function Presale() {
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
+  function calculateTimeLeft() {
+    const targetDate = new Date('March 31, 2025 00:00:00').getTime();
+    const now = new Date().getTime();
+    const difference = targetDate - now;
+
+    if (difference <= 0) {
+      return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    }
+
+    return {
+      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+      minutes: Math.floor((difference / 1000 / 60) % 60),
+      seconds: Math.floor((difference / 1000) % 60),
+    };
+  }
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="presale-fullscreen">
+      <h1>Presale Starts Soon, Stay Updated</h1>
+      <div className="countdown-timer">
+        <span>{timeLeft.days}d</span> :
+        <span>{timeLeft.hours}h</span> :
+        <span>{timeLeft.minutes}m</span> :
+        <span>{timeLeft.seconds}s</span>
+      </div>
+    </div>
+  );
+}
+
+export default Presale;
+
+
+/*
+======= HIDDEN CODE BELOW =======
+
 import React, { useEffect, useState } from 'react';
+import './Presale.css'; // Keep your existing styles
 import { ethers } from 'ethers';
 import TOKEN_CONFIG from '../tokenConfig'; // Ensure correct token configuration
-import './Presale.css'; // Import CSS for styling
+
 
 function Presale() {
   const [presaleContract, setPresaleContract] = useState(null);
@@ -157,3 +208,4 @@ function Presale() {
 }
 
 export default Presale;
+*/

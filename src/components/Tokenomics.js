@@ -6,7 +6,7 @@ const Tokenomics = () => {
 
   useEffect(() => {
     // Countdown Timer Logic
-    const countdownDate = new Date("2024-12-31T00:00:00").getTime();
+    const countdownDate = new Date("2025-03-31T00:00:00").getTime();
     const updateCountdown = () => {
       const now = new Date().getTime();
       const distance = countdownDate - now;
@@ -70,7 +70,7 @@ const Tokenomics = () => {
           </div>
           <div className="allocation-card">
             <img src="/assets/skill-development.png" alt="Skill Development Icon" />
-            <h3>Skilled Development Program - 30%</h3>
+            <h3>Environment Program - 30%</h3>
             <p>Locked for 3 years to promote industry skill development, with gradual unlocking of 10% per year.</p>
           </div>
           <div className="allocation-card">

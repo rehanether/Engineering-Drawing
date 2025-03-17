@@ -6,7 +6,6 @@ import Home from './components/Home';
 import ProjectOverview from './components/ProjectOverview';
 import Tokenomics from './components/Tokenomics';
 import Presale from './components/Presale';
-import EducationFoundation from './components/EducationFoundation';
 import Contact from './components/Contact';
 import './App.css';
 
@@ -19,7 +18,6 @@ const App = () => {
         <Route path="/project-overview" element={<ProjectOverview />} />
         <Route path="/tokenomics" element={<Tokenomics />} />
         <Route path="/presale" element={<Presale />} />
-        <Route path="/education-foundation" element={<EducationFoundation />} />
         <Route path="/contact" element={<Contact />} />
       </Routes>
       <Footer />

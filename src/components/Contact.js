@@ -27,9 +27,9 @@ const Contact = () => {
           <h3>Get in Touch</h3>
           <p>We're here to help and answer any questions you might have. We look forward to hearing from you.</p>
           <ul>
-            <li>Email: <a href="mailto:info@engineeringdrawing.com">info@engineeringdrawing.com</a></li>
+            <li>Email: <a href="mailto:info@engineeringdrawing.com">engineeringdrawing.tech@gmail.com</a></li>
             <li>Phone: +91 73470 27851</li>
-            <li>LinkedIn: <a href="https://www.linkedin.com/company/engineering-drawing" target="_blank" rel="noopener noreferrer">Follow us on LinkedIn</a></li>
+            <li>LinkedIn: <a href="https://www.linkedin.com/company/engineeringdrawing" target="_blank" rel="noopener noreferrer">Follow us on LinkedIn</a></li>
           </ul>
         </div>
         <div className="contact-form">

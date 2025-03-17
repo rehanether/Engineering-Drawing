@@ -21,7 +21,7 @@
 .introduction-text {
   position: relative;
   z-index: 2; /* Keep above video */
-  background: rgba(108, 13, 218, 0.85); /* Darker background for better contrast */
+  background: rgba(184, 139, 235, 0.85); /* Darker background for better contrast */
   padding: 30px; /* Added more padding for a balanced look */
   border-radius: 12px;
   color: white;

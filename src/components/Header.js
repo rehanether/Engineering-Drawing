@@ -22,7 +22,6 @@ function Header() {
           <li><Link to="/project-overview" onClick={() => setMenuOpen(false)}>Project Overview</Link></li>
           <li><Link to="/tokenomics" onClick={() => setMenuOpen(false)}>Tokenomics</Link></li>
           <li><Link to="/presale" onClick={() => setMenuOpen(false)}>Presale</Link></li>
-          <li><Link to="/education-foundation" onClick={() => setMenuOpen(false)}>Education</Link></li>
           <li><Link to="/contact" onClick={() => setMenuOpen(false)}>Contact</Link></li>
         </ul>
       </nav>

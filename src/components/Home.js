@@ -13,13 +13,13 @@ const Home = () => {
           Your browser does not support the video tag.
         </video>
         <div className="introduction-text">
-          <h1>Engineering Drawing Project</h1>
+          <h1>Engineering Drawing</h1>
           <p>
             We are bringing Industry 4.0 to engineering with state-of-the-art AI-driven design, cost-efficient solutions, and sustainable industrial processes.
           </p>
           
           {/* White Paper Download Button */}
-          <a href="/assets/whitepaper.pdf" download>
+          <a href="/assets/whitepaper Engineering Drawing.pdf" download>
             <button className="download-button">White Paper</button>
           </a>
 

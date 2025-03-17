@@ -1,4 +1,86 @@
+/* Full-page styling for presale countdown */
+.presale-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #ffffff, #ffffff);
+  color: rgb(0, 0, 0);
+  font-family: 'Poppins', sans-serif;
+  text-align: center;
+}
+
+/* Logo Styling */
+.presale-logo {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 50px;
+  height: 50px;
+}
+
+/* Title */
+.presale-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Countdown Timer */
+.countdown-timer {
+  display: flex;
+  gap: 15px;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #0b7402;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 15px 30px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.2);
+}
+
+/* Individual countdown sections */
+.countdown-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.countdown-number {
+  font-size: 3rem;
+  font-weight: 800;
+}
+
+.countdown-label {
+  font-size: 1rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .presale-title {
+    font-size: 2rem;
+  }
+  .countdown-timer {
+    font-size: 1.5rem;
+  }
+  .countdown-number {
+    font-size: 2.5rem;
+  }
+}
+
+
 /* General Page Styling */
+/*
 .presale-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -8,7 +90,7 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Header Styling */
+/* Header 
 .presale-header {
   text-align: center;
   margin-bottom: 20px;
@@ -27,12 +109,12 @@
   margin-bottom: 20px;
 }
 
-/* Presale Stages Section */
+/* Presale Stages Section
 .presale-stages {
   display: flex;
   justify-content: space-between;
   gap: 20px;
-  flex-wrap: nowrap; /* Ensure stages are in a row */
+  flex-wrap: nowrap; /* Ensure stages are in a row *
   margin-bottom: 20px;
 }
 
@@ -70,7 +152,7 @@
   background-color: #28a745;
 }
 
-/* Wallet Actions Section */
+/* Wallet Actions Section 
 .wallet-actions {
   text-align: center;
   margin-top: 20px;
@@ -114,7 +196,7 @@
   background: #218838;
 }
 
-/* Error Message Styling */
+/* Error Message Styling 
 .error-message {
   color: #dc3545;
   font-weight: bold;
@@ -122,7 +204,7 @@
   margin-bottom: 15px;
 }
 
-/* Footer Styling */
+/* Footer Styling 
 .presale-footer {
   text-align: center;
   margin-top: 30px;
@@ -130,7 +212,7 @@
   color: #777;
 }
 
-/* Responsive Styles */
+/* Responsive Styles 
 @media (max-width: 768px) {
   .presale-stages {
     flex-direction: column;
@@ -166,3 +248,5 @@
     font-size: 0.9rem;
   }
 }
+
+ */

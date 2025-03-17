@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
+import './components/Header.css';  // ✅ Correct
+
+
 
 const rootElement = document.getElementById('root');
 const root = createRoot(rootElement); // New React 18 API
