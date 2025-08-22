@@ -1,0 +1,221 @@
+/* Home.ed.css — Production, themed palette, full-bleed hero video,
+   compact/centered evaporator, fitted GIFs */
+
+/* ---------- Palette & tokens ---------- */
+:root{
+  /* Brand palette */
+  --primary-600:#2563EB;  /* actions / links */
+  --primary-800:#1E40AF;
+
+  --secondary-400:#A78BFA; /* purple accent */
+  --secondary-600:#7C3AED;
+
+  --accent-amber:#F59E0B;  /* small highlights */
+
+  --success-600:#10B981;   /* download / success */
+  --success-700:#059669;
+
+  --text-strong:#0F172A;   /* headings */
+  --text:#374151;          /* body */
+  --text-muted:#6B7280;
+
+  --bg-page:#EAF3FF;       /* page background */
+  --bg-card:#FFFFFF;       /* white cards */
+  --bg-soft:#F8FAFC;
+  --stroke:#E5E7EB;
+
+  /* Layout tokens */
+  --site-width: 1280px;
+  --side-gutter: clamp(10px, 2vw, 22px);
+  --card-radius: 16px;
+  --card-shadow: 0 10px 24px rgba(0,0,0,.06);
+
+  /* Evaporator image height (shorter card) */
+  --evap-img-h: clamp(160px, 20vw, 240px);
+}
+
+/* ---------- Global ---------- */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg-page); color: var(--text); }
+
+.homepage{
+  width: 100%;
+  max-width: var(--site-width);
+  margin: 0 auto !important;
+  padding-top: 80px;
+}
+
+/* remove stray margins between blocks */
+.homepage > *{ margin-top: 0 !important; margin-bottom: 0 !important; }
+section{ margin-top: 0 !important; margin-bottom: 0 !important; }
+
+/* ---------- HERO (video fills container; no black bars) ---------- */
+.hero-section{
+  position: relative;
+  min-height: clamp(360px, 46vw, 560px);
+  overflow: hidden;                         /* keeps rounded corners on video */
+  border-radius: var(--card-radius);
+  border: 1px solid var(--stroke);
+  box-shadow: var(--card-shadow);
+  background: var(--bg-card);
+  padding: 18px var(--side-gutter) 12px !important;
+  margin: 6px var(--side-gutter) 10px;
+}
+
+.background-video{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;                         /* fill container (no letterboxing) */
+  object-position: center;                   /* adjust focus if needed */
+  border-radius: inherit;
+  display: block;
+  z-index: 1;
+}
+
+/* Enlarged, professional-looking intro card */
+.introduction-text{
+  position: relative; z-index: 2;
+  background: rgba(167,139,250,.88);         /* --secondary-400 @ 88% */
+  width: clamp(420px, 34vw, 560px);
+  padding: clamp(18px, 2.2vw, 26px);
+  border-radius: 14px;
+  color: #fff;
+  box-shadow: 0 6px 15px rgba(103,218,26,.28);
+}
+.introduction-text h1{
+  color: #fff;
+  font-size: clamp(1.8rem, 2.2vw + .6rem, 2.4rem);
+  line-height: 1.15;
+  letter-spacing: .2px;
+  margin: 0 0 10px;
+  text-align: left;
+}
+.introduction-text p{
+  color: rgba(255,255,255,.92);
+  font-size: clamp(1rem, .35vw + .95rem, 1.12rem);
+  line-height: 1.6;
+  margin: 8px 0 16px;
+  text-align: left;
+  max-width: 62ch;
+}
+
+/* Buttons: inline on desktop, stacked on small screens */
+.download-button, .presale-button{
+  padding: 10px 20px;
+  border: none; border-radius: 6px; cursor: pointer;
+  transition: background-color .25s, transform .15s;
+  font-weight: 600;
+  width: auto;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.introduction-text a{ display: inline-block; }
+.introduction-text a + a{ margin-left: 10px; }
+
+.download-button{ background: var(--success-600); color:#fff; }
+.download-button:hover{ background: var(--success-700); transform: translateY(-1px); }
+.presale-button{ background: var(--primary-600); color:#fff; }
+.presale-button:hover{ background: var(--primary-800); transform: translateY(-1px); }
+
+@media (max-width: 560px){
+  .introduction-text{ width: min(92%, 520px); }
+  .introduction-text a{ display:block; }
+  .introduction-text a + a{ margin-left: 0; margin-top: 10px; }
+}
+
+/* ---------- EVAPORATOR HIGHLIGHT (shorter, centered copy) ---------- */
+/* Supports EvaporatorShowcase (.ed-*) or simple section (.evaporator-*) */
+.ed-evap-strip{ display: contents !important; padding: 0 !important; margin: 0 !important; }
+.ed-evap-container{ max-width: var(--site-width); width: 100%; margin: 8px auto 12px !important; padding: 0 var(--side-gutter) !important; }
+
+.ed-evap-card{
+  display: grid;
+  grid-template-columns: minmax(360px, 1.05fr) minmax(420px, 1fr); /* text | image */
+  background: var(--bg-card);
+  border: 1px solid var(--stroke);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  overflow: hidden; padding: 0; margin: 0 !important;
+  align-items: center;
+}
+
+.ed-evap-copy{
+  padding: 12px 18px;
+  display:flex; flex-direction:column;
+  justify-content:center; align-items:center;
+  text-align:center; gap:10px;
+}
+.ed-evap-copy h2{
+  color: var(--text-strong);
+  margin: 0 0 8px;
+  font-size: clamp(1.25rem, 1.8vw + .4rem, 1.6rem);
+  line-height:1.25;
+}
+.ed-evap-copy p{
+  margin: 6px 0 12px;
+  color: var(--text);
+  line-height:1.6; max-width:58ch;
+}
+.ed-evap-copy .presale-button,
+.ed-evap-copy .enter-evaporator-button,
+.ed-evap-copy a.btn,
+.ed-evap-copy a,
+.ed-evap-copy button{ align-self:center; }
+
+.ed-evap-visual{ display:flex; align-items:center; justify-content:center; border-left: 1px solid #eef2f7; }
+.ed-evap-visual img{ width:100%; height:auto; max-height: var(--evap-img-h); object-fit: contain; display:block; }
+
+/* If the page uses .evaporator-section instead of .ed-evap-* */
+.evaporator-section{
+  display:grid; grid-template-columns: 1.05fr 1fr;
+  align-items:center; padding: 10px 18px; column-gap: 24px;
+}
+.evaporator-section .evaporator-left{
+  padding: 10px 0;
+  display:flex; flex-direction:column; justify-content:center; align-items:center;
+  text-align:center; gap:10px;
+}
+.evaporator-section .evaporator-right img{
+  max-height: var(--evap-img-h);
+  height:auto; object-fit: contain;
+}
+
+/* ---------- CATEGORIES (GIFs fit perfectly) ---------- */
+.categories-section{
+  display:flex; justify-content:center; flex-wrap:wrap; gap:14px;
+  padding: 0 var(--side-gutter); margin: 12px 0 18px !important;
+}
+.category{
+  text-align:center; flex-basis:100%; max-width:30%;
+  padding:10px; background:var(--bg-soft); border-radius:10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,.08); margin:0;
+}
+.category img{
+  width:100%; height:180px; object-fit: contain;   /* show entire GIF without crop */
+  background:#fff; border-radius:10px; display:block;
+}
+.category h3{ margin:8px 0 6px; color: var(--text-strong); }
+.category button{
+  margin-top:6px; padding:8px 15px; border:0;
+  background: var(--primary-600); color:#fff; border-radius:5px;
+}
+.category button:hover{ background: var(--primary-800); }
+
+/* ---------- Small accents ---------- */
+.badge-amber{ color: var(--accent-amber); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 980px){
+  .ed-evap-card{ grid-template-columns: 1fr; }
+  .ed-evap-visual{ border-left:0; border-top:1px solid #eef2f7; }
+  .evaporator-section{ grid-template-columns: 1fr; }
+}
+@media (max-width: 560px){
+  .categories-section{ padding: 0 10px; }
+  .category{ max-width:100%; padding:8px; }
+  .category img{ height:140px; }
+}

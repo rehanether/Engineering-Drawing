@@ -8,54 +8,72 @@ const ProjectOverview = () => {
       <div className="hero-section">
         <h1>Engineering Excellence through Industry 4.0</h1>
         <p>Revolutionizing industrial design with transparency, sustainability, and efficiency.</p>
-        <img src="/assets/industry4_overview.jpg" alt="Industry 4.0 Overview" className="hero-image" />
+
+        {/* Replaced static image with your GIF */}
+        <img
+          src="/assets/hero-industry.gif"
+          alt="Industry 4.0 animation"
+          className="hero-image"
+        />
       </div>
 
-      {/* Core Focus Areas */}
-      <div className="core-focus">
+      {/* Core Focus */}
+      <section className="core-focus">
         <h2>Our Core Focus</h2>
-        <div className="focus-card">
-          <img src="/assets/industry4_icon.png" alt="Industry 4.0" />
-          <h3>Industry 4.0 Solutions</h3>
-          <p>Incorporating advanced technology to make industrial design smarter, interconnected, and automated.</p>
+        <div className="focus-grid">
+          <div className="focus-card">
+            <img src="/assets/industry4_icon.png" alt="Industry 4.0" />
+            <h3>Industry 4.0 Solutions</h3>
+            <p>Advanced automation and data-driven design for smarter, interconnected, and self-optimizing plants.</p>
+          </div>
+          <div className="focus-card">
+            <img src="/assets/sustainable_icon.png" alt="Sustainable Design" />
+            <h3>Sustainable & Energy-Efficient</h3>
+            <p>Equipment and processes engineered to minimize environmental impact and maximize energy conservation.</p>
+          </div>
+          <div className="focus-card">
+            <img src="/assets/blockchain_icon.png" alt="Blockchain Transparency" />
+            <h3>Decentralized Transparency</h3>
+            <p>Blockchain-backed traceability and ownership for trusted collaboration across the project lifecycle.</p>
+          </div>
         </div>
-        <div className="focus-card">
-          <img src="/assets/sustainable_icon.png" alt="Sustainable Design" />
-          <h3>Sustainable and Energy-Efficient Design</h3>
-          <p>Designing equipment and processes that minimize environmental impact and maximize energy conservation.</p>
-        </div>
-        <div className="focus-card">
-          <img src="/assets/blockchain_icon.png" alt="Decentralized Process" />
-          <h3>Decentralized and Transparent Process</h3>
-          <p>Leveraging blockchain technology for transparency and decentralized ownership, improving trust and collaboration.</p>
-        </div>
-      </div>
+      </section>
 
       {/* Industry Focus */}
-      <div className="industry-focus">
+      <section className="industry-focus">
         <h2>Solutions Across Multiple Industries</h2>
-        <div className="industry-card">
-          <h3>Refinery Industry</h3>
-          <p>Complete plant design for efficient refinery processes, from raw materials to final products.</p>
+        <div className="industry-grid">
+          <div className="industry-card">
+            <h3>Refinery</h3>
+            <p>Front-end design to commissioning—efficient crude-to-product workflows with robust safety margins.</p>
+          </div>
+          <div className="industry-card">
+            <h3>Pharma</h3>
+            <p>cGMP-aligned equipment and process design for quality, precision, and compliance.</p>
+          </div>
+          <div className="industry-card">
+            <h3>Environment</h3>
+            <p>Water treatment, waste management, and renewable integration for cleaner operations.</p>
+          </div>
         </div>
-        <div className="industry-card">
-          <h3>Pharma Industry</h3>
-          <p>Pharmaceutical manufacturing equipment design and implementation, ensuring the highest standards of safety and precision.</p>
-        </div>
-        <div className="industry-card">
-          <h3>Environment Industry</h3>
-          <p>Innovative solutions for water treatment, waste management, and renewable energy systems.</p>
-        </div>
-      </div>
+      </section>
 
       {/* Call to Action */}
-      <div className="call-to-action">
+      <section className="cta-section">
         <h2>Transform Your Industry Today</h2>
-        <button className="contact-button">Contact Us</button>
-        <button className="download-button">Download Our White Paper</button>
-      </div>
+        <div className="cta-buttons">
+          <button className="primary-btn">Contact Us</button>
+          <a href="/assets/whitepaper_Engineering_Drawing.pdf" download className="secondary-btn">Download White Paper</a>
+        </div>
+      </section>
     </div>
   );
 };
 
 export default ProjectOverview;
+
+
+
+
+
+

@@ -1,161 +1,130 @@
-/* ProjectOverview.css */
+/* =========================================================
+   ProjectOverview.css — isolated to .project-overview ONLY
+   (No effect on Home)
+========================================================= */
 
-.project-overview {
+/* Page frame: same feel as Home (width + side gutters + top space) */
+.project-overview{
   width: 100%;
-  max-width: 1200px; /* Constrain width */
+  max-width: 1200px;            /* match Home’s content width */
   margin: 0 auto;
-  padding: 10px 20px; /* Compact padding for better alignment */
+  padding: 18px 20px 12px !important;   /* top gap under navbar + side gutters */
+
+  display: grid;                /* control spacing with row-gap (no margin collapse) */
+  grid-template-columns: 1fr;
+  row-gap: 12px;
   box-sizing: border-box;
 }
 
-.hero-section {
-  position: relative;
-  display: flex;
-  align-items: center; /* Align vertically */
-  justify-content: space-between; /* Spread out text and image */
-  height: 60vh; /* Set height similar to home page */
-  padding: 30px;
-  background: rgba(0, 0, 0, 0.05);
+/* Remove stray margins from direct children so row-gap rules spacing */
+.project-overview > *{ margin: 0 !important; }
+
+/* ---------- HERO CARD (fully scoped; neutralizes any global .hero-section) ---------- */
+.project-overview .hero-section{
+  height: auto !important;          /* kill any 50–60vh heights */
+  min-height: 300px !important;
+  margin: 0 !important;
+  padding: 16px 18px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px;
+
+  background: #ffffff !important;
+  border: 1px solid #E5E7EB !important;
+  border-radius: 16px !important;
+  box-shadow: 0 10px 24px rgba(0,0,0,.06) !important;
 }
 
-.hero-section h1 {
-  font-size: 2.4rem; /* Set similar font size as home page */
-  color: #333;
-  line-height: 1.3;
-  width: 50%; /* Adjusted width for better alignment with image */
+.project-overview .hero-section h1{
+  margin: 0 0 6px 0 !important;
+  color: #0F172A !important;
+  font-size: clamp(1.8rem, 2.2vw + .4rem, 2.2rem) !important;
+  line-height: 1.2 !important;
+}
+.project-overview .hero-section p{
+  margin: 0 !important;
+  color: #374151 !important;
+  line-height: 1.55 !important;
+  max-width: 58ch !important;
+}
+.project-overview .hero-image{
+  width: 100% !important;
+  max-width: 420px !important;
+  height: auto !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,.10) !important;
 }
 
-.hero-section p {
-  font-size: 1rem;
-  color: #666;
-  margin-top: 10px;
+/* ---------- CORE FOCUS ---------- */
+.project-overview .core-focus{ height: auto !important; min-height: unset !important; }
+.project-overview .core-focus h2{
+  text-align: center; color:#0F172A; margin:0 0 10px 0;
 }
-
-.hero-image {
-  width: 45%; /* Similar height ratio to hero text */
-  height: auto;
-  object-fit: contain; /* Maintain aspect ratio */
-  max-height: 300px; /* Ensure consistent sizing */
+.project-overview .focus-grid{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:14px;
 }
-
-.core-focus {
-  display: flex;
-  justify-content: space-between; /* Make sure all three cards are evenly distributed */
-  gap: 20px; /* Even gap between cards for consistency */
-  margin-top: 30px;
-  flex-wrap: nowrap; /* Prevent wrapping to keep all cards in one row */
-  padding: 0 20px;
+.project-overview .focus-card{
+  background:#fff; border:1px solid #E5E7EB; border-radius:12px;
+  box-shadow:0 10px 24px rgba(0,0,0,.06); padding:12px 12px 14px; text-align:center;
 }
+.project-overview .focus-card img{ width:52px; height:52px; margin-bottom:8px; }
+.project-overview .focus-card h3{ color:#2563EB; margin:4px 0 6px; }
+.project-overview .focus-card p{ color:#374151; line-height:1.55; }
 
-.focus-card {
-  text-align: center;
-  background-color: #ffffff;
-  padding: 20px; /* Balanced padding for a neat look */
-  border-radius: 10px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-  width: calc(33% - 20px); /* Ensure the cards divide space evenly */
-  max-width: 350px; /* Set max width for consistency */
-  box-sizing: border-box;
+/* ---------- INDUSTRIES ---------- */
+.project-overview .industry-focus{ height:auto !important; min-height:unset !important; }
+.project-overview .industry-focus h2{
+  text-align:center; color:#0F172A; margin:0 0 10px 0;
 }
-
-.focus-card img {
-  width: 50px;
-  height: 50px;
-  margin-bottom: 10px;
+.project-overview .industry-grid{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:14px;
 }
-
-.focus-card h3 {
-  font-size: 1.4rem;
-  color: #007bff;
-  margin-bottom: 10px;
+.project-overview .industry-card{
+  background:#F8FAFC; border:1px solid #E5E7EB; border-radius:12px;
+  padding:12px; box-shadow:0 6px 14px rgba(2,6,23,.05);
 }
+.project-overview .industry-card h3{ color:#0F172A; margin:0 0 6px 0; }
+.project-overview .industry-card p{ color:#374151; margin:0; line-height:1.55; }
 
-.focus-card p {
-  font-size: 0.95rem;
-  color: #333;
-  line-height: 1.4;
+/* ---------- CTA / FINAL BLOCK (compact; never huge) ---------- */
+.project-overview .cta,
+.project-overview .cta-section,
+.project-overview .final-cta{
+  height:auto !important;
+  min-height:0 !important;       /* stop full-viewport growth */
+  margin:0 !important;
+  padding:14px 16px !important;
+
+  background: linear-gradient(180deg,#FFFFFF,#F3F6FF);
+  border:1px solid #E5E7EB; border-radius:14px;
+  text-align:center; box-shadow:0 10px 24px rgba(0,0,0,.06);
 }
-
-.call-to-action {
-  margin-top: 30px; /* Reduce space */
-  text-align: center;
+.project-overview .cta h2,
+.project-overview .cta-section h2,
+.project-overview .final-cta h2{ color:#0F172A; margin:0 0 8px 0; }
+.project-overview .cta-buttons{ display:flex; justify-content:center; gap:10px; flex-wrap:wrap; }
+.project-overview .primary-btn,
+.project-overview .secondary-btn{
+  padding:10px 18px; border-radius:8px; border:1px solid transparent;
+  font-weight:600; color:#fff; text-decoration:none; cursor:pointer;
 }
+.project-overview .primary-btn{ background:#2563EB; }
+.project-overview .primary-btn:hover{ background:#1E40AF; }
+.project-overview .secondary-btn{ background:#10B981; }
+.project-overview .secondary-btn:hover{ background:#059669; }
 
-.contact-button,
-.download-button {
-  margin: 5px;
-  padding: 12px 25px; /* Keep consistent button padding */
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1rem;
-  color: white;
+/* ---------- Responsive ---------- */
+@media (max-width:980px){
+  .project-overview .hero-section{ flex-direction:column; min-height:unset !important; }
+  .project-overview .hero-image{ max-width:70%; margin-top:10px; }
+  .project-overview .focus-grid,
+  .project-overview .industry-grid{ grid-template-columns:1fr 1fr; }
 }
-
-.contact-button {
-  background-color: #007bff;
-}
-
-.contact-button:hover {
-  background-color: #0056b3;
-}
-
-.download-button {
-  background-color: #28a745;
-}
-
-.download-button:hover {
-  background-color: #218838;
-}
-
-/* Responsive Styles */
-@media (max-width: 768px) {
-  .hero-section {
-    flex-direction: column; /* Stack content vertically on smaller screens */
-    text-align: center; /* Center text for better presentation */
-    height: auto; /* Adjust height for smaller screens */
-  }
-
-  .hero-section h1 {
-    width: 100%;
-    margin-bottom: 20px;
-  }
-
-  .hero-image {
-    width: 80%;
-    max-height: 200px;
-    margin-bottom: 20px;
-  }
-
-  .core-focus {
-    flex-direction: column; /* Stack the cards vertically on smaller screens */
-    align-items: center;
-    padding: 0 10px;
-  }
-
-  .focus-card {
-    width: 90%;
-    margin-bottom: 15px;
-  }
-}
-
-@media (max-width: 480px) {
-  .hero-section h1 {
-    font-size: 1.8rem; /* Reduce heading size for better readability */
-  }
-
-  .focus-card img {
-    width: 40px;
-    height: 40px;
-  }
-
-  .focus-card p {
-    font-size: 0.9rem; /* Smaller font for mobile */
-  }
-
-  .contact-button,
-  .download-button {
-    padding: 10px 20px;
-    font-size: 0.9rem; /* Adjust button text size for mobile */
-  }
+@media (max-width:600px){
+  .project-overview{ padding:16px 12px 10px !important; }
+  .project-overview .hero-image{ max-width:100%; }
+  .project-overview .focus-grid,
+  .project-overview .industry-grid{ grid-template-columns:1fr; }
 }

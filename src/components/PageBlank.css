@@ -1,0 +1,21 @@
+/* Minimal, non-invasive styles (no global leaks) */
+.page-blank{
+  max-width: 1200px;
+  margin: 80px auto 24px;   /* leave room for fixed header */
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.05);
+}
+.page-blank h1{
+  margin: 0 0 8px;
+  font-size: 1.8rem;
+  line-height: 1.2;
+  color: #0f172a;
+}
+.page-blank .muted{
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.6;
+}

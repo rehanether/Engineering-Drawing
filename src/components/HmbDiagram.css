@@ -1,0 +1,36 @@
+.hmb-container {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: #eef6ff;
+  border-radius: 10px;
+}
+
+.hmb-diagram {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.box {
+  border: 2px solid #0a58ca;
+  border-radius: 8px;
+  padding: 10px 20px;
+  background-color: white;
+  text-align: center;
+  font-size: 14px;
+  min-width: 120px;
+}
+
+.arrow {
+  font-size: 24px;
+  color: #0a58ca;
+}
+
+.recycle-up {
+  color: orange;
+  transform: rotate(-20deg);
+}
+

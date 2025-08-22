@@ -1,252 +1,101 @@
-/* Full-page styling for presale countdown */
-.presale-fullscreen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background: linear-gradient(135deg, #ffffff, #ffffff);
-  color: rgb(0, 0, 0);
-  font-family: 'Poppins', sans-serif;
-  text-align: center;
-}
-
-/* Logo Styling */
-.presale-logo {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  width: 50px;
-  height: 50px;
-}
-
-/* Title */
-.presale-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin-bottom: 10px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
-/* Countdown Timer */
-.countdown-timer {
-  display: flex;
-  gap: 15px;
-  font-size: 2rem;
-  font-weight: bold;
-  color: #0b7402;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 15px 30px;
-  border-radius: 10px;
-  box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.2);
-}
-
-/* Individual countdown sections */
-.countdown-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.countdown-number {
-  font-size: 3rem;
-  font-weight: 800;
-}
-
-.countdown-label {
-  font-size: 1rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  color: #fff;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .presale-title {
-    font-size: 2rem;
-  }
-  .countdown-timer {
-    font-size: 1.5rem;
-  }
-  .countdown-number {
-    font-size: 2.5rem;
-  }
-}
-
-
-/* General Page Styling */
-/*
-.presale-container {
-  max-width: 1200px;
+.presale-wrap {
+  max-width: 980px;
   margin: 0 auto;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 24px 16px 64px;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: #0f172a;
 }
 
-/* Header 
-.presale-header {
-  text-align: center;
-  margin-bottom: 20px;
+.title { font-size: 22px; font-weight: 700; margin: 18px 0 6px; }
+
+.presale-top {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap;
+}
+.presale-top .left-links { font-size: 14px; }
+.presale-top .left-links a { color: #2563eb; text-decoration: none; font-weight: 600; }
+.presale-top .muted { color: #64748b; }
+.presale-top .right { display: flex; gap: 8px; }
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0,1fr));
+  gap: 12px; margin: 14px 0 10px;
+}
+.card {
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+  padding: 14px 16px; box-shadow: 0 1px 2px rgba(2,6,23,.06);
+}
+.card .label { font-size: 12px; color: #6b7280; margin-bottom: 6px; }
+.card .value { font-size: 16px; font-weight: 700; }
+.card .value.green { color: #16a34a; }
+.card .value.red   { color: #dc2626; }
+.card .sub { font-size: 12px; color: #6b7280; margin-top: 4px; }
+
+.stages { margin: 18px 0 8px; display: flex; flex-direction: column; gap: 10px; }
+.stage .stage-head { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.stage .stage-head .muted { color: #6b7280; font-weight: 400; }
+
+/* LIVE pill — BNB yellow */
+.pill {
+  background: #f59e0b;      /* warm BNB yellow */
+  color: #111827;
+  border-radius: 999px; padding: 2px 8px; font-size: 12px;
 }
 
-.presale-header h1 {
-  font-size: 2.2rem; 
-  color: #333;
-  margin-bottom: 10px;
+/* Bars: red progress */
+.stage .bar { height: 8px; background: #e5e7eb; border-radius: 999px; overflow: hidden; }
+.stage .fill { height: 8px; background: #ef4444; } /* red-500 */
+
+.buy { margin-top: 12px; }
+.title2 { font-weight: 700; margin-bottom: 6px; }
+.row { display: flex; gap: 8px; align-items: center; }
+.row.gap { margin-top: 10px; }
+input[type="number"], input[type="text"], input:not([type]) {
+  width: 100%; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 10px;
+  font-size: 14px; outline: none;
 }
 
-.presale-details {
-  text-align: center;
-  font-size: 1rem;
-  color: #666;
-  margin-bottom: 20px;
+.btn {
+  padding: 10px 14px; border-radius: 10px; border: 1px solid transparent;
+  background: #f3f4f6; cursor: pointer; font-weight: 600;
+  transition: transform .05s ease, filter .15s ease;
 }
+.btn:active { transform: translateY(1px); }
+.btn.primary   { background: #2563eb; color: #fff; }
+.btn.secondary { background: #eef2ff; color: #1d4ed8; }
 
-/* Presale Stages Section
-.presale-stages {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: nowrap; /* Ensure stages are in a row *
-  margin-bottom: 20px;
+/* 0.01 BNB quick-fill button — BNB yellow */
+.btn.bnb {
+  background: #F0B90B;      /* official-ish BNB yellow */
+  color: #111827;
+  border-color: #eab308;
 }
+.btn.bnb:hover { filter: brightness(0.95); }
 
-.stage-card {
-  background: #ffffff;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 15px;
-  width: calc(33% - 20px); 
-  text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+/* Buy button — success green */
+.btn.buy {
+  background: linear-gradient(180deg, #22c55e, #16a34a);
+  color: #fff;
+  box-shadow: 0 6px 12px rgba(34,197,94,.25);
 }
+.btn.buy:hover { filter: brightness(1.02); }
 
-.stage-card h3 {
-  color: #007bff;
-  font-size: 1.4rem;
-  margin-bottom: 8px;
+.btn.disabled  { opacity: .6; pointer-events: none; }
+
+.error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; padding: 8px 10px; border-radius: 10px; margin-bottom: 10px; }
+.busy  { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; padding: 8px 10px; border-radius: 10px; margin-bottom: 10px; }
+
+.admin { margin-top: 16px; }
+
+.footnote {
+  margin-top: 16px; color: #6b7280; font-size: 12px;
 }
+.footnote a { color: #2563eb; font-weight: 600; text-decoration: none; }
 
-.stage-card p {
-  font-size: 1rem;
-  color: #333;
-  margin-bottom: 10px;
+@media (max-width: 960px) {
+  .cards { grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
-
-.stage-card progress {
-  width: 100%;
-  height: 10px; 
-  border-radius: 5px;
-  margin-top: 10px;
-  background-color: #e9ecef;
+@media (max-width: 560px) {
+  .cards { grid-template-columns: 1fr; }
 }
-
-.stage-card progress::-webkit-progress-value {
-  background-color: #28a745;
-}
-
-/* Wallet Actions Section 
-.wallet-actions {
-  text-align: center;
-  margin-top: 20px;
-}
-
-.wallet-actions input[type="text"] {
-  padding: 10px;
-  width: 60%;
-  margin: 10px 0;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  font-size: 1rem;
-}
-
-.wallet-actions button {
-  padding: 10px 25px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1rem;
-  margin-top: 10px;
-}
-
-.connect-button {
-  background: #007bff;
-  color: #ffffff;
-  transition: background 0.3s ease;
-}
-
-.connect-button:hover {
-  background: #0056b3;
-}
-
-.buy-tokens-button {
-  background: #28a745;
-  color: #ffffff;
-  transition: background 0.3s ease;
-}
-
-.buy-tokens-button:hover {
-  background: #218838;
-}
-
-/* Error Message Styling 
-.error-message {
-  color: #dc3545;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 15px;
-}
-
-/* Footer Styling 
-.presale-footer {
-  text-align: center;
-  margin-top: 30px;
-  font-size: 0.9rem;
-  color: #777;
-}
-
-/* Responsive Styles 
-@media (max-width: 768px) {
-  .presale-stages {
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-  }
-
-  .stage-card {
-    width: 90%;
-    margin-bottom: 15px;
-  }
-
-  .wallet-actions input[type="text"] {
-    width: 80%;
-  }
-}
-
-@media (max-width: 480px) {
-  .presale-header h1 {
-    font-size: 1.8rem;
-  }
-
-  .stage-card h3 {
-    font-size: 1.2rem;
-  }
-
-  .wallet-actions input[type="text"] {
-    width: 90%;
-  }
-
-  .wallet-actions button {
-    padding: 8px 20px;
-    font-size: 0.9rem;
-  }
-}
-
- */

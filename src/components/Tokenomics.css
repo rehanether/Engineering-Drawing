@@ -1,165 +1,204 @@
-/* General Page Styling */
-.tokenomics-page {
-  font-family: Arial, sans-serif;
-  max-width: 1200px;
-  margin: auto;
-  padding: 10px 20px; /* Reduced padding for a compact layout */
-  box-sizing: border-box;
+/* =========================
+   TOKENOMICS (CLEAN DESKTOP ONE-SCREEN)
+   ========================= */
+
+/* Tuning knobs */
+:root { --nav-h: 78px; }                 /* adjust to your real navbar height */
+.tokenomics-page { --gap: 8px; }         /* tiny, consistent internal gap */
+.tokenomics-page .tok-card{
+  background:#fff; border-radius:14px;
+  padding:12px 14px; box-shadow:0 8px 22px rgba(19,49,109,.08);
 }
 
-/* Hero Section Styling */
-.hero-section {
-  text-align: center;
-  margin-bottom: 20px; /* Reduced margin for better compactness */
-}
+/* ---------- DESKTOP ≥ 1024px: FIT CONTENT IN ONE SCREEN ---------- */
+@media (min-width: 1024px){
 
-.hero-section h1 {
-  font-size: 2.2em; /* Reduced font size for compact look */
-  color: #333;
-}
-
-.hero-section p {
-  font-size: 1em; /* Adjusted font size to fit better */
-  color: #777;
-  margin-bottom: 15px; /* Reduced margin for better fit */
-}
-
-/* Presale Stages Section */
-.presale-section {
-  margin-bottom: 30px; /* Reduced margin for compact view */
-  text-align: center;
-}
-
-.presale-section h2 {
-  font-size: 1.8em; /* Reduced font size for better fit */
-  color: #ffc107;
-  margin-bottom: 15px;
-}
-
-.countdown-timer {
-  font-size: 1.3em; /* Reduced font size for a more compact view */
-  color: #dc3545;
-  font-weight: bold;
-  margin-bottom: 15px;
-}
-
-.stages-container {
-  display: flex;
-  justify-content: space-between; /* Ensure cards spread evenly */
-  gap: 15px; /* Reduce gap for a compact layout */
-  flex-wrap: nowrap; /* Keep cards in one row */
-  margin-bottom: 20px; /* Reduce margin for compact view */
-}
-
-.stage-card {
-  background: #f8f9fa;
-  border-radius: 10px;
-  padding: 15px; /* Reduce padding to make cards more compact */
-  width: calc(33% - 15px); /* Ensure cards fit into one row */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  transition: transform 0.3s ease;
-  max-width: 300px; /* Set a max-width for better fit */
-}
-
-.stage-card h3 {
-  color: #333;
-  font-size: 1.2em; /* Reduce font size for compactness */
-  margin-bottom: 8px;
-}
-
-.stage-card p {
-  font-size: 0.95em; /* Reduced font size for better fit */
-  margin-bottom: 10px;
-}
-
-.stage-card progress {
-  width: 100%;
-  height: 15px; /* Reduced height for a more compact look */
-}
-
-/* Token Allocation Breakdown Section */
-.allocation-details-section {
-  margin-bottom: 30px; /* Reduced margin for a compact layout */
-  text-align: center;
-}
-
-.allocation-details-section h2 {
-  font-size: 1.8em; /* Reduced font size to better match the compact layout */
-  color: #28a745;
-  margin-bottom: 15px;
-}
-
-.allocation-cards-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Adjusted grid for better fit */
-  gap: 15px; /* Reduced gap for compactness */
-  margin-bottom: 20px; /* Reduced margin for compact view */
-}
-
-.allocation-card {
-  background: #ffffff;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  padding: 15px; /* Reduce padding for compactness */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  transition: transform 0.3s ease;
-}
-
-.allocation-card:hover {
-  transform: translateY(-5px);
-}
-
-.allocation-card img {
-  max-width: 50px; /* Reduced size for better fit */
-  margin-bottom: 10px;
-}
-
-.allocation-card h3 {
-  color: #333;
-  font-size: 1.2em; /* Reduced font size for a more compact view */
-  margin-bottom: 8px;
-}
-
-.allocation-card p {
-  color: #777;
-  font-size: 0.9em; /* Reduced font size for compact view */
-}
-
-/* Responsive Styles */
-@media (max-width: 768px) {
-  .stages-container {
-      flex-direction: column; /* Stack the cards vertically for smaller screens */
-      align-items: center;
-      gap: 20px; /* Add space for better readability on smaller screens */
+  .tokenomics-page .tok-container{
+    width:min(1200px, 92vw);
+    margin-inline:auto;
+    /* one-screen grid: hero | stages | allocation  */
+    height: calc(100vh - var(--nav-h));
+    display:grid;
+    grid-template-rows:
+      minmax(180px, 32vh)
+      minmax(150px, 22vh)
+      minmax(220px, 1fr);
+    row-gap: var(--gap);
+    align-content:start;
+    overflow:hidden;            /* no page scrollbar */
   }
 
-  .allocation-cards-container {
-      grid-template-columns: 1fr; /* Stack allocation cards for smaller screens */
+  .tokenomics-page .tok-section{
+    margin:0; padding:0; min-height:0; /* allow sections to shrink inside rows */
+    display:grid; align-content:start;  /* no extra vertical whitespace */
   }
 
-  .stage-card, .allocation-card {
-      width: 90%; /* Ensure cards expand to full width on mobile */
-      max-width: 100%;
-      margin: 0 auto 15px; /* Add bottom margin for spacing */
+  /* HERO */
+  .tokenomics-page .tok-hero{
+    grid-template-columns: 1fr 520px; gap: var(--gap);
+    grid-auto-flow: column; align-items:center;
+  }
+  .tokenomics-page .tok-hero-copy h1{
+    margin:0 0 6px 0; font-size:clamp(26px, 2.4vw, 34px); color:#0e2a55;
+  }
+  .tokenomics-page .tok-hero-copy p{ margin:0; color:#51607a; }
+  .tokenomics-page .tok-hero-art{ height:100%; }
+  .tokenomics-page .tok-hero-art.tok-card{ padding:0; }
+  .tokenomics-page .tok-hero-gif{
+    width:100%; height:100%; display:block; border-radius:14px; object-fit:cover;
+  }
+
+  /* STAGES */
+  .tokenomics-page .stages{
+    grid-template-columns: 240px 1fr; gap: var(--gap);
+  }
+  .tokenomics-page .tok-side{ display:flex; flex-direction:column; gap:8px; }
+  .tokenomics-page .tok-eyebrow{
+    font-size:12px; letter-spacing:.16em; font-weight:700; color:#6a87c2;
+  }
+  .tokenomics-page h2{ margin:0; color:#0e2a55; font-size:20px; }
+  .tokenomics-page .tok-btn{
+    align-self:flex-start; background:#2d6df6; color:#fff; text-decoration:none;
+    padding:8px 14px; border-radius:10px; font-weight:600;
+  }
+
+  .tokenomics-page .tok-stage-grid{
+    height:100%; min-height:0;            /* keeps it inside the row */
+    display:grid;
+    grid-template-columns: repeat(3, minmax(240px, 1fr));
+    gap: var(--gap);
+  }
+  .tokenomics-page .stage{
+    display:flex; flex-direction:column; gap:8px; min-width:0; /* truncation safe */
+  }
+  .tokenomics-page .tok-stage-top{
+    display:flex; justify-content:space-between; gap:8px; align-items:baseline;
+  }
+  .tokenomics-page .tok-stage-title{
+    font-weight:700; color:#0e2a55; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .tokenomics-page .tok-stage-price{ color:#51607a; }
+  .tokenomics-page .tok-stage-price b{ color:#0e2a55; }
+  .tokenomics-page .tok-bar{ height:6px; background:#e9effc; border-radius:999px; overflow:hidden; }
+  .tokenomics-page .tok-bar > span{ display:block; height:100%; background:linear-gradient(90deg,#2d6df6,#2fd184); }
+  .tokenomics-page .tok-stage-foot{
+    display:flex; justify-content:space-between; align-items:center; color:#51607a; font-size:13px;
+  }
+  .tokenomics-page .tok-live{
+    background:#fff2d5; color:#cf7a00; font-weight:700; padding:2px 8px; border-radius:999px; font-size:12px;
+  }
+
+  /* ALLOCATION */
+  .tokenomics-page .alloc{ grid-template-columns: 240px 1fr; gap: var(--gap); }
+  .tokenomics-page .tok-alloc-grid{
+    height:100%; min-height:0; overflow:hidden;
+    display:grid;
+    grid-template-columns: repeat(5, minmax(200px, 1fr));
+    gap: var(--gap);
+    align-items:stretch;
+  }
+  .tokenomics-page .tok-alloc-grid .tok-card{
+    display:flex; flex-direction:column; gap:6px; height:100%; min-width:0;
+  }
+  .tokenomics-page .tok-alloc-icon{
+    width:42px; height:42px; border-radius:10px;
+    background:#f2f7ff; display:grid; place-items:center;
+    box-shadow:inset 0 0 0 1px #e7eefc;
+  }
+  .tokenomics-page .tok-alloc-icon img{ width:24px; height:24px; object-fit:contain; }
+  .tokenomics-page .tok-alloc-grid h3{ margin:2px 0 2px 0; font-size:15px; color:#0e2a55; }
+  .tokenomics-page .tok-alloc-grid p{
+    margin:0; color:#51607a; line-height:1.25;
+    display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
   }
 }
 
-@media (max-width: 480px) {
-  .hero-section h1 {
-      font-size: 1.8em; /* Smaller heading size for mobile */
+/* ---------- MOBILE/TABLET < 1024px: NORMAL FLOW (ALLOW SCROLL) ---------- */
+@media (max-width: 1023.98px){
+  .tokenomics-page .tok-container{
+    width:min(1200px, 92vw);
+    margin-inline:auto;
+    display:flex; flex-direction:column; gap:12px;
+    padding-bottom:16px;              /* a little breathing room */
   }
+  .tokenomics-page .tok-hero{ display:grid; grid-template-columns:1fr; gap:12px; }
+  .tokenomics-page .stages{ display:grid; grid-template-columns:1fr; gap:12px; }
+  .tokenomics-page .tok-stage-grid{ display:grid; grid-template-columns:repeat(2, minmax(220px,1fr)); gap:12px; }
+  .tokenomics-page .alloc{ display:grid; grid-template-columns:1fr; gap:12px; }
+  .tokenomics-page .tok-alloc-grid{ display:grid; grid-template-columns:repeat(2, minmax(220px,1fr)); gap:12px; }
+}
+@media (max-width: 640px){
+  .tokenomics-page .tok-stage-grid, .tokenomics-page .tok-alloc-grid{ grid-template-columns:1fr; }
+}
 
-  .stage-card h3, .allocation-card h3 {
-      font-size: 1.1em; /* Reduced font size for mobile */
-  }
 
-  .stage-card p, .allocation-card p {
-      font-size: 0.85em; /* Smaller font for mobile */
-  }
 
-  .countdown-timer {
-      font-size: 1.1em; /* Smaller countdown timer text */
-  }
+
+
+
+
+
+/* === Allocation: header above + 5-up row, tidy & even === */
+.tokenomics-page .alloc{
+  /* stack header above grid instead of side-by-side */
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  row-gap: 14px !important;
+}
+
+.tokenomics-page .alloc .tok-side{
+  grid-column: 1 / -1 !important;   /* span full width */
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 12px !important;
+  margin: 0 !important;
+}
+
+/* five cards across, perfectly filling the container */
+.tokenomics-page .tok-alloc-grid{
+  grid-column: 1 / -1 !important;
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 14px !important;              /* small, even gutters */
+}
+
+/* tighten cards so five fit comfortably */
+.tokenomics-page .tok-alloc-grid .tok-card{
+  padding: 12px 12px !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
+/* compact icon & text so titles don’t wrap awkwardly */
+.tokenomics-page .tok-alloc-icon{ width: 40px; height: 40px; margin-bottom: 4px; }
+.tokenomics-page .tok-alloc-icon img{ width: 22px; height: 22px; }
+
+.tokenomics-page .tok-alloc-grid h3{
+  margin: 2px 0 2px 0 !important;
+  font-size: 15px !important;
+  line-height: 1.2 !important;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.tokenomics-page .tok-alloc-grid p{
+  margin: 0 !important;
+  color: #51607a;
+  line-height: 1.25;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* keep five-up on wide screens; gracefully reduce on smaller */
+@media (max-width: 1280px){
+  .tokenomics-page .tok-alloc-grid{ grid-template-columns: repeat(4, minmax(0,1fr)) !important; }
+}
+@media (max-width: 1024px){
+  .tokenomics-page .tok-alloc-grid{ grid-template-columns: repeat(3, minmax(0,1fr)) !important; }
+}
+@media (max-width: 768px){
+  .tokenomics-page .tok-alloc-grid{ grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+}
+@media (max-width: 520px){
+  .tokenomics-page .tok-alloc-grid{ grid-template-columns: 1fr !important; }
 }

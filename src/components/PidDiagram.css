@@ -1,0 +1,35 @@
+.pid-container {
+  padding: 20px;
+  background-color: #f0f8ff;
+  border-radius: 10px;
+  margin-top: 20px;
+}
+
+.equipment {
+  stroke: #003366;
+  stroke-width: 2;
+  fill: #e6f2ff;
+}
+
+.feed-tank {
+  fill: #ccf2ff;
+}
+
+.pump {
+  fill: #99ccff;
+}
+
+.heater {
+  fill: #ffd699;
+}
+
+.evaporator {
+  fill: #ffe6e6;
+}
+
+.line {
+  stroke: #003366;
+  stroke-width: 2;
+  marker-end: url(#arrowhead);
+}
+
