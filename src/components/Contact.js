@@ -58,15 +58,13 @@ const Contact = () => {
     }, 1000);
   };
 
-  const mailTo = `mailto:engineeringdrawing.tech@gmail.com?subject=${encodeURIComponent(
-    `[EDG] ${form.topic}`
-  )}&body=${encodeURIComponent(
+  // Email links
+  const subject = encodeURIComponent(`[EDG] ${form.topic}`);
+  const body = encodeURIComponent(
     `Name: ${form.name}\nEmail: ${form.email}\nPhone: ${form.phone}\n\n${form.message}`
-  )}`;
-
-  const whatsappLink = `https://wa.me/917347027851?text=${encodeURIComponent(
-    `Hello Engineering Drawing team,\n\nTopic: ${form.topic}\n\n${form.message || ""}`
-  )}`;
+  );
+  const mailToAdmin = `mailto:admin@engineeringdrawing.io?subject=${subject}&body=${body}`;
+  const mailToContact = `mailto:contact@engineeringdrawing.io?subject=${subject}&body=${body}`;
 
   const linkedinUrl = "https://www.linkedin.com/company/engineeringdrawing";
 
@@ -75,17 +73,25 @@ const Contact = () => {
       {/* Toast */}
       <div ref={toastRef} className="contact-toast" role="status" aria-live="polite" />
 
-      {/* HERO — keep this exactly as-is */}
+      {/* HERO */}
       <section className="contact-hero">
         <div className="hero-copy tok-card">
           <h1>Let’s build something meaningful</h1>
           <p>
             Questions about EDG, partnerships, or industrial design? Drop a line—our team reads every message.
           </p>
+
+          {/* Quick actions */}
           <div className="hero-quick">
-            <a className="btn-primary" href={mailTo}>Email Us</a>
-            <a className="btn-ghost" href={whatsappLink} target="_blank" rel="noreferrer">WhatsApp</a>
-            <a className="btn-linkedin" href={linkedinUrl} target="_blank" rel="noreferrer">LinkedIn</a>
+            <a className="btn-primary" href={mailToContact}>
+              contact@engineeringdrawing.io
+            </a>
+            <a className="btn-ghost" href={mailToAdmin}>
+              admin@engineeringdrawing.io
+            </a>
+            <a className="btn-linkedin" href={linkedinUrl} target="_blank" rel="noreferrer">
+              LinkedIn
+            </a>
           </div>
         </div>
 
@@ -98,7 +104,7 @@ const Contact = () => {
         </div>
       </section>
 
-      {/* MAIN — single, centered form (info container removed) */}
+      {/* MAIN */}
       <section className="contact-main tok-card">
         <h2>Send a message</h2>
         <form onSubmit={handleSubmit} noValidate className="contact-form">
@@ -177,7 +183,8 @@ const Contact = () => {
             <button type="submit" className="btn-primary" disabled={sent}>
               {sent ? "Sending..." : "Send message"}
             </button>
-            <a className="btn-ghost" href={mailTo}>Use Email Client</a>
+            {/* open email client (defaults to contact@) */}
+            <a className="btn-ghost" href={mailToContact}>Use Email Client</a>
           </div>
         </form>
       </section>
@@ -186,4 +193,3 @@ const Contact = () => {
 };
 
 export default Contact;
-

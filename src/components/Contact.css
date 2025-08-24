@@ -190,3 +190,28 @@
 .contact-page .contact-toast.show{
   opacity: 1; transform: translateX(-50%) translateY(0);
 }
+
+
+
+
+/* Compact email chips (mobile friendly) */
+.contact-page .email-chips{
+  margin: 10px 0 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.contact-page .email-chips li button{
+  border: 1px dashed var(--c-stroke);
+  background: var(--c-bg-soft);
+  color: var(--c-text);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.contact-page .email-chips li button:hover{
+  border-style: solid;
+}
