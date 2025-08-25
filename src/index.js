@@ -14,7 +14,7 @@ const root = createRoot(document.getElementById('root'));
 root.render(
   <BrowserRouter>
     <App />
-    <Analytics />       {/* pageview & route-change beacons */}
-    <SpeedInsights />   {/* performance beacons */}
+    <Analytics />
+    <SpeedInsights />
   </BrowserRouter>
 );
