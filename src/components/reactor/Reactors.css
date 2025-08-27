@@ -1,0 +1,240 @@
+/* ===============================
+   Reactor — compact + desktop-polish
+   =============================== */
+
+:root{
+  --edg-bg:#eef5ff;
+  --edg-card:#ffffff;
+  --edg-ink:#0f172a;
+  --edg-muted:#64748b;
+  --edg-line:#e5e7eb;
+  --edg-soft:#f1f5f9;
+  --edg-primary:#2563eb;
+  --edg-primary-600:#1d4ed8;
+  --shadow:0 6px 18px rgba(2,6,23,.06);
+  --radius-lg:14px;
+  --radius-md:12px;
+  --gap:16px;
+}
+
+/* page container — aligned with Home/Distillation */
+.reactors-content{
+  width:min(1200px, 100% - 32px);
+  margin:18px auto 48px;
+  color:var(--edg-ink);
+}
+
+.reactors-content h1{font-size:26px;font-weight:800;letter-spacing:.2px;margin:8px 6px 14px}
+.reactors-content h2{font-size:18px;font-weight:800;margin:0 0 10px}
+.reactors-content h3{font-size:15px;font-weight:800;margin:0 0 8px}
+
+/* step pills */
+.rx-step-nav{display:flex;flex-wrap:wrap;gap:8px;margin:6px 4px 14px}
+.rx-step-nav a{
+  text-decoration:none;font-size:12px;color:var(--edg-ink);
+  background:#f1f5ff;border:1px solid #e6edff;padding:6px 10px;border-radius:999px
+}
+.rx-step-nav a:hover{background:#e7eeff}
+
+/* global card */
+.card{
+  background:var(--edg-card);
+  border:1px solid var(--edg-line);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow);
+  padding:16px;
+  margin:12px 0;
+}
+
+/* toolbar (Reset) */
+.toolbar{display:flex;justify-content:flex-end;gap:10px;margin:2px 0 10px}
+.presale-button,.secondary-button{
+  height:38px;padding:0 14px;border-radius:10px;font-weight:700;font-size:13px;
+  border:1px solid transparent;cursor:pointer
+}
+.presale-button{background:var(--edg-primary);color:#fff;box-shadow:0 6px 14px rgba(37,99,235,.22)}
+.presale-button:hover{background:var(--edg-primary-600)}
+.secondary-button{background:#f8fafc;border-color:var(--edg-line);color:var(--edg-ink)}
+.secondary-button:hover{background:#f1f5f9}
+
+/* 4-up grid (desktop), collapses on smaller screens */
+.four-col{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:18px;
+  align-items:stretch;
+}
+
+/* pane = individual column card */
+.pane{
+  background:#fff;border:1px solid var(--edg-line);border-radius:var(--radius-md);
+  padding:0;display:flex;flex-direction:column;min-width:0;
+}
+
+/* sticky pane header for orientation in tall forms */
+.pane > .pane-head,
+.pane > h2{
+  position:sticky;top:0;z-index:2;
+  background:#fff;border-bottom:1px solid var(--edg-soft);
+  padding:12px 12px 10px;border-top-left-radius:var(--radius-md);border-top-right-radius:var(--radius-md)
+}
+.pane > h2{margin:0;font-size:16px}
+
+/* pane body */
+.pane-body{padding:12px;display:flex;flex-direction:column;gap:12px;flex:1}
+
+/* ----------------------------
+   Form grids
+   - .stacked  = label above input (clear & consistent)
+   - .two-col  = label left, input right (optional)
+   ---------------------------- */
+
+/* DEFAULT we use stacked everywhere to avoid confusion */
+.form-subgrid{display:grid;gap:8px}
+
+/* stacked: one column */
+.form-subgrid.stacked label{
+  display:flex;flex-direction:column;gap:6px;
+  font-size:12.5px;color:var(--edg-ink)
+}
+.form-subgrid.stacked input,
+.form-subgrid.stacked select{
+  height:38px;padding:8px 10px;border:1px solid var(--edg-line);
+  border-radius:10px;background:#fff;font-size:13px;outline:none
+}
+
+/* optional: two-column variant if you want in some areas */
+.form-subgrid.two-col{
+  grid-template-columns: 135px 1fr;
+  gap:8px 12px;align-items:center;
+}
+.form-subgrid.two-col label{display:contents}
+.form-subgrid.two-col label > *:first-child{
+  grid-column:1;align-self:center;font-size:12.5px;color:var(--edg-ink)
+}
+.form-subgrid.two-col input,
+.form-subgrid.two-col select{
+  grid-column:2;height:34px;padding:6px 10px;border:1px solid var(--edg-line);
+  border-radius:10px;background:#fff;font-size:13px;outline:none
+}
+
+/* focus */
+.form-subgrid input:focus,.form-subgrid select:focus{
+  border-color:#cfe0ff;box-shadow:0 0 0 3px rgba(37,99,235,.12)
+}
+
+/* sectioned result layout */
+.section-grid{display:grid;grid-template-columns:180px 1fr;gap:8px 16px}
+.section-grid .title{padding-top:2px}
+.section-grid .body ul{margin:0;padding-left:18px}
+.section-grid .body li{margin:4px 0}
+
+/* SVG frame */
+.svg-frame{
+  border:1px solid var(--edg-line);border-radius:12px;background:#fff;padding:10px;overflow:auto
+}
+.svg-frame svg{display:block;width:100%;height:auto}
+
+.actions-bar{margin-top:10px}
+.actions-inner{display:flex;flex-wrap:wrap;gap:10px}
+
+.small{color:var(--edg-muted);font-size:12px}
+.step-badge{
+  display:inline-block;margin-right:6px;background:#eef3ff;color:#1d4ed8;border:1px solid #d9e3ff;
+  padding:2px 8px;border-radius:999px;font-weight:700;font-size:12px
+}
+
+/* --------- Responsive --------- */
+@media (max-width:1100px){
+  .four-col{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:860px){
+  .reactors-content{width:min(1000px,100% - 20px)}
+  .four-col{grid-template-columns:1fr}
+  .pane > .pane-head,.pane > h2{position:static;border-bottom:1px solid var(--edg-soft)}
+  .pane-body{padding:12px}
+  /* stacked already ideal on mobile */
+  .section-grid{grid-template-columns:1fr}
+}
+@media (max-width:420px){
+  .rx-step-nav{gap:6px}
+  .presale-button,.secondary-button{width:100%}
+}
+
+
+/* ===============================
+   Buttons — vivid, polished
+   =============================== */
+
+.btn, .presale-button, .secondary-button{
+  position: relative;
+  isolation: isolate;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform .12s ease, filter .12s ease, box-shadow .12s ease, background .12s ease;
+  outline: none;
+}
+
+/* Primary action (already used for Download/Print/CSV) */
+.presale-button{
+  --from:#2563eb;   /* blue */
+  --to:#7c3aed;     /* purple */
+  background: linear-gradient(135deg, var(--from), var(--to));
+  color:#fff;
+  box-shadow: 0 8px 18px rgba(37,99,235,.25), inset 0 1px 0 rgba(255,255,255,.25);
+  border: 0;
+}
+.presale-button:hover{ transform: translateY(-1px); filter:brightness(1.03) }
+.presale-button:active{ transform: translateY(0) }
+.presale-button:focus-visible{
+  box-shadow: 0 0 0 3px rgba(37,99,235,.22), 0 8px 18px rgba(37,99,235,.25);
+}
+
+/* Secondary (used for general/toolbar buttons) */
+.secondary-button{
+  background:#eef4ff;
+  border-color:#cfe0ff;
+  color:#1e3a8a;
+  box-shadow: 0 4px 10px rgba(30,58,138,.08);
+}
+.secondary-button:hover{ background:#dfe9ff; border-color:#bcd2ff }
+.secondary-button:focus-visible{
+  box-shadow: 0 0 0 3px rgba(37,99,235,.18);
+}
+
+/* Optional color variants: just add the class to any button */
+.secondary-button.danger{
+  --from:#ef4444; --to:#f97316; /* red → orange */
+  background: linear-gradient(135deg,var(--from),var(--to));
+  color:#fff; border:0;
+}
+.secondary-button.success{
+  --from:#22c55e; --to:#0ea5e9; /* green → cyan */
+  background: linear-gradient(135deg,var(--from),var(--to));
+  color:#fff; border:0;
+}
+.secondary-button.neutral{
+  background:#f8fafc;border-color:#e5e7eb;color:#111827;
+}
+.secondary-button.ghost{
+  background:transparent;border-color:#dbeafe;color:#1d4ed8;
+}
+
+/* Step pills — a touch of color on hover for delight */
+.rx-step-nav a{
+  background:#eef4ff;border-color:#dbe7ff;
+}
+.rx-step-nav a:hover{
+  background:linear-gradient(135deg,#e6eeff,#f1eafe);
+  border-color:#cfe0ff;
+  box-shadow:0 4px 12px rgba(37,99,235,.15);
+}
+
+/* Action bar: give primary buttons a nice minimum width */
+.actions-inner .presale-button{ min-width:160px }
+

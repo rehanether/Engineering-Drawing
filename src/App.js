@@ -11,6 +11,8 @@ import Presale from './components/Presale';
 import Contact from './components/Contact';
 
 import Evaporators from './components/Evaporators';
+import Reactors from "./components/reactor/Reactors";
+import Distillation from './components/distillation/Distillation';
 
 /* Category pages (clean slates) */
 import IndustrialDesign from './components/IndustrialDesign';
@@ -32,7 +34,8 @@ const App = () => {
 
         {/* Product */}
         <Route path="/evaporators" element={<Evaporators />} />
-
+        <Route path="/reactors" element={<Reactors />} />
+        <Route path="/distillation" element={<Distillation />} />
         {/* Categories */}
         <Route path="/IndustrialDesign" element={<IndustrialDesign />} />
         <Route path="/ConstructionDesign" element={<ConstructionDesign />} />

@@ -2,6 +2,9 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import './Home.ed.css';
 import EvaporatorShowcase from './EvaporatorShowcase';
+import ReactorShowcase from "./reactor/ReactorShowcase";
+import DistillationShowcase from "./distillation/DistillationShowcase";
+
 
 const Home = () => {
   return (
@@ -32,6 +35,10 @@ const Home = () => {
 
       {/* Evaporator card */}
       <EvaporatorShowcase />
+      {/* Reactor card (same container & layout) */}
+      <ReactorShowcase />
+      {/* Distillation card */}
+      <DistillationShowcase />
 
       {/* Categories */}
       <div className="categories-section">
