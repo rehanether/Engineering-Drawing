@@ -29,3 +29,26 @@ yarn-error.log*
 *.env
 server/.env
 
+# --- EDG React app ignores ---
+/build
+/node_modules
+/.vercel
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# editors & OS
+.vscode/
+.DS_Store
+Thumbs.db
+
+# local env & coverage
+.env
+.env.*
+coverage/
+
+# put old stuff here instead of deleting
+archive/
