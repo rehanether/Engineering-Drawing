@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import {
   BrowserProvider,
   JsonRpcProvider,
@@ -17,8 +17,7 @@ const CHAIN_ID_HEX = "0x38";
 const READ_RPC     = "https://bsc-dataseed.binance.org";
 const EXPLORER     = "https://bscscan.com/address/";
 
-/* ========= ADDRS/ABIs (robust keys) =========
-   Your mainnet addresses are included here as fallbacks so links always render. */
+/* ========= ADDRS/ABIs ========= */
 const FALLBACK_PRESALE = "0x944483c8083827A8BF09c12cFC57DB6a5b22697A";
 const FALLBACK_TOKEN   = "0xa90Cc0137FDA4285Eaa6da0f7a5118A1432b2a76";
 
@@ -27,26 +26,51 @@ const PRESALE_ABI     = presaleMeta.ABI      || presaleMeta.abi;
 const TOKEN_ADDRESS   = tokenMeta.ADDRESS    || tokenMeta.address || FALLBACK_TOKEN;
 const TOKEN_ABI       = tokenMeta.ABI        || tokenMeta.abi;
 
-/* ========= HELPERS ========= */
+/* ========= MOBILE / WC ========= */
+const WC_PROJECT_ID = process.env.REACT_APP_WC_PROJECT_ID || ""; // optional
+const isMobileUA = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
 const fmtInt = (n) =>
-  Number(n ?? 0).toLocaleString("en-IN", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
-
+  Number(n ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 const fmt = (n, d = 2) =>
-  Number(n ?? 0).toLocaleString("en-IN", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: d,
-  });
-
+  Number(n ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: d });
 const short = (addr) => (addr ? addr.slice(0, 6) + "..." + addr.slice(-4) : "");
+
+/* ========= HELPERS ========= */
+async function ensureChain(eip1193) {
+  try {
+    await eip1193.request({ method: "wallet_switchEthereumChain", params: [{ chainId: CHAIN_ID_HEX }] });
+  } catch (e) {
+    if (e?.code === 4902) {
+      await eip1193.request({
+        method: "wallet_addEthereumChain",
+        params: [{
+          chainId: CHAIN_ID_HEX,
+          chainName: "BNB Smart Chain",
+          nativeCurrency: { name: "BNB", symbol: "BNB", decimals: 18 },
+          rpcUrls: [READ_RPC],
+          blockExplorerUrls: ["https://bscscan.com/"],
+        }],
+      });
+    } else {
+      throw e;
+    }
+  }
+}
+
+function openMetaMaskDeepLink() {
+  // Opens your site inside MetaMask’s in-app browser on mobile
+  const dapp = encodeURIComponent(`${window.location.origin}/presale`);
+  window.location.href = `https://metamask.app.link/dapp/${dapp}`;
+}
 
 /* ========= COMPONENT ========= */
 export default function Presale() {
-  /* wallet / provider */
   const [signer, setSigner]     = useState(null);
   const [account, setAccount]   = useState(null);
+  const [usingWC, setUsingWC]   = useState(false); // UI hint
+  const wcRef = useRef(null); // keep WalletConnect provider to cleanly disconnect
+
   const readProv = useMemo(() => new JsonRpcProvider(READ_RPC, CHAIN_ID_DEC), []);
 
   /* on-chain state */
@@ -77,62 +101,96 @@ export default function Presale() {
   const [codeOk, setCodeOk]         = useState(true);
 
   /* contracts (read+write) */
-  const presaleRead = useMemo(
-    () => new Contract(PRESALE_ADDRESS, PRESALE_ABI, readProv),
-    [readProv]
-  );
-  const tokenRead = useMemo(
-    () => new Contract(TOKEN_ADDRESS, TOKEN_ABI, readProv),
-    [readProv]
-  );
-  const presaleWrite = useMemo(
-    () => (signer ? new Contract(PRESALE_ADDRESS, PRESALE_ABI, signer) : null),
-    [signer]
-  );
+  const presaleRead = useMemo(() => new Contract(PRESALE_ADDRESS, PRESALE_ABI, readProv), [readProv]);
+  const tokenRead   = useMemo(() => new Contract(TOKEN_ADDRESS,   TOKEN_ABI,   readProv), [readProv]);
+  const presaleWrite= useMemo(() => (signer ? new Contract(PRESALE_ADDRESS, PRESALE_ABI, signer) : null), [signer]);
 
-  /* ========= CONNECT ========= */
+  /* ========= CONNECT (smart, mobile-aware) ========= */
   const connect = useCallback(async () => {
+    setErr("");
     try {
-      if (!window.ethereum) throw new Error("No wallet detected. Install MetaMask.");
+      // 1) Injected (desktop or MetaMask in-app)
+      if (window.ethereum) {
+        await ensureChain(window.ethereum);
+        const prov    = new BrowserProvider(window.ethereum, "any");
+        const signer_ = await prov.getSigner();
+        const addr    = (await signer_.getAddress()).toLowerCase();
 
-      try {
-        await window.ethereum.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: CHAIN_ID_HEX }],
-        });
-      } catch (e) {
-        if (e?.code === 4902) {
-          await window.ethereum.request({
-            method: "wallet_addEthereumChain",
-            params: [{
-              chainId: CHAIN_ID_HEX,
-              chainName: "BNB Smart Chain",
-              nativeCurrency: { name: "BNB", symbol: "BNB", decimals: 18 },
-              rpcUrls: [READ_RPC],
-              blockExplorerUrls: ["https://bscscan.com/"],
-            }],
-          });
-        } else {
-          throw e;
+        // listen for changes
+        if (typeof window.ethereum.on === "function") {
+          window.ethereum.on("accountsChanged", (accs) => setAccount((accs?.[0] || "").toLowerCase()));
+          window.ethereum.on("chainChanged", () => window.location.reload());
         }
+
+        setSigner(signer_); setAccount(addr); setUsingWC(false);
+        return;
       }
 
-      const prov    = new BrowserProvider(window.ethereum, "any");
-      const signer_ = await prov.getSigner();
-      const addr    = (await signer_.getAddress()).toLowerCase();
+      // 2) No injected provider — mobile path
+      if (isMobileUA) {
+        if (WC_PROJECT_ID) {
+          // WalletConnect v2
+          const mod = await import("@walletconnect/ethereum-provider");
+          const EthereumProvider = mod?.default || mod?.EthereumProvider;
+          const wc = await EthereumProvider.init({
+            projectId: WC_PROJECT_ID,
+            chains: [CHAIN_ID_DEC],
+            rpcMap: { [CHAIN_ID_DEC]: READ_RPC },
+            showQrModal: true,
+            methods: [
+              "eth_sendTransaction","eth_signTransaction","eth_sign","personal_sign","eth_signTypedData",
+              "wallet_switchEthereumChain","wallet_addEthereumChain"
+            ],
+            events: ["chainChanged","accountsChanged"],
+            metadata: {
+              name: "Engineering Drawing — EDG Presale",
+              description: "EDG Presale on BSC Mainnet",
+              url: window.location.origin,
+              icons: ["https://engineeringdrawing.io/assets/edg_logo.png"]
+            }
+          });
+          wcRef.current = wc;
 
-      setSigner(signer_);
-      setAccount(addr);
-      setErr("");
+          // Ensure chain then enable
+          try { await ensureChain(wc); } catch {} // some wallets switch after session
+          await wc.enable();
+
+          const prov    = new BrowserProvider(wc, "any");
+          const signer_ = await prov.getSigner();
+          const addr    = (await signer_.getAddress()).toLowerCase();
+
+          if (typeof wc.on === "function") {
+            wc.on("accountsChanged", (accs) => setAccount((accs?.[0] || "").toLowerCase()));
+            wc.on("chainChanged", () => window.location.reload());
+            wc.on("disconnect", () => { setSigner(null); setAccount(null); setUsingWC(false); });
+          }
+
+          setSigner(signer_); setAccount(addr); setUsingWC(true);
+          return;
+        }
+
+        // 3) No WC Project ID → open MetaMask deep link
+        openMetaMaskDeepLink();
+        return;
+      }
+
+      // 4) Fallback: tell user to install a wallet
+      throw new Error("No wallet detected. Install MetaMask or use WalletConnect.");
     } catch (e) {
       setErr(e?.shortMessage || e?.message || String(e));
     }
   }, []);
 
-  const disconnect = useCallback(() => {
+  const disconnect = useCallback(async () => {
+    try {
+      if (usingWC && wcRef.current?.disconnect) {
+        await wcRef.current.disconnect();
+      }
+    } catch {}
     setSigner(null);
     setAccount(null);
-  }, []);
+    setUsingWC(false);
+  }, [usingWC]);
 
   /* ========= LOAD (public RPC) ========= */
   const loadData = useCallback(async () => {
@@ -147,9 +205,7 @@ export default function Presale() {
         return;
       }
 
-      const [
-        dec, own, p, s, S, bPrice, minW, maxW, tSold, pmode,
-      ] = await Promise.all([
+      const [dec, own, p, s, S, bPrice, minW, maxW, tSold, pmode] = await Promise.all([
         tokenRead.decimals(),
         presaleRead.owner(),
         presaleRead.paused(),
@@ -188,7 +244,7 @@ export default function Presale() {
       if (account) setYourPurchased(await presaleRead.purchased(account));
       else setYourPurchased(0n);
 
-      /* Expose exact integers for other pages */
+      // expose to Tokenomics page
       const toInt = (x) => Math.round(Number(formatUnits(x || 0n, Number(dec))));
       const data = {
         stage1: { sold: toInt(sold[0]), total: toInt(caps[0]) },
@@ -221,7 +277,6 @@ export default function Presale() {
         if (!presaleRead || !bnbIn || Number(bnbIn) <= 0) { setEstTokens(0n); setEstStage(null); return; }
         const wei = parseEther(bnbIn);
 
-        // try on-chain helper if exists
         try {
           const out = await presaleRead.estimateTokensOut?.(wei);
           if (out) {
@@ -230,7 +285,6 @@ export default function Presale() {
           }
         } catch {}
 
-        // fallback math
         const bnbUsd  = bnbUsd1e18 || 0n;
         const price18 = stagePricesUsd[stage] || 0n;
         if (!bnbUsd || !price18) { setEstTokens(0n); setEstStage(null); return; }
@@ -351,7 +405,7 @@ export default function Presale() {
 
   return (
     <div className="presale-wrap">
-      {/* Top bar with BscScan links */}
+      {/* Top bar */}
       <div className="presale-top">
         <div className="left-links">
           <a href={`${EXPLORER}${PRESALE_ADDRESS}`} target="_blank" rel="noreferrer">Presale Contract</a>
@@ -359,13 +413,23 @@ export default function Presale() {
           <a href={`${EXPLORER}${TOKEN_ADDRESS}`} target="_blank" rel="noreferrer">Token</a>
           <span className="muted"> &nbsp;&nbsp;Last update: {lastUpdated || "—"} — Auto refresh in: {refreshIn}s</span>
         </div>
-        <div className="right">
+
+        <div className="right" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {account ? (
             <button className={busy ? "btn disabled" : "btn secondary"} onClick={disconnect}>
-              {short(account)} · Disconnect
+              {short(account)} · Disconnect{usingWC ? " (WC)" : ""}
             </button>
           ) : (
-            <button className="btn primary" onClick={connect}>Connect Wallet</button>
+            <>
+              <button className="btn primary" onClick={connect}>
+                {isMobileUA ? "Connect (Mobile / WC)" : "Connect Wallet"}
+              </button>
+              {isMobileUA && !WC_PROJECT_ID && (
+                <button className="btn secondary" onClick={openMetaMaskDeepLink}>
+                  Open in MetaMask
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -439,7 +503,7 @@ export default function Presale() {
         <button className="btn buy" onClick={doBuy} disabled={!account || busy}>Buy Tokens</button>
       </div>
 
-      {/* Admin */}
+      {/* Admin (unchanged) */}
       {isAdmin && (
         <div className="admin card">
           <div className="title2">Admin</div>
@@ -478,7 +542,7 @@ export default function Presale() {
         Engineering Drawing Presale on BSC Mainnet ·
         &nbsp;<a href={`${EXPLORER}${PRESALE_ADDRESS}`} target="_blank" rel="noreferrer">Presale Contract</a> ·
         &nbsp;<a href={`${EXPLORER}${TOKEN_ADDRESS}`} target="_blank" rel="noreferrer">Token</a>.
-        Data auto-refreshes every minute for transparency. 
+        Data auto-refreshes every minute for transparency.
       </div>
     </div>
   );
