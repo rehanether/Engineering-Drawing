@@ -33,8 +33,39 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
     <title>Engineering Drawing</title>
+    <!-- NEW: visually-hidden utility for accessible H1 -->
+    <style>
+      .sr-only {
+        position: absolute !important;
+        width: 1px; height: 1px;
+        padding: 0; margin: -1px;
+        overflow: hidden; clip: rect(0, 0, 0, 0);
+        white-space: nowrap; border: 0;
+        clip-path: inset(50%);
+      }
+    </style>
+
+    <!-- NEW: Organization JSON-LD to satisfy “No Markup found” -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Engineering Drawing",
+      "url": "https://www.engineeringdrawing.io/",
+      "logo": "https://www.engineeringdrawing.io/favicon-32x32.png",
+      "sameAs": [
+        "https://github.com/rehanether/Engineering-Drawing",
+        "https://www.linkedin.com/company/engineeringdrawing"
+      ]
+    }
+    </script>
   </head>
   <body>
+    <!-- NEW: accessible H1 (hidden; no UI change) -->
+    <h1 class="sr-only">
+      Engineering Drawing — AI-driven industrial design (evaporators, reactors, distillation) with EDG on BNB Chain
+    </h1>
+     
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
   </body>
