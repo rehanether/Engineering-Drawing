@@ -1,8 +1,4 @@
-# https://www.robotstxt.org/robotstxt.html
 User-agent: *
 Allow: /
 
 Sitemap: https://www.engineeringdrawing.io/sitemap.xml
-
-
-Sitemap: https://www.engineeringdrawing.io/assets/sitemap.xml
