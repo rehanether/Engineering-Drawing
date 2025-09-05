@@ -1,1 +1,13 @@
-{"rewrites":[{"source":"/(.*)","destination":"/index.html"}]}
+{
+  "redirects": [
+    { "source": "/sitemap.xml", "destination": "/assets/sitemap.xml", "permanent": true }
+  ],
+  "headers": [
+    {
+      "source": "/assets/sitemap.xml",
+      "headers": [
+        { "key": "Content-Type", "value": "application/xml; charset=utf-8" }
+      ]
+    }
+  ]
+}
