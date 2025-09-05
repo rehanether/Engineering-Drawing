@@ -52,3 +52,7 @@ coverage/
 
 # put old stuff here instead of deleting
 archive/
+
+# env
+.env
+.env.local
