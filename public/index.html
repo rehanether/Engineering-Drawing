@@ -4,15 +4,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+    <!-- Canonical -->
     <link rel="canonical" href="https://www.engineeringdrawing.io/">
-    <link rel="shortcut icon" href="/favicon.ico">
 
-    <!-- Canonical root icons for crawlers (non-breaking addition) -->
+    <!-- Favicon set (root-level for crawlers) -->
+    <link rel="shortcut icon" href="/favicon.ico">
     <link rel="icon" href="/favicon.ico?v=edg2" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=edg2">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=edg2">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=edg2">
-
 
     <!-- PWA manifest + branding -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
@@ -20,7 +20,7 @@
     <meta name="theme-color" content="#1f2937" />
     <meta name="description" content="Industry 4.0 design tools • AI evaporators, distillation, and EDG on BNB Chain." />
 
-    <!-- Favicons -->
+    <!-- Optional: Public URL favicons kept for CRA dev/preview environments -->
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <link rel="icon" type="image/png" sizes="16x16" href="%PUBLIC_URL%/assets/favicon-16.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="%PUBLIC_URL%/assets/favicon-32.png" />
@@ -33,7 +33,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
     <title>Engineering Drawing</title>
-    <!-- NEW: visually-hidden utility for accessible H1 -->
+
+    <!-- Accessible but visually-hidden H1 utility -->
     <style>
       .sr-only {
         position: absolute !important;
@@ -45,7 +46,19 @@
       }
     </style>
 
-    <!-- NEW: Organization JSON-LD to satisfy “No Markup found” -->
+    <!-- Open Graph / Twitter -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Engineering Drawing — AI-driven Industrial Design" />
+    <meta property="og:description" content="Evaporators, distillation, reactors — AI + Industry 4.0 + on-chain transparency (EDG on BNB Chain)." />
+    <meta property="og:url" content="https://www.engineeringdrawing.io/" />
+    <meta property="og:image" content="https://www.engineeringdrawing.io/assets/preview.png" />
+    <meta property="og:site_name" content="Engineering Drawing" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Engineering Drawing — AI-driven Industrial Design" />
+    <meta name="twitter:description" content="Evaporators, distillation, reactors — AI + Industry 4.0 + on-chain transparency." />
+    <meta name="twitter:image" content="https://www.engineeringdrawing.io/assets/preview.png" />
+
+    <!-- Organization JSON-LD (kept from your file) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -59,13 +72,28 @@
       ]
     }
     </script>
+
+    <!-- New: WebSite JSON-LD to improve rich results and site search -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "url": "https://www.engineeringdrawing.io/",
+      "name": "Engineering Drawing",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://www.engineeringdrawing.io/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
   </head>
   <body>
-    <!-- NEW: accessible H1 (hidden; no UI change) -->
+    <!-- Accessible H1 (hidden; no UI change) -->
     <h1 class="sr-only">
       Engineering Drawing — AI-driven industrial design (evaporators, reactors, distillation) with EDG on BNB Chain
     </h1>
-     
+
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
   </body>

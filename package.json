@@ -16,7 +16,6 @@
     "axios": "^1.11.0",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
-    "ether": "^0.0.9",
     "ethers": "^6.15.0",
     "express": "^5.1.0",
     "form-data": "^4.0.4",
@@ -54,6 +53,7 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@craco/craco": "^7.1.0",
     "ajv": "^6.12.6",
     "ajv-keywords": "^3.5.2"
   }
