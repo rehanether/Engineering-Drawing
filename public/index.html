@@ -1,152 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- Canonical -->
-    <link rel="canonical" href="https://www.engineeringdrawing.io/" />
+  <!-- Primary SEO -->
+  <title>EngineeringDrawing.io | AI-powered Industrial Engineering Platform</title>
 
-    <!-- Favicon -->
-    <link rel="shortcut icon" href="/favicon.ico" />
-    <link rel="icon" href="/favicon.ico?v=edg2" sizes="any" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=edg2" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=edg2" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=edg2" />
+  <meta
+    name="description"
+    content="AI-powered industrial engineering platform for process design, simulation, and optimization. Design evaporators, reactors, distillation systems, and industrial equipment directly in your browser."
+  />
 
-    <!-- Manifest -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+  <meta name="author" content="Engineering Drawing" />
+  <meta name="application-name" content="Engineering Drawing" />
+  <meta name="theme-color" content="#1f2937" />
+  <meta name="robots" content="index,follow,max-image-preview:large" />
 
-    <!-- SEO -->
-    <title>EngineeringDrawing.io | AI-powered Industrial Engineering Platform</title>
+  <!-- Canonical -->
+  <link rel="canonical" href="https://www.engineeringdrawing.io/" />
 
-    <meta
-      name="description"
-      content="AI-powered industrial engineering platform for process design, simulation, and optimization. Design evaporators, reactors, distillation systems, and industrial equipment in the browser."
-    />
+  <!-- Favicons -->
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/edg-192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/edg-apple-180.png" />
 
-    <meta name="application-name" content="Engineering Drawing" />
-    <meta name="theme-color" content="#1f2937" />
-    <meta name="author" content="Engineering Drawing" />
-    <meta name="robots" content="index,follow,max-image-preview:large" />
+  <!-- Manifest -->
+  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
 
-    <!-- Additional Favicons -->
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <link rel="icon" type="image/png" sizes="16x16" href="%PUBLIC_URL%/assets/favicon-16.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="%PUBLIC_URL%/assets/favicon-32.png" />
-    <link rel="icon" type="image/png" sizes="192x192" href="%PUBLIC_URL%/assets/edg-192.png" />
+  <!-- Mobile -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Engineering Drawing" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
-    <!-- Apple -->
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/assets/edg-apple-180.png" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="EDG" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Engineering Drawing" />
+  <meta property="og:locale" content="en_US" />
 
-    <!-- Hidden H1 -->
-    <style>
-      .sr-only {
-        position: absolute !important;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        clip-path: inset(50%);
-        white-space: nowrap;
-        border: 0;
-      }
-    </style>
+  <meta
+    property="og:title"
+    content="EngineeringDrawing.io | AI-powered Industrial Engineering Platform"
+  />
 
-    <!-- Open Graph -->
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Engineering Drawing" />
-    <meta
-      property="og:title"
-      content="EngineeringDrawing.io | AI-powered Industrial Engineering Platform"
-    />
-    <meta
-      property="og:description"
-      content="Design, simulate, and optimize industrial systems with AI. Browser-native platform for evaporators, reactors, distillation systems, and process engineering."
-    />
-    <meta property="og:url" content="https://www.engineeringdrawing.io/" />
-    <meta property="og:image" content="https://www.engineeringdrawing.io/assets/preview.png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:type" content="image/png" />
+  <meta
+    property="og:description"
+    content="Design, simulate and optimize industrial systems with AI. Browser-native engineering platform for evaporators, reactors, distillation systems and process engineering."
+  />
 
-    <!-- Facebook -->
-    <meta property="fb:app_id" content="1511781840162804" />
+  <meta property="og:url" content="https://www.engineeringdrawing.io/" />
 
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta
-      name="twitter:title"
-      content="EngineeringDrawing.io | AI-powered Industrial Engineering Platform"
-    />
-    <meta
-      name="twitter:description"
-      content="Design, simulate, and optimize industrial systems with AI. Browser-native engineering platform."
-    />
-    <meta
-      name="twitter:image"
-      content="https://www.engineeringdrawing.io/assets/preview.png"
-    />
+  <meta
+    property="og:image"
+    content="https://www.engineeringdrawing.io/assets/preview.png"
+  />
 
-    <!-- Organization -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      "name": "Engineering Drawing",
-      "url": "https://www.engineeringdrawing.io/",
-      "logo": "https://www.engineeringdrawing.io/assets/logo-512.png",
-      "sameAs": [
-        "https://github.com/rehanether/Engineering-Drawing",
-        "https://www.linkedin.com/company/engineeringdrawing"
-      ]
+  <meta
+    property="og:image:secure_url"
+    content="https://www.engineeringdrawing.io/assets/preview.png"
+  />
+
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:type" content="image/png" />
+
+  <meta
+    property="og:image:alt"
+    content="EngineeringDrawing.io — AI-powered Industrial Engineering Platform"
+  />
+
+  <!-- Facebook -->
+  <meta property="fb:app_id" content="1511781840162804" />
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <meta
+    name="twitter:title"
+    content="EngineeringDrawing.io | AI-powered Industrial Engineering Platform"
+  />
+
+  <meta
+    name="twitter:description"
+    content="AI-powered browser-native engineering platform for industrial process design and optimization."
+  />
+
+  <meta
+    name="twitter:image"
+    content="https://www.engineeringdrawing.io/assets/preview.png"
+  />
+
+  <!-- Uncomment after creating an X account -->
+  <!--
+  <meta name="twitter:site" content="@EngineeringDraw" />
+  -->
+
+  <!-- Organization -->
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"Organization",
+    "name":"Engineering Drawing",
+    "url":"https://www.engineeringdrawing.io/",
+    "logo":"https://www.engineeringdrawing.io/assets/logo-512.png",
+    "sameAs":[
+      "https://github.com/rehanether/Engineering-Drawing",
+      "https://www.linkedin.com/company/engineeringdrawing"
+    ]
+  }
+  </script>
+
+  <!-- Website -->
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"WebSite",
+    "name":"Engineering Drawing",
+    "url":"https://www.engineeringdrawing.io/",
+    "potentialAction":{
+      "@type":"SearchAction",
+      "target":"https://www.engineeringdrawing.io/search?q={search_term_string}",
+      "query-input":"required name=search_term_string"
     }
-    </script>
+  }
+  </script>
 
-    <!-- Website -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "Engineering Drawing",
-      "url": "https://www.engineeringdrawing.io/",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://www.engineeringdrawing.io/search?q={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
+  <!-- Software -->
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"SoftwareApplication",
+    "name":"EngineeringDrawing.io",
+    "applicationCategory":"EngineeringApplication",
+    "operatingSystem":"Web",
+    "url":"https://www.engineeringdrawing.io/",
+    "description":"AI-powered industrial engineering platform for process design, simulation and optimization."
+  }
+  </script>
+
+  <!-- Accessibility -->
+  <style>
+    .sr-only{
+      position:absolute!important;
+      width:1px;
+      height:1px;
+      padding:0;
+      margin:-1px;
+      overflow:hidden;
+      clip:rect(0,0,0,0);
+      clip-path:inset(50%);
+      white-space:nowrap;
+      border:0;
     }
-    </script>
+  </style>
 
-    <!-- Software Application -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "EngineeringDrawing.io",
-      "applicationCategory": "EngineeringApplication",
-      "operatingSystem": "Web",
-      "url": "https://www.engineeringdrawing.io/",
-      "description": "AI-powered industrial engineering platform for process design, simulation, and optimization."
-    }
-    </script>
+</head>
 
-  </head>
+<body>
 
-  <body>
+<h1 class="sr-only">
+EngineeringDrawing.io — AI-powered Industrial Engineering Platform
+</h1>
 
-    <h1 class="sr-only">
-      EngineeringDrawing.io — AI-powered Industrial Engineering Platform
-    </h1>
+<noscript>
+You need to enable JavaScript to run this application.
+</noscript>
 
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+<div id="root"></div>
 
-    <div id="root"></div>
-
-  </body>
+</body>
 </html>
