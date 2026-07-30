@@ -130,7 +130,7 @@ export default function ReactorSimulator() {
             <div><dt>Utility demand</dt><dd>{design.thermal.utilityFlowM3H} m³/h</dd></div>
             <div><dt>Plant envelope</dt><dd>{design.layout.lengthM} × {design.layout.widthM} × {design.layout.heightM} m</dd></div>
           </dl>
-          <button onClick={()=>setTab("details")}>Review professional deliverables</button>
+          <ReactorCheckout payment={payment} setPayment={setPayment} status={paymentStatus} message={message} startBnb={startBnb} payEdg={payEdg} download={downloadPackage}/>
           <p>Reaction kinetics, calorimetry, relief sizing, HAZOP, hazardous-area classification and code design require project-specific professional review.</p>
         </aside>
       </div>
@@ -145,6 +145,9 @@ function Field({label,value,unit,min,max,step,onChange}) {
   return <label>{label}<small>{min}–{max}</small><span><input type="number" value={value} min={min} max={max} step={step} onChange={e=>onChange(e.target.value)} onBlur={blur}/>{unit}</span></label>;
 }
 function Kpi({name,value,unit}) { return <span><small>{name}</small><b>{value}</b><em>{unit}</em></span>; }
+function ReactorCheckout({payment,setPayment,status,message,startBnb,payEdg,download}) {
+  return <section className="rx-checkout"><small>PROFESSIONAL BEP · SECURE CHECKOUT</small><div className="rx-payment-choice"><button className={payment==="BNB"?"active":""} onClick={()=>setPayment("BNB")}><i className="bnb">◆</i><b>BNB</b><em>Live $100 equivalent</em></button><button className={payment==="EDG"?"active":""} onClick={()=>setPayment("EDG")}><i><img src="/assets/edg_logo.svg" alt="EDG"/></i><b>EDG</b><em>5,000 EDG</em></button></div><div className="rx-price"><span>Production reactor BEP</span><b>{payment==="EDG"?"5,000 EDG":"$100"}</b><em>{payment==="EDG"?"Direct token transfer on BNB Smart Chain":"BNB on BSC · NOWPayments secure checkout"}</em></div>{status==="paid"?<button onClick={download}>Download professional BEP ↓</button>:<button disabled={status==="pending"} onClick={payment==="EDG"?payEdg:startBnb}>{status==="pending"?"Confirming payment...":payment==="EDG"?"Pay 5,000 EDG with MetaMask":"Pay securely with BNB · $100"}</button>}{message&&<p className="rx-payment-message">{message}</p>}</section>;
+}
 
 function ReactorPfd({design,pfdRef}) {
   const d=design;

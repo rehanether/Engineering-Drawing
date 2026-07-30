@@ -1,11 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './Home.ed.css';
-import EvaporatorShowcase from './EvaporatorShowcase';
-import ReactorShowcase from "./reactor/ReactorShowcase";
-import DistillationShowcase from "./distillation/DistillationShowcase";
-
-
 const Home = () => {
   return (
     <div className="homepage">
@@ -31,14 +26,12 @@ const Home = () => {
             <button className="presale-button">Join Presale</button>
           </Link>
         </div>
+        <div className="hero-equipment" aria-label="Industrial design simulators">
+          <Link to="/evaporators"><img src="/assets/mvr-evaporator.gif" alt="" /><span>MVR Evaporator</span><small>Live HMBD · PFD · 3D plant</small></Link>
+          <Link to="/reactors"><img src="/assets/reactor.gif" alt="" /><span>Industrial Reactor</span><small>Feed basis · kinetics · 3D plant</small></Link>
+          <Link to="/distillation"><img src="/assets/distillation.gif" alt="" /><span>Distillation Column</span><small>Separation · utilities · 3D plant</small></Link>
+        </div>
       </div>
-
-      {/* Evaporator card */}
-      <EvaporatorShowcase />
-      {/* Reactor card (same container & layout) */}
-      <ReactorShowcase />
-      {/* Distillation card */}
-      <DistillationShowcase />
 
       {/* Categories */}
       <div className="categories-section">

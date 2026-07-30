@@ -274,10 +274,10 @@ export default function Distillation(){
 
       <p className="subtitle">Enter a visible feed basis and simulate column, internals, utilities and product split in real time.</p>
 
-      {/* ===== Four equal cards ===== */}
-      <div className="form-section">
+      <section className="ds-guide"><b>1. Choose mixture</b><span>2. Enter feed flow and composition</span><span>3. Set top and bottom product purity</span><span>4. Review the live PFD and 3D plant</span></section>
+      <div className="form-section ds-basic-form">
         <div className="form-block">
-          <h3>System & Specs</h3>
+          <h3>Simple separation basis</h3>
           <label className="row">
             System
             <select name="system" value={inps.system} onChange={onChange}>
@@ -288,6 +288,19 @@ export default function Distillation(){
           {label("zF","zF (LK in feed)",{type:"number",step:"0.01"})}
           {label("xD","xD (distillate LK)",{type:"number",step:"0.01"})}
           {label("xB","xB (bottoms LK)",{type:"number",step:"0.01"})}
+          <small>LK is the lighter-boiling component. Change these four values and the complete design updates automatically.</small>
+        </div>
+        <div className="ds-live-card">
+          <small>LIVE PRODUCT SPLIT</small><b>{num(calc.D,2)} kmol/h distillate</b><b>{num(calc.B,2)} kmol/h bottoms</b>
+          <span>{num(calc.D*calc.xD,2)} kmol/h light key in distillate · closure {num(calc.F-calc.D-calc.B,4)} kmol/h</span>
+          <button onClick={()=>setView("pfd")}>View live PFD</button>
+        </div>
+      </div>
+      <details className="ds-advanced">
+        <summary>Advanced engineering assumptions <span>Optional · professional defaults are active</span></summary>
+        <div className="form-section ds-advanced-grid">
+        <div className="form-block">
+          <h3>Separation model</h3>
           {label("alpha","Rel. volatility α",{type:"number",step:"0.01"})}
           {label("q","Feed quality q",{type:"number",step:"0.05"})}
           {label("RR","Reflux factor R/Rmin",{type:"number",step:"0.05"})}
@@ -352,9 +365,11 @@ export default function Distillation(){
           {label("drumHoldup_min","Drum holdup (min)",{type:"number"})}
         </div>
       </div>
+      </details>
 
       {/* ===== Results ===== */}
       <div className="results-section">
+        <DistillationCheckout payment={payment} setPayment={setPayment} status={paymentStatus} message={message} startBnb={startBnb} payEdg={payEdg} download={downloadPackage}/>
         <h2>Design Summary</h2>
 
         {calc.badSpecs && (
@@ -414,7 +429,7 @@ export default function Distillation(){
         <div className="ds-tabs"><button className={view==="pfd"?"active":""} onClick={()=>setView("pfd")}>Live PFD + HMBD</button><button className={view==="3d"?"active":""} onClick={()=>setView("3d")}>3D plant</button><button className={view==="package"?"active":""} onClick={()=>setView("package")}>🔒 Professional package</button></div>
         {view==="pfd"&&<div ref={pfdRef}><h3>Live PFD and heat &amp; mass balance</h3><DistillationHMBD data={calc} /></div>}
         {view==="3d"&&<DistillationPlant3D data={calc} inputs={inps}/>}
-        {view==="package"&&<section className="ds-package"><span>{paymentStatus==="paid"?"✓":"🔒"}</span><h3>Industrial distillation basic engineering package</h3><p>Controlled branded report, calculation workbook schedules, live HMBD/PFD, equipment schedule and design-data JSON.</p><div className="ds-pay-methods"><button className={payment==="BNB"?"active":""} onClick={()=>setPayment("BNB")}>◆ BNB · $100</button><button className={payment==="EDG"?"active":""} onClick={()=>setPayment("EDG")}>◉ EDG · 5,000</button></div>{paymentStatus==="paid"?<button className="ds-buy" onClick={downloadPackage}>Download professional BEP ↓</button>:<button className="ds-buy" disabled={paymentStatus==="pending"} onClick={payment==="EDG"?payEdg:startBnb}>{paymentStatus==="pending"?"Confirming payment...":payment==="EDG"?"Pay 5,000 EDG with MetaMask":"Pay securely with BNB · $100"}</button>}{message&&<p className="ds-message">{message}</p>}<small>Payment unlocks a preliminary package. Final mechanical, relief, controls, hazardous-area, environmental and statutory design requires professional review.</small></section>}
+        {view==="package"&&<section className="ds-package"><span>{paymentStatus==="paid"?"✓":"🔒"}</span><h3>Industrial distillation basic engineering package</h3><p>Controlled branded report, calculation workbook schedules, live HMBD/PFD, equipment schedule and design-data JSON.</p><DistillationCheckout payment={payment} setPayment={setPayment} status={paymentStatus} message={message} startBnb={startBnb} payEdg={payEdg} download={downloadPackage}/><small>Payment unlocks a preliminary package. Final mechanical, relief, controls, hazardous-area, environmental and statutory design requires professional review.</small></section>}
         <button
           className="export-btn"
           onClick={() => {
@@ -457,6 +472,10 @@ export default function Distillation(){
       </div>
     </div>
   );
+}
+
+function DistillationCheckout({payment,setPayment,status,message,startBnb,payEdg,download}){
+  return <aside className="ds-checkout"><small>PROFESSIONAL BEP · SECURE CHECKOUT</small><div className="ds-payment-choice"><button className={payment==="BNB"?"active":""} onClick={()=>setPayment("BNB")}><i className="bnb">◆</i><b>BNB</b><em>Live $100 equivalent</em></button><button className={payment==="EDG"?"active":""} onClick={()=>setPayment("EDG")}><i><img src="/assets/edg_logo.svg" alt="EDG"/></i><b>EDG</b><em>5,000 EDG</em></button></div><div className="ds-price"><span>Production distillation BEP</span><b>{payment==="EDG"?"5,000 EDG":"$100"}</b><em>{payment==="EDG"?"Direct token transfer on BNB Smart Chain":"BNB on BSC · NOWPayments secure checkout"}</em></div>{status==="paid"?<button className="ds-buy" onClick={download}>Download professional BEP ↓</button>:<button className="ds-buy" disabled={status==="pending"} onClick={payment==="EDG"?payEdg:startBnb}>{status==="pending"?"Confirming payment...":payment==="EDG"?"Pay 5,000 EDG with MetaMask":"Pay securely with BNB · $100"}</button>}{message&&<p className="ds-message">{message}</p>}</aside>;
 }
 
 
