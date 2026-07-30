@@ -1,8 +1,17 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { BrowserProvider, Contract, parseUnits } from "ethers";
 import "./Distillation.css";
 import DistillationHMBD from "./DistillationHMBD";
+import DistillationPlant3D from "./DistillationPlant3D";
 import PSVSizing from "./PSVSizing";
 import DistillationDatasheet from "./DistillationDatasheet";
+import { createDistillationPackage } from "./downloadPackage";
+import tokenMeta from "../../EnggDrawTokenABI.json";
+
+const configuredApiBase=process.env.REACT_APP_API_BASE_URL||"";
+const API_BASE=/^https?:\/\//.test(configuredApiBase)&&!configuredApiBase.includes("localhost")?configuredApiBase.replace(/\/$/,""):"";
+const EDG_ADMIN_WALLET="0xD9738cc53E9746a01cAC8EF01aF17fF4e88DD25F";
+const EDG_ABI=["function balanceOf(address) view returns (uint256)","function transfer(address,uint256) returns (bool)"];
 
 /* ---------------- property packs (Antoine in mmHg, °C) ---------------- */
 const sysDB = {
@@ -113,6 +122,11 @@ const DEFAULTS = Object.freeze({
 
 export default function Distillation(){
   const [inps, setInps] = useState(DEFAULTS);
+  const [view,setView]=useState("pfd");
+  const [payment,setPayment]=useState("BNB");
+  const [paymentStatus,setPaymentStatus]=useState(localStorage.getItem("distillationPackagePaid")?"paid":"idle");
+  const [message,setMessage]=useState("");
+  const pfdRef=useRef(null);
   const onChange = e => setInps(s => ({ ...s, [e.target.name]: e.target.value }));
   const num = (v, d = 2) => (v || v === 0) ? (+v).toFixed(d) : "—";
 
@@ -233,17 +247,32 @@ export default function Distillation(){
     </label>
   );
 
+  useEffect(()=>{
+    const query=new URLSearchParams(window.location.search),result=query.get("payment"),order=query.get("order")||localStorage.getItem("distillationPaymentOrder");
+    if(result==="cancelled"){setMessage("Payment cancelled; the simulation is preserved.");window.history.replaceState({},"",window.location.pathname);return undefined;}
+    if(result!=="return"||!order)return undefined;
+    setPaymentStatus("pending");setMessage("Checking secure payment status...");let stopped=false,attempts=0;
+    const check=async()=>{attempts+=1;try{const response=await fetch(`${API_BASE}/api/payments/nowpayments/status/${encodeURIComponent(order)}`),body=await response.json();if(!response.ok)throw new Error(body.error);if(body.status==="finished"){localStorage.setItem("distillationPackagePaid",`NOWPAYMENTS-${order}`);setPaymentStatus("paid");setMessage("Payment confirmed. Industrial distillation BEP unlocked.");window.history.replaceState({},"",window.location.pathname);return;}if(["failed","expired","refunded"].includes(body.status)){setPaymentStatus("idle");setMessage(`Payment ${body.status}.`);return;}if(!stopped&&attempts<30)window.setTimeout(check,4000);}catch(error){setPaymentStatus("idle");setMessage(error.message||"Could not verify payment.");}};check();return()=>{stopped=true;};
+  },[]);
+  async function startBnb(){
+    setPaymentStatus("pending");setMessage("");
+    try{const response=await fetch(`${API_BASE}/api/payments/nowpayments/distillation/invoice`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({design:{feedFlow:calc.F,system:inps.system}})}),body=await response.json();if(!response.ok||!body.invoiceUrl)throw new Error(body.error||"Could not create checkout.");localStorage.setItem("distillationPaymentOrder",body.orderId);window.location.assign(body.invoiceUrl);}catch(error){setPaymentStatus("idle");setMessage(error.message||"Could not open checkout.");}
+  }
+  async function payEdg(){
+    if(!window.ethereum){setMessage("Install MetaMask or open the page in its wallet browser.");return;}setPaymentStatus("pending");setMessage("");
+    try{await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x38"}]});const provider=new BrowserProvider(window.ethereum),signer=await provider.getSigner(),buyer=await signer.getAddress(),token=new Contract(tokenMeta.ADDRESS,EDG_ABI,signer),amount=parseUnits("5000",18);const [balance,gas]=await Promise.all([token.balanceOf(buyer),provider.getBalance(buyer)]);if(balance<amount)throw new Error("This wallet needs at least 5,000 transferable EDG.");if(gas===0n)throw new Error("Add a small amount of BNB for the network fee.");const tx=await token.transfer(EDG_ADMIN_WALLET,amount);setMessage("Waiting for BNB Smart Chain confirmation...");const receipt=await tx.wait();if(receipt.status!==1)throw new Error("Transfer was not confirmed.");localStorage.setItem("distillationPackagePaid",`EDG-${tx.hash}`);setPaymentStatus("paid");setMessage("5,000 EDG confirmed. Industrial distillation BEP unlocked.");}catch(error){setPaymentStatus("idle");setMessage(error.shortMessage||error.reason||error.message||"Payment cancelled.");}
+  }
+  function downloadPackage(){const svgNode=pfdRef.current?.querySelector("svg"),svg=svgNode?new XMLSerializer().serializeToString(svgNode):"<svg xmlns='http://www.w3.org/2000/svg'/>",blob=createDistillationPackage(inps,calc,svg),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="engineering-drawing-industrial-distillation-bep.zip";a.click();URL.revokeObjectURL(url);}
+
   return (
     <div className="product-detail distillation-content">
+      <section className="ds-hero"><span>INDUSTRIAL SEPARATION ENGINEERING · LIVE SIMULATOR</span><h1>Industrial distillation column design</h1><p>Calculation-led binary separation with live feed and product balance, Fenske–Underwood–Gilliland stage estimation, tray or packing hydraulics, condenser and reboiler duties, utility demand, PFD and capacity-responsive 3D plant arrangement.</p><div><b>PRELIMINARY BEP</b> Confirm VLE, azeotropes, property method, impurities and safety basis before design freeze.</div></section>
       <div className="topbar">
         <div className="crumbs">HMBD/P&ID</div>
         <button className="reset-btn" onClick={resetAll} title="Reset to defaults">Reset</button>
       </div>
 
-      <h1>Distillation Column Design</h1>
-      <p className="subtitle">
-        Property packs + FUG sizing, hydraulics, utilities, HX areas, HMBD export, PSV stub, and printable datasheet.
-      </p>
+      <p className="subtitle">Enter a visible feed basis and simulate column, internals, utilities and product split in real time.</p>
 
       {/* ===== Four equal cards ===== */}
       <div className="form-section">
@@ -382,8 +411,10 @@ export default function Distillation(){
           <li>MW<sub>D</sub> ≈ <b>{num(calc.MWmixD,1)}</b> kg/kmol | Holdup {inps.drumHoldup_min} min → <b>{calc.Vdrum ? num(calc.Vdrum,2) : "—"} m³</b></li>
         </ul>
 
-        <h3>HMBD (Auto)</h3>
-        <DistillationHMBD data={calc} />
+        <div className="ds-tabs"><button className={view==="pfd"?"active":""} onClick={()=>setView("pfd")}>Live PFD + HMBD</button><button className={view==="3d"?"active":""} onClick={()=>setView("3d")}>3D plant</button><button className={view==="package"?"active":""} onClick={()=>setView("package")}>🔒 Professional package</button></div>
+        {view==="pfd"&&<div ref={pfdRef}><h3>Live PFD and heat &amp; mass balance</h3><DistillationHMBD data={calc} /></div>}
+        {view==="3d"&&<DistillationPlant3D data={calc} inputs={inps}/>}
+        {view==="package"&&<section className="ds-package"><span>{paymentStatus==="paid"?"✓":"🔒"}</span><h3>Industrial distillation basic engineering package</h3><p>Controlled branded report, calculation workbook schedules, live HMBD/PFD, equipment schedule and design-data JSON.</p><div className="ds-pay-methods"><button className={payment==="BNB"?"active":""} onClick={()=>setPayment("BNB")}>◆ BNB · $100</button><button className={payment==="EDG"?"active":""} onClick={()=>setPayment("EDG")}>◉ EDG · 5,000</button></div>{paymentStatus==="paid"?<button className="ds-buy" onClick={downloadPackage}>Download professional BEP ↓</button>:<button className="ds-buy" disabled={paymentStatus==="pending"} onClick={payment==="EDG"?payEdg:startBnb}>{paymentStatus==="pending"?"Confirming payment...":payment==="EDG"?"Pay 5,000 EDG with MetaMask":"Pay securely with BNB · $100"}</button>}{message&&<p className="ds-message">{message}</p>}<small>Payment unlocks a preliminary package. Final mechanical, relief, controls, hazardous-area, environmental and statutory design requires professional review.</small></section>}
         <button
           className="export-btn"
           onClick={() => {

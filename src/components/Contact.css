@@ -39,6 +39,11 @@
   border-radius: 16px;
   box-shadow: 0 10px 24px rgba(0,0,0,.06);
   padding: 16px;
+  transition: transform .3s ease, box-shadow .3s ease;
+}
+.contact-page .tok-card:hover{
+  transform: translateY(-3px);
+  box-shadow: 0 18px 40px rgba(0,0,0,.12);
 }
 
 /* ---------------- DESKTOP ≥1024px: one-screen layout ---------------- */
@@ -161,21 +166,152 @@
   .contact-page.contact-onecol{
     min-height: calc(100vh - var(--c-nav-h));
     display: block; overflow: auto;
-    padding: 16px var(--c-side-gutter);
+    padding: 20px 18px 40px;
   }
   .contact-page .contact-hero,
   .contact-page .contact-main{
-    width: min(var(--c-site-width), 92vw);
-    margin-inline: auto;
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
     padding-inline: 0;
   }
   .contact-page .contact-hero{
-    display: grid; grid-template-columns: 1fr; gap: var(--c-gap);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .contact-page .tok-card{
+    padding: 22px;
+    border-radius: 20px;
+  }
+  .contact-page .hero-copy h1{
+    color: var(--c-text-strong);
+    font-size: clamp(2rem, 7vw, 3.2rem);
+    line-height: 1.15;
+    letter-spacing: -.02em;
+    margin: 0 0 14px;
+  }
+  .contact-page .hero-copy p{
+    color: var(--c-text-muted);
+    margin: 0 0 18px;
+    line-height: 1.6;
+  }
+  .contact-page .hero-quick{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .contact-page .hero-quick a{
+    width: 100%;
+    justify-content: center;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    text-align: center;
+  }
+  .contact-page .hero-aside .quick-stats{
+    list-style: none;
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+  }
+  .contact-page .hero-aside .quick-stats li{
+    padding: 14px 16px;
+    background: var(--c-bg-soft);
+    border: 1px solid var(--c-stroke);
+    border-radius: 12px;
+    color: var(--c-text);
+    font-size: .95rem;
+    font-weight: 600;
+  }
+  .contact-page .contact-main{
+    margin-top: 16px;
+  }
+  .contact-page .contact-main h2{
+    margin: 0 0 12px;
+    color: var(--c-text-strong);
+    font-size: 1.35rem;
+  }
+  .contact-page .contact-form{
+    display: grid;
+    gap: 16px;
   }
   .contact-page .contact-form .row{ grid-template-columns: 1fr; }
+  .contact-page .contact-form label{ display: grid; gap: 7px; }
+  .contact-page .contact-form label span{ font-weight: 600; color: var(--c-text-strong); }
+  .contact-page .contact-form input,
+  .contact-page .contact-form textarea,
+  .contact-page .contact-form select{
+    width: 100%;
+    min-height: 52px;
+    padding: 12px 14px;
+    border: 1px solid var(--c-stroke);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--c-text-strong);
+    font-size: 16px;
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .contact-page .contact-form input:focus,
+  .contact-page .contact-form textarea:focus,
+  .contact-page .contact-form select:focus{
+    border-color: var(--c-primary-600);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-primary-600) 20%, transparent);
+  }
+  .contact-page .contact-form textarea{
+    min-height: 140px;
+    resize: vertical;
+  }
+  .contact-page .contact-form small{ color: var(--c-text-muted); justify-self: end; }
+  .contact-page .contact-form .consent{
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: var(--c-text-muted);
+    line-height: 1.45;
+  }
+  .contact-page .contact-form .consent input{
+    width: 18px;
+    min-height: 18px;
+    margin: 2px 0 0;
+  }
+  .contact-page .contact-form .actions{
+    display: grid;
+    gap: 12px;
+  }
   .contact-page .btn-primary,
   .contact-page .btn-ghost,
-  .contact-page .btn-linkedin{ width: 100%; }
+  .contact-page .btn-linkedin{
+    width: 100%;
+    min-height: 52px;
+    padding: 12px 16px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .contact-page .btn-primary{
+    background: var(--c-primary-600);
+    border-color: var(--c-primary-600);
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(37,99,235,.25);
+  }
+  .contact-page .btn-ghost{
+    background: var(--c-bg-soft);
+    border-color: var(--c-stroke);
+    color: var(--c-primary-600);
+  }
+  .contact-page .btn-linkedin{
+    background: #0A66C2;
+    border-color: #0958a7;
+    color: #fff;
+  }
 }
 
 /* toast (scoped) */

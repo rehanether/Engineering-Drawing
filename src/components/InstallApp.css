@@ -1,0 +1,33 @@
+.pwa-install {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 32px);
+  padding: 10px 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  background: #eff6ff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, .18);
+  color: #1e3a8a;
+  font-size: 13px;
+  font-weight: 700;
+}
+.pwa-install button {
+  min-height: 38px;
+  padding: 8px 13px;
+  border: 0;
+  border-radius: 9px;
+  background: #2563eb;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+.pwa-install { flex-wrap: wrap; }
+.pwa-install-help { width: 100%; font-weight: 500; }
+@media (max-width: 560px) {
+  .pwa-install { right: 12px; bottom: 12px; left: 12px; justify-content: space-between; }
+}

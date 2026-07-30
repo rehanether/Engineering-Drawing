@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Navigate, Routes, Route } from 'react-router-dom';
 
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -11,20 +11,24 @@ import Presale from './components/Presale';
 import Contact from './components/Contact';
 
 import Evaporators from './components/Evaporators';
-import Reactors from "./components/reactor/Reactors";
+import ReactorSimulator from "./components/reactor/ReactorSimulator";
 import Distillation from './components/distillation/Distillation';
 
 /* Category pages (clean slates) */
 import IndustrialDesign from './components/IndustrialDesign';
 import ConstructionDesign from './components/ConstructionDesign';
-import ProcessDesign from './components/ProcessDesign';
+import ProcessDesign from './components/process/ProcessDesign';
+import Seo from './components/Seo';
+import InstallApp from './components/InstallApp';
 
 import './App.css';
 
 const App = () => {
   return (
     <div className="app-container">
+      <Seo />
       <Header />
+      <InstallApp />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/project-overview" element={<ProjectOverview />} />
@@ -34,12 +38,15 @@ const App = () => {
 
         {/* Product */}
         <Route path="/evaporators" element={<Evaporators />} />
-        <Route path="/reactors" element={<Reactors />} />
+        <Route path="/reactors" element={<ReactorSimulator />} />
         <Route path="/distillation" element={<Distillation />} />
         {/* Categories */}
-        <Route path="/IndustrialDesign" element={<IndustrialDesign />} />
-        <Route path="/ConstructionDesign" element={<ConstructionDesign />} />
-        <Route path="/ProcessDesign" element={<ProcessDesign />} />
+        <Route path="/industrial-design" element={<IndustrialDesign />} />
+        <Route path="/construction-design" element={<ConstructionDesign />} />
+        <Route path="/process-design" element={<ProcessDesign />} />
+        <Route path="/IndustrialDesign" element={<Navigate to="/industrial-design" replace />} />
+        <Route path="/ConstructionDesign" element={<Navigate to="/construction-design" replace />} />
+        <Route path="/ProcessDesign" element={<Navigate to="/process-design" replace />} />
       </Routes>
       <Footer />
     </div>

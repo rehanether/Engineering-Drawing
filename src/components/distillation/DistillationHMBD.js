@@ -1,7 +1,7 @@
 import React from "react";
 
 export default function DistillationHMBD({ data }) {
-  const { F, D, B, R, Qc_kJph, Qr_kJph, Dcol, Nth, Nactual, internals } = data || {};
+  const { F, D, B, R, Qc_kJph, Qr_kJph, Dcol, Nth, Nactual, internals, zF, xD, xB, Ttop, Tbot } = data || {};
   const num = (v, d = 1) => (v || v === 0) ? Number(v).toFixed(d) : "—";
 
   return (
@@ -42,7 +42,8 @@ export default function DistillationHMBD({ data }) {
       <line x1="100" y1="260" x2="140" y2="260" stroke="#F59E0B" strokeWidth="6" /> {/* bottoms to reboiler */}
 
       {/* labels */}
-      <text x="90" y="156" fontSize="12" fill="#0F172A">F = {num(F, 2)} kmol/h</text>
+      <text x="92" y="142" fontSize="12" fill="#0F172A">S-01 FEED</text>
+      <text x="92" y="157" fontSize="12" fill="#0F172A">F = {num(F, 2)} kmol/h · zLK={num(zF,3)}</text>
       <text x="430" y="90" fontSize="12" fill="#0F172A">Reflux drum</text>
       <text x="610" y="90" fontSize="12" fill="#0F172A">Condenser</text>
       <text x="282" y="62" fontSize="12" fill="#0F172A">V ↑</text>
@@ -51,13 +52,14 @@ export default function DistillationHMBD({ data }) {
 
       {/* numbers */}
       <text x="310" y="58"  fontSize="12" fill="#0F172A">R = {num(R, 2)}</text>
-      <text x="605" y="58"  fontSize="12" fill="#0F172A">Qc = {num(Qc_kJph, 0)} kJ/h</text>
-      <text x="60"  y="290" fontSize="12" fill="#0F172A">Qr = {num(Qr_kJph, 0)} kJ/h</text>
+      <text x="605" y="58"  fontSize="12" fill="#0F172A">Qc = {num((Qc_kJph||0)/3600, 1)} kW · {num(Ttop,1)}°C</text>
+      <text x="60"  y="305" fontSize="12" fill="#0F172A">Qr = {num((Qr_kJph||0)/3600, 1)} kW · {num(Tbot,1)}°C</text>
       <text x="140" y="35"  fontSize="12" fill="#0F172A">ID ≈ {num(Dcol, 3)} m · N(th)={num(Nth, 1)}{Nactual ? ` · N(act)=${Nactual}` : ""}</text>
 
       {/* product tags now show flows so D & B are used */}
-      <text x="720" y="75"  fontSize="12" fill="#0F172A">D = {num(D, 2)} kmol/h</text>
-      <text x="90"  y="270" fontSize="12" fill="#0F172A">B = {num(B, 2)} kmol/h</text>
+      <text x="720" y="75"  fontSize="12" fill="#0F172A">S-03 D = {num(D, 2)} kmol/h · xLK={num(xD,3)}</text>
+      <text x="90"  y="270" fontSize="12" fill="#0F172A">S-05 B = {num(B, 2)} kmol/h · xLK={num(xB,3)}</text>
+      <text x="690" y="292" fontSize="12" fill="#0F172A">Balance closure = {num((F||0)-(D||0)-(B||0),4)} kmol/h</text>
     </svg>
   );
 }

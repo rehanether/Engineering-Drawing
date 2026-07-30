@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://www.engineeringdrawing.io/</loc></url>
-  <url><loc>https://www.engineeringdrawing.io/presale</loc></url>
-  <url><loc>https://www.engineeringdrawing.io/industrial-design</loc></url>
-  <url><loc>https://www.engineeringdrawing.io/contact</loc></url>
+  <url><loc>https://www.engineeringdrawing.io/</loc><lastmod>2026-07-29</lastmod></url>
+  <url><loc>https://www.engineeringdrawing.io/industrial-design</loc><lastmod>2026-07-29</lastmod></url>
+  <url><loc>https://www.engineeringdrawing.io/project-overview</loc><lastmod>2026-07-29</lastmod></url>
+  <url><loc>https://www.engineeringdrawing.io/evaporators</loc><lastmod>2026-07-30</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.engineeringdrawing.io/reactors</loc><lastmod>2026-07-30</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.engineeringdrawing.io/distillation</loc><lastmod>2026-07-30</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://www.engineeringdrawing.io/process-design</loc><lastmod>2026-07-29</lastmod></url>
+  <url><loc>https://www.engineeringdrawing.io/tokenomics</loc><lastmod>2026-07-29</lastmod></url>
+  <url><loc>https://www.engineeringdrawing.io/presale</loc><lastmod>2026-07-29</lastmod></url>
+  <url><loc>https://www.engineeringdrawing.io/contact</loc><lastmod>2026-07-29</lastmod></url>
 </urlset>

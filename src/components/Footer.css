@@ -1,23 +1,46 @@
 /* Footer.css */
 
-footer {
-    background-color: #b31111;
-    color: #000000;
-    text-align: center;
-    padding: 15px;
+.site-footer {
+  width: 100%;
+  margin-top: auto;
+  background: #ffffff;
+  border-top: 1px solid #dbeafe;
+  color: #0f172a;
+  text-align: center;
+  padding: 18px 20px;
+}
+
+.site-footer .footer-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.site-footer .footer-brand img { display: block; }
+
+.site-footer .footer-brand p { margin: 0; }
+
+.site-footer .social-links { margin-top: 10px; }
+
+.site-footer .social-links a {
+  color: #2563eb;
+  margin: 0 10px;
+  text-decoration: none;
+}
+
+.site-footer .social-links a:hover,
+.site-footer .social-links a:focus-visible { text-decoration: underline; }
+
+@media (max-width: 520px){
+  .site-footer { padding: 18px 14px; }
+  .site-footer .footer-brand { align-items: flex-start; text-align: left; }
+  .site-footer .footer-brand p { font-size: .9rem; line-height: 1.4; }
+  .site-footer .social-links {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin-top: 14px;
   }
-  
-  .social-links {
-    margin-top: 10px;
-  }
-  
-  .social-links a {
-    color: #000000;
-    margin: 0 10px;
-    text-decoration: none;
-  }
-  
-  .social-links a:hover {
-    text-decoration: underline;
-  }
-  
+  .site-footer .social-links a { margin: 0; }
+}

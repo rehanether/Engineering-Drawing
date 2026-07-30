@@ -11,7 +11,7 @@ function Header() {
     <header>
       <div className="logo-container">
         <img src={logo} alt="Engineering Drawing Logo" className="logo" />
-        <h1>Engineering Drawing</h1>
+        <div className="site-brand-name">Engineering Drawing</div>
         <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)}>
           ☰
         </button>

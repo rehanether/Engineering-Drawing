@@ -2,7 +2,7 @@
 /* Import Font */
 @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap'); /* Example font, update accordingly */
 
-header h1 {
+.site-brand-name {
   font-family: 'Great Vibes', cursive; /* Use your required font */
   font-size: 32px;
   font-weight: bold;

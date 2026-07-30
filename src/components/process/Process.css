@@ -1,0 +1,64 @@
+/* Centered page container with side margins like other detail pages */
+.edg-page {
+  max-width: 1200px;          /* same feel as your product pages */
+  margin: 24px auto;          /* <-- left/right gutters */
+  padding: 0 16px;            /* small inner padding */
+}
+
+.edg-sim-layout {
+  height: calc(100vh - 180px); /* account for header/footer on your site */
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+/* Card look for the panel + table */
+.edg-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.edg-card h3 { margin: 12px 16px; }
+
+.edg-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.edg-table th, .edg-table td {
+  border-bottom: 1px solid #f1f5f9;
+  padding: 6px 8px;
+  text-align: left;
+  font-size: 13px;
+}
+
+.edg-sim-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+
+.edg-chip {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.edg-chip:hover { background: #f1f5f9; }
+
+
+.edg-toolbar-title {
+  font-size: 13px;
+  color: #334155;
+  margin-right: 8px;
+}
+
+.edg-palette {
+  user-select: none;
+}

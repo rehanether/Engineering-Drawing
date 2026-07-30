@@ -11,7 +11,7 @@ const Home = () => {
     <div className="homepage">
       {/* Hero */}
       <div className="hero-section">
-        <video autoPlay loop muted className="background-video">
+        <video autoPlay loop muted playsInline preload="metadata" className="background-video">
           <source src="/assets/industry4.mp4" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
@@ -43,25 +43,25 @@ const Home = () => {
       {/* Categories */}
       <div className="categories-section">
         <div className="category industrial">
-          <img src="/assets/industrial.gif" alt="Industrial GIF" />
+          <img src="/assets/industrial.webp" alt="Industrial process design visualization" loading="lazy" decoding="async" />
           <h3>Industrial Design</h3>
-          <Link to="/IndustrialDesign">
+          <Link to="/industrial-design">
             <button>Learn More</button>
           </Link>
         </div>
 
         <div className="category constraction">
-          <img src="/assets/construction.gif" alt="Construction GIF" />
+          <img src="/assets/construction.webp" alt="Construction design visualization" loading="lazy" decoding="async" />
           <h3>Construction Design</h3>
-          <Link to="/ConstructionDesign">
+          <Link to="/construction-design">
             <button>Learn More</button>
           </Link>
         </div>
 
         <div className="category process">
-          <img src="/assets/process.gif" alt="Process GIF" />
+          <img src="/assets/process.webp" alt="Process design visualization" loading="lazy" decoding="async" />
           <h3>Process Design</h3>
-          <Link to="/ProcessDesign">
+          <Link to="/process-design">
             <button>Learn More</button>
           </Link>
         </div>

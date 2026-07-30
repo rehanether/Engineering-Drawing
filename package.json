@@ -3,13 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@chainlink/contracts": "^0.8.0",
-    "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
-    "@react-three/drei": "^9.117.0",
-    "@react-three/fiber": "^8.17.10",
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
+    "@metamask/connect": "^0.2.0",
+    "@neondatabase/serverless": "^0.10.4",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
     "@walletconnect/ethereum-provider": "^2.21.8",
@@ -18,17 +13,18 @@
     "dotenv": "^16.6.1",
     "ethers": "^6.15.0",
     "express": "^5.1.0",
-    "form-data": "^4.0.4",
+    "express-rate-limit": "^8.6.1",
+    "helmet": "^8.3.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0",
-    "react-scripts": "^5.0.1",
     "reactflow": "^11.11.4",
-    "web-vitals": "^2.1.4",
-    "web3": "^4.15.0"
+    "three": "^0.185.1",
+    "web-vitals": "^2.1.4"
   },
   "scripts": {
     "start": "react-scripts start",
+    "server": "node server/index.js",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
@@ -53,8 +49,11 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@craco/craco": "^7.1.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "ajv": "^6.12.6",
-    "ajv-keywords": "^3.5.2"
+    "ajv-keywords": "^3.5.2",
+    "react-scripts": "^5.0.1"
   }
 }
