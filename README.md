@@ -1,70 +1,154 @@
-# Getting Started with Create React App
+# EngineeringDrawing.io
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+> AI-Powered Industrial Engineering Platform built on **BNB Smart Chain (BSC)**
 
-## Available Scripts
+EngineeringDrawing.io is an AI-powered industrial engineering platform that helps engineers and manufacturers design, simulate, and optimize industrial processes using Artificial Intelligence, Web3, and blockchain technology.
 
-In the project directory, you can run:
+Our mission is to accelerate Industry 4.0 by combining AI with **BNB Chain** to create secure, transparent, and intelligent engineering solutions.
 
-### `npm start`
+---
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+# Website
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+https://engineeringdrawing.io
 
-### `npm test`
+---
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+# Overview
 
-### `npm run build`
+EngineeringDrawing.io provides intelligent engineering tools for:
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- Process Design
+- Process Simulation
+- PFD Generation
+- P&ID Generation
+- Equipment Design
+- Heat Exchanger Design
+- Evaporator Design
+- Reactor Design
+- Distillation Design
+- Engineering Calculations
+- AI Engineering Assistant
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+# BNB Chain Integration
 
-### `npm run eject`
+EngineeringDrawing.io is built on **BNB Smart Chain (BSC)** and uses blockchain technology for secure and transparent engineering workflows.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## Supported Blockchain
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- BNB Chain
+- BNB Smart Chain (BSC)
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+---
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+# Smart Contracts
 
-## Learn More
+## EDG Token (BEP-20)
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+Contract Address
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+0xa90Cc0137FDA4285Eaa6da0f7a5118A1432b2a76
 
-### Code Splitting
+## EDG Presale Contract
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Contract Address
 
-### Analyzing the Bundle Size
+0x944483c8083827A8BF09c12cFC57DB6a5b22697A
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+---
 
-### Making a Progressive Web App
+# Features
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+- AI Industrial Design
+- Industrial Process Simulation
+- Web3 Wallet Integration
+- BEP-20 Token Support
+- Smart Contract Integration
+- Engineering Documentation
+- PFD Generator
+- P&ID Generator
+- Industry 4.0 Solutions
+- Cloud Engineering Platform
 
-### Advanced Configuration
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+# Technology Stack
 
-### Deployment
+Frontend
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+- React
+- JavaScript
+- HTML5
+- CSS3
 
-### `npm run build` fails to minify
+Backend
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- Node.js
+- Express
+
+Blockchain
+
+- Solidity
+- Web3.js
+- Ethers.js
+- BNB Smart Chain (BSC)
+
+Deployment
+
+- Vercel
+
+---
+
+# Why BNB Chain
+
+EngineeringDrawing.io selected **BNB Chain** because of:
+
+- Low transaction fees
+- High scalability
+- Fast confirmation time
+- Reliable Web3 ecosystem
+- Secure smart contracts
+- Excellent developer tools
+
+---
+
+# Repository
+
+This repository contains the source code for the EngineeringDrawing.io platform, including frontend, backend, blockchain integration, and engineering design tools.
+
+---
+
+# Future Roadmap
+
+- AI Copilot for Industrial Engineering
+- Advanced Process Simulation
+- Digital Twin Integration
+- Industrial IoT
+- Engineering Marketplace
+- Enterprise Dashboard
+- AI Design Automation
+- Cross-chain Web3 Support
+
+---
+
+# Contact
+
+Website
+
+https://engineeringdrawing.io
+
+Email
+
+contact@engineeringdrawing.io
+
+---
+
+# License
+
+MIT License
+
+---
+
+Built with ❤️ by the EngineeringDrawing.io Team.
