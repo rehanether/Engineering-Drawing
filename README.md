@@ -1,154 +1,223 @@
-# EngineeringDrawing.io
+<div align="center">
 
-> AI-Powered Industrial Engineering Platform built on **BNB Smart Chain (BSC)**
+# 🚀 EngineeringDrawing.io
 
-EngineeringDrawing.io is an AI-powered industrial engineering platform that helps engineers and manufacturers design, simulate, and optimize industrial processes using Artificial Intelligence, Web3, and blockchain technology.
+### AI Copilot for Industrial Engineering
 
-Our mission is to accelerate Industry 4.0 by combining AI with **BNB Chain** to create secure, transparent, and intelligent engineering solutions.
+**Design • Simulate • Optimize • Build**
 
----
+<p>
+  <a href="https://engineeringdrawing.io"><strong>🌐 Website</strong></a> •
+  <a href="https://github.com/rehanether/Engineering-Drawing"><strong>📦 Repository</strong></a>
+</p>
 
-# Website
+<img src="public/assets/preview.png" width="100%" alt="EngineeringDrawing.io Banner">
 
-https://engineeringdrawing.io
-
----
-
-# Overview
-
-EngineeringDrawing.io provides intelligent engineering tools for:
-
-- Process Design
-- Process Simulation
-- PFD Generation
-- P&ID Generation
-- Equipment Design
-- Heat Exchanger Design
-- Evaporator Design
-- Reactor Design
-- Distillation Design
-- Engineering Calculations
-- AI Engineering Assistant
+</div>
 
 ---
 
-# BNB Chain Integration
+## 🌍 Overview
 
-EngineeringDrawing.io is built on **BNB Smart Chain (BSC)** and uses blockchain technology for secure and transparent engineering workflows.
+EngineeringDrawing.io is an AI-powered industrial engineering platform that combines Artificial Intelligence, Process Engineering, and Web3 technologies to simplify industrial design workflows.
 
-## Supported Blockchain
+The platform enables engineers to design, simulate, optimize, and document industrial systems while leveraging blockchain technology for transparency and security.
 
-- BNB Chain
-- BNB Smart Chain (BSC)
-
----
-
-# Smart Contracts
-
-## EDG Token (BEP-20)
-
-Contract Address
-
-0xa90Cc0137FDA4285Eaa6da0f7a5118A1432b2a76
-
-## EDG Presale Contract
-
-Contract Address
-
-0x944483c8083827A8BF09c12cFC57DB6a5b22697A
+Our vision is to build the **AI Copilot for Industrial Engineering** and accelerate the adoption of Industry 4.0 technologies.
 
 ---
 
-# Features
+# ✨ Key Features
 
-- AI Industrial Design
-- Industrial Process Simulation
-- Web3 Wallet Integration
-- BEP-20 Token Support
-- Smart Contract Integration
-- Engineering Documentation
-- PFD Generator
-- P&ID Generator
-- Industry 4.0 Solutions
-- Cloud Engineering Platform
+- 🤖 AI Engineering Assistant
+- 🏭 Industrial Process Design
+- 📊 Process Simulation
+- 📄 PFD Generator
+- ⚙️ P&ID Generator
+- 🔥 Heat Exchanger Design
+- 💧 Evaporator Design
+- 🧪 Reactor Design
+- 🏗 Distillation Design
+- 📑 Engineering Documentation
+- 🌐 Web3 Wallet Integration
+- ⛓️ BNB Smart Chain Support
 
 ---
 
-# Technology Stack
+# 📸 Product Showcase
 
-Frontend
+## 🏠 Homepage
+
+![Homepage](public/assets/homepage.png)
+
+---
+
+## 🏭 Industrial Design
+
+![Industrial Design](public/assets/industrial-design.png)
+
+---
+
+## 💧 Evaporator Design
+
+![Evaporator Design](public/assets/evaporator.png)
+
+---
+
+## 🌐 Wallet Integration
+
+![Wallet](public/assets/wallet.png)
+
+---
+
+# ⚙️ Technology Stack
+
+## Frontend
 
 - React
 - JavaScript
 - HTML5
 - CSS3
 
-Backend
+## Backend
 
 - Node.js
-- Express
+- Express.js
 
-Blockchain
+## Blockchain
 
 - Solidity
-- Web3.js
 - Ethers.js
+- Web3.js
 - BNB Smart Chain (BSC)
 
-Deployment
+## Deployment
 
 - Vercel
 
 ---
 
-# Why BNB Chain
+# ⛓️ Blockchain Integration
 
-EngineeringDrawing.io selected **BNB Chain** because of:
+EngineeringDrawing.io is built on **BNB Smart Chain (BSC)** to provide secure, transparent, and scalable engineering workflows.
 
-- Low transaction fees
-- High scalability
-- Fast confirmation time
-- Reliable Web3 ecosystem
-- Secure smart contracts
-- Excellent developer tools
+### Supported Network
+
+- BNB Chain
+- BNB Smart Chain (BSC)
 
 ---
 
-# Repository
+# 🪙 Smart Contracts
 
-This repository contains the source code for the EngineeringDrawing.io platform, including frontend, backend, blockchain integration, and engineering design tools.
+## EDG Token (BEP-20)
+
+```
+0xa90Cc0137FDA4285Eaa6da0f7a5118A1432b2a76
+```
+
+## EDG Presale Contract
+
+```
+0x944483c8083827A8BF09c12cFC57DB6a5b22697A
+```
 
 ---
 
-# Future Roadmap
+# 🚀 Quick Start
+
+```bash
+git clone https://github.com/rehanether/Engineering-Drawing.git
+
+cd Engineering-Drawing
+
+npm install
+
+npm start
+```
+
+---
+
+# 📁 Project Structure
+
+```
+Engineering-Drawing
+├── public
+├── src
+├── server
+├── api
+├── docs
+├── README.md
+└── package.json
+```
+
+---
+
+# 🎯 Why EngineeringDrawing.io?
+
+✅ AI-assisted engineering workflows
+
+✅ Modern React-based web application
+
+✅ Industrial equipment design modules
+
+✅ Process simulation tools
+
+✅ Blockchain-powered ecosystem
+
+✅ Industry 4.0 ready
+
+---
+
+# 🗺️ Roadmap
 
 - AI Copilot for Industrial Engineering
 - Advanced Process Simulation
 - Digital Twin Integration
 - Industrial IoT
-- Engineering Marketplace
 - Enterprise Dashboard
+- Engineering Marketplace
 - AI Design Automation
 - Cross-chain Web3 Support
 
 ---
 
-# Contact
+# 📖 Documentation
 
-Website
+Additional engineering documentation is available inside the **docs/** directory.
+
+---
+
+# 🌐 Website
 
 https://engineeringdrawing.io
 
-Email
+---
+
+# 📧 Contact
+
+**Website**
+
+https://engineeringdrawing.io
+
+**Email**
 
 contact@engineeringdrawing.io
 
 ---
 
-# License
+# 📄 License
 
-MIT License
+This project is licensed under the **MIT License**.
+
+See the LICENSE file for details.
 
 ---
 
-Built with ❤️ by the EngineeringDrawing.io Team.
+<div align="center">
+
+## ⭐ Star this repository if you find it useful!
+
+Built with ❤️ by the EngineeringDrawing.io Team
+
+</div>
