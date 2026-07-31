@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
+
+<rss version="2.0"
+     xmlns:atom="http://www.w3.org/2005/Atom">
+
 <channel>
 
 <title>EngineeringDrawing.io</title>
@@ -14,15 +17,26 @@ AI Copilot for Industrial Engineering
 
 <copyright>© 2026 EngineeringDrawing.io</copyright>
 
-<managingEditor>contact@engineeringdrawing.io</managingEditor>
+<managingEditor>Rehan Uddin (Engineering Drawing) contact@engineeringdrawing.io</managingEditor>
 
-<webMaster>contact@engineeringdrawing.io</webMaster>
+<webMaster>Engineering Drawing Team contact@engineeringdrawing.io</webMaster>
 
-<lastBuildDate>Fri, 31 Jul 2026 11:52:00 GMT</lastBuildDate>
+<lastBuildDate>Fri, 31 Jul 2026 12:00:00 GMT</lastBuildDate>
 
 <generator>EngineeringDrawing.io RSS Generator</generator>
 
 <ttl>60</ttl>
+
+<atom:link
+    href="https://www.engineeringdrawing.io/rss.xml"
+    rel="self"
+    type="application/rss+xml"/>
+
+<image>
+<title>EngineeringDrawing.io</title>
+<url>https://www.engineeringdrawing.io/logo192.png</url>
+<link>https://www.engineeringdrawing.io/</link>
+</image>
 
 <item>
 
@@ -32,7 +46,7 @@ AI Copilot for Industrial Engineering
 
 <guid isPermaLink="true">https://github.com/rehanether/Engineering-Drawing</guid>
 
-<pubDate>Fri, 31 Jul 2026 11:52:00 GMT</pubDate>
+<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
 
 <description><![CDATA[
 EngineeringDrawing.io has officially released its open-source repository featuring AI-powered industrial engineering tools, Industry 4.0 workflows, and BNB Chain integration.
@@ -41,4 +55,5 @@ EngineeringDrawing.io has officially released its open-source repository featuri
 </item>
 
 </channel>
+
 </rss>
