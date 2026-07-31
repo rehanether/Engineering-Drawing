@@ -3,56 +3,55 @@
 <rss version="2.0"
      xmlns:atom="http://www.w3.org/2005/Atom">
 
-<channel>
+  <channel>
 
-<title>EngineeringDrawing.io</title>
+    <title>EngineeringDrawing.io</title>
 
-<link>https://www.engineeringdrawing.io/</link>
+    <link>https://www.engineeringdrawing.io/</link>
 
-<description>
-AI Copilot for Industrial Engineering
-</description>
+    <description>AI Copilot for Industrial Engineering</description>
 
-<language>en-us</language>
+    <language>en-us</language>
 
-<copyright>© 2026 EngineeringDrawing.io</copyright>
+    <copyright>© 2026 EngineeringDrawing.io</copyright>
 
-<managingEditor>contact@engineeringdrawing.io (Rehan Uddin)</managingEditor>
-<webMaster>contact@engineeringdrawing.io (Engineering Drawing Team)</webMaster>
+    <managingEditor>contact@engineeringdrawing.io (Rehan Uddin)</managingEditor>
 
-<lastBuildDate>Fri, 31 Jul 2026 12:00:00 GMT</lastBuildDate>
+    <webMaster>contact@engineeringdrawing.io (Engineering Drawing Team)</webMaster>
 
-<generator>EngineeringDrawing.io RSS Generator</generator>
+    <lastBuildDate>Fri, 31 Jul 2026 12:00:00 GMT</lastBuildDate>
 
-<ttl>60</ttl>
+    <generator>EngineeringDrawing.io RSS Generator</generator>
 
-<atom:link
-    href="https://www.engineeringdrawing.io/rss.xml"
-    rel="self"
-    type="application/rss+xml"/>
+    <ttl>60</ttl>
 
-<image>
-<title>EngineeringDrawing.io</title>
-<url>https://www.engineeringdrawing.io/assets/edg-192.png</url>
-<link>https://www.engineeringdrawing.io/</link>
-</image>
+    <atom:link
+      href="https://www.engineeringdrawing.io/rss.xml"
+      rel="self"
+      type="application/rss+xml" />
 
-<item>
+    <image>
+      <title>EngineeringDrawing.io</title>
+      <url>https://www.engineeringdrawing.io/assets/edg-192.png</url>
+      <link>https://www.engineeringdrawing.io/</link>
+    </image>
 
-<title>EngineeringDrawing.io Open Source Repository Released</title>
+    <item>
 
-<link>https://github.com/rehanether/Engineering-Drawing</link>
+      <title>EngineeringDrawing.io Open Source Repository Released</title>
 
-<guid isPermaLink="true">https://github.com/rehanether/Engineering-Drawing</guid>
+      <link>https://github.com/rehanether/Engineering-Drawing</link>
 
-<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+      <guid isPermaLink="true">https://github.com/rehanether/Engineering-Drawing</guid>
 
-<description><![CDATA[
+      <pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+
+      <description><![CDATA[
 EngineeringDrawing.io has officially released its open-source repository featuring AI-powered industrial engineering tools, Industry 4.0 workflows, and BNB Chain integration.
-]]></description>
+      ]]></description>
 
-</item>
+    </item>
 
-</channel>
+  </channel>
 
 </rss>
