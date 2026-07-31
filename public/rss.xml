@@ -4,7 +4,7 @@
 
 <title>EngineeringDrawing.io</title>
 
-<link>https://engineeringdrawing.io</link>
+<link>https://www.engineeringdrawing.io/</link>
 
 <description>
 AI Copilot for Industrial Engineering
@@ -12,34 +12,30 @@ AI Copilot for Industrial Engineering
 
 <language>en-us</language>
 
-<lastBuildDate>Fri, 31 Jul 2026 12:00:00 GMT</lastBuildDate>
+<copyright>© 2026 EngineeringDrawing.io</copyright>
 
-<generator>EngineeringDrawing.io</generator>
+<managingEditor>contact@engineeringdrawing.io</managingEditor>
 
-<image>
-<title>EngineeringDrawing.io</title>
-<url>https://engineeringdrawing.io/logo192.png</url>
-<link>https://engineeringdrawing.io</link>
-</image>
+<webMaster>contact@engineeringdrawing.io</webMaster>
+
+<lastBuildDate>Fri, 31 Jul 2026 11:52:00 GMT</lastBuildDate>
+
+<generator>EngineeringDrawing.io RSS Generator</generator>
+
+<ttl>60</ttl>
 
 <item>
 
 <title>EngineeringDrawing.io Open Source Repository Released</title>
 
-<link>
-https://github.com/rehanether/Engineering-Drawing
-</link>
+<link>https://github.com/rehanether/Engineering-Drawing</link>
 
-<guid>
-https://github.com/rehanether/Engineering-Drawing
-</guid>
+<guid isPermaLink="true">https://github.com/rehanether/Engineering-Drawing</guid>
 
-<pubDate>
-Fri, 31 Jul 2026 12:00:00 GMT
-</pubDate>
+<pubDate>Fri, 31 Jul 2026 11:52:00 GMT</pubDate>
 
 <description><![CDATA[
-EngineeringDrawing.io has officially released its open-source repository with AI-powered industrial engineering tools, BNB Chain integration, and Industry 4.0 solutions.
+EngineeringDrawing.io has officially released its open-source repository featuring AI-powered industrial engineering tools, Industry 4.0 workflows, and BNB Chain integration.
 ]]></description>
 
 </item>
