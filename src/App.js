@@ -21,6 +21,9 @@ import ProcessDesign from './components/process/ProcessDesign';
 import Seo from './components/Seo';
 import InstallApp from './components/InstallApp';
 
+import Privacy from "./components/Privacy";
+import FAQ from "./components/FAQ";
+
 import './App.css';
 
 const App = () => {
@@ -47,6 +50,9 @@ const App = () => {
         <Route path="/IndustrialDesign" element={<Navigate to="/industrial-design" replace />} />
         <Route path="/ConstructionDesign" element={<Navigate to="/construction-design" replace />} />
         <Route path="/ProcessDesign" element={<Navigate to="/process-design" replace />} />
+
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/faq" element={<FAQ />} />
       </Routes>
       <Footer />
     </div>
