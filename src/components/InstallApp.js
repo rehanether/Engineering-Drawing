@@ -3,7 +3,9 @@ import "./InstallApp.css";
 
 const isIOS = () => /iPhone|iPad|iPod/i.test(navigator.userAgent);
 const isMobile = () => /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-const isStandalone = () => window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+const isStandalone = () =>
+  (typeof window.matchMedia === "function" && Boolean(window.matchMedia("(display-mode: standalone)")?.matches)) ||
+  window.navigator.standalone === true;
 
 export default function InstallApp() {
   const [installPrompt, setInstallPrompt] = useState(null);

@@ -12,7 +12,7 @@ import Contact from './components/Contact';
 
 import Evaporators from './components/Evaporators';
 import ReactorSimulator from "./components/reactor/ReactorSimulator";
-import Distillation from './components/distillation/Distillation';
+import Distillation from './components/distillation/DistillationProduction';
 
 /* Category pages (clean slates) */
 import IndustrialDesign from './components/IndustrialDesign';

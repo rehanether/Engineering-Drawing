@@ -28,3 +28,19 @@
 .rx-checkout{margin-top:15px;padding-top:14px;border-top:1px solid var(--line)}.rx-checkout>small{color:var(--purple);font-size:8px;font-weight:900;letter-spacing:.08em}.rx-payment-choice{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.rx-side .rx-payment-choice button{display:grid;grid-template-columns:25px 1fr;grid-template-rows:auto auto;align-items:center;margin:0;padding:8px;border:1px solid var(--line);background:#fff;color:var(--ink);text-align:left}.rx-side .rx-payment-choice button.active{border-color:var(--purple);background:#f6f3ff}.rx-payment-choice i{grid-row:1/3;font-style:normal;color:#f0b90b;font-size:20px}.rx-payment-choice img{width:24px;height:24px}.rx-payment-choice b{font-size:10px}.rx-payment-choice em{color:#758096;font-size:7px;font-style:normal}.rx-price{margin:8px 0;padding:10px;border-radius:8px;background:#f2f5f9}.rx-price span,.rx-price em{display:block;color:#748096;font-size:8px;font-style:normal}.rx-price b{display:block;margin:2px 0;font-size:20px}.rx-checkout>.rx-payment-message{padding:7px!important;background:#f2f5f9!important}
 @media(max-width:720px){.rx-advisor{margin:0 10px 18px}.rx-advisor ul{grid-template-columns:1fr}}
 @media(max-width:480px){.rx-primary label:first-child,.rx-primary label:nth-child(2){grid-column:auto}.rx-pay{grid-template-columns:1fr!important}}
+
+/* Production layout parity with the evaporator simulator */
+.rx-tabs button.locked{color:#7c8495;background:#f6f7fa}
+.rx-side h4{margin:16px 0 4px;color:#39455b;font-size:10px;text-transform:uppercase;letter-spacing:.08em}
+.rx-deliverables{margin:0;padding-left:18px;color:#465168;font-size:11px;line-height:1.65}
+.rx-payment-choice.has-shopline{grid-template-columns:repeat(3,1fr)}
+.rx-payment-choice i.shopline{display:grid;place-items:center;width:22px;height:22px;border-radius:6px;background:#111;color:#fff;font-size:11px}
+.rx-seo-content{max-width:1180px;margin:30px auto 0;padding:32px;border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:0 14px 40px rgba(24,35,55,.06)}
+.rx-seo-content>h2{margin:6px 0 10px;font-size:clamp(23px,3vw,34px);line-height:1.15}
+.rx-seo-content>p{max-width:900px;color:#5e6b80;line-height:1.75}
+.rx-seo-content>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:20px}
+.rx-seo-content article{padding:18px;border:1px solid #e1e6ef;border-radius:12px;background:#f8f9fc}
+.rx-seo-content h3{margin:0 0 7px;font-size:15px}.rx-seo-content article p{margin:0;color:#657187;font-size:12px;line-height:1.6}
+.rx-seo-content .rx-seo-note{max-width:none;margin:18px 0 0;padding:12px 14px;border-left:4px solid #ffb42b;background:#fff8e8;color:#5a6170;font-size:11px}
+@media(max-width:720px){.rx-seo-content{margin:20px 10px 0;padding:20px 16px}.rx-seo-content>div{grid-template-columns:1fr}.rx-payment-choice.has-shopline{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.rx-payment-choice.has-shopline{grid-template-columns:1fr}.rx-seo-content{margin:16px 4px 0;padding:18px 14px}}

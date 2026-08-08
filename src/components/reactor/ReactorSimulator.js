@@ -4,6 +4,7 @@ import ReactorPlant3D from "./ReactorPlant3D";
 import { calculateReactorDesign, REACTOR_PRESETS } from "./reactorDesignEngine";
 import { createReactorPackage } from "./downloadPackage";
 import tokenMeta from "../../EnggDrawTokenABI.json";
+import { openShoplineCheckout, shoplineCheckoutEnabled } from "../payments/shoplineCheckout";
 import "./ReactorSimulator.css";
 
 const DEFAULTS = { preset:"pharma", ...REACTOR_PRESETS.pharma, projectName:"Pharmaceutical API Intermediate Reactor", clientName:"Client / End User" };
@@ -21,6 +22,7 @@ export default function ReactorSimulator() {
   const [payment,setPayment]=useState("BNB");
   const [paymentStatus,setPaymentStatus]=useState(localStorage.getItem("reactorPackagePaid")?"paid":"idle");
   const [message,setMessage]=useState("");
+  const shoplineEnabled=shoplineCheckoutEnabled("reactor");
   const pfdRef=useRef(null);
   const design=useMemo(()=>calculateReactorDesign(inputs),[inputs]);
   const update=(key,value)=>{setInputs(current=>({...current,[key]:value}));setTab("pfd");};
@@ -44,6 +46,10 @@ export default function ReactorSimulator() {
     if(!window.ethereum){setMessage("Install MetaMask or open this page in its wallet browser.");return;}
     setPaymentStatus("pending");setMessage("");
     try{await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x38"}]});const provider=new BrowserProvider(window.ethereum);const signer=await provider.getSigner();const buyer=await signer.getAddress();const token=new Contract(tokenMeta.ADDRESS,EDG_ABI,signer);const amount=parseUnits("5000",18);const [balance,gas]=await Promise.all([token.balanceOf(buyer),provider.getBalance(buyer)]);if(balance<amount)throw new Error("This wallet needs at least 5,000 transferable EDG.");if(gas===0n)throw new Error("Add a small amount of BNB for the network fee.");const tx=await token.transfer(EDG_ADMIN_WALLET,amount);setMessage("Waiting for BNB Smart Chain confirmation...");const receipt=await tx.wait();if(receipt.status!==1)throw new Error("Transfer was not confirmed.");localStorage.setItem("reactorPackagePaid",`EDG-${tx.hash}`);setPaymentStatus("paid");setMessage("5,000 EDG confirmed. Professional reactor BEP unlocked.");}catch(error){setPaymentStatus("idle");setMessage(error.shortMessage||error.reason||error.message||"Payment cancelled.");}
+  }
+  function payShopline(){
+    setMessage("");
+    try{openShoplineCheckout("reactor");}catch(error){setMessage(error.message);}
   }
   function downloadPackage(){
     const svg=pfdRef.current?new XMLSerializer().serializeToString(pfdRef.current):"<svg xmlns='http://www.w3.org/2000/svg'/>";
@@ -112,16 +118,18 @@ export default function ReactorSimulator() {
           <Kpi name="CAPEX" value={`$${money(design.cost.installedUsd)}`} unit="Class 4"/>
         </div>
       </div>
-      <div className="rx-tabs">{[["pfd","Live PFD + balance"],["3d","3D plant"],["cost","Budget"],["details","Engineering schedules"]].map(([key,label])=><button key={key} className={tab===key?"active":""} onClick={()=>setTab(key)}>{key==="details"&&<span>🔒</span>}{label}</button>)}</div>
+      <div className="rx-tabs">{[["pfd","PFD + balance",false],["3d","3D plant",false],["cost","Budget estimate",false],["details","Engineering schedules",true]].map(([key,label,locked])=><button key={key} className={`${tab===key?"active":""} ${locked?"locked":""}`} onClick={()=>setTab(key)}>{locked&&<span aria-hidden="true">🔒</span>}{label}</button>)}</div>
       <div className="rx-workspace">
         <div className="rx-main">
           {tab==="pfd"&&<ReactorPfd design={design} pfdRef={pfdRef}/>}
           {tab==="3d"&&<ReactorPlant3D design={design}/>}
           {tab==="cost"&&<CostPanel design={design}/>}
-          {tab==="details"&&<LockedPanel payment={payment} setPayment={setPayment} status={paymentStatus} message={message} startBnb={startBnb} payEdg={payEdg} download={downloadPackage}/>}
+          {tab==="details"&&<LockedPanel status={paymentStatus}/>}
         </div>
         <aside className="rx-side">
-          <small>REACTOR DESIGN BASIS</small><h3>Engineering snapshot</h3>
+          <small>PROFESSIONAL BEP · SECURE CHECKOUT</small><h3>Complete reactor engineering package</h3>
+          <ul className="rx-deliverables"><li>Controlled branded design report</li><li>Feed, component and heat balance</li><li>Equipment, motor and utility schedules</li><li>Line-sizing and preliminary valve basis</li><li>Editable PFD SVG, 3D OBJ and design JSON</li><li>Class 4 budgetary cost estimate</li></ul>
+          <h4>Live design snapshot</h4>
           <dl>
             <div><dt>Reactor geometry</dt><dd>Ø {design.geometry.diameterM} × {design.geometry.totalHeightM} m</dd></div>
             <div><dt>Process line</dt><dd>{design.piping.process.nps} · {design.piping.process.velocityMS} m/s</dd></div>
@@ -130,13 +138,14 @@ export default function ReactorSimulator() {
             <div><dt>Utility demand</dt><dd>{design.thermal.utilityFlowM3H} m³/h</dd></div>
             <div><dt>Plant envelope</dt><dd>{design.layout.lengthM} × {design.layout.widthM} × {design.layout.heightM} m</dd></div>
           </dl>
-          <ReactorCheckout payment={payment} setPayment={setPayment} status={paymentStatus} message={message} startBnb={startBnb} payEdg={payEdg} download={downloadPackage}/>
+          <ReactorCheckout payment={payment} setPayment={setPayment} status={paymentStatus} message={message} startBnb={startBnb} payEdg={payEdg} payShopline={payShopline} shoplineEnabled={shoplineEnabled} download={downloadPackage}/>
           <p>Reaction kinetics, calorimetry, relief sizing, HAZOP, hazardous-area classification and code design require project-specific professional review.</p>
         </aside>
       </div>
       <div className="rx-warnings">{design.warnings.length?design.warnings.map(w=><p key={w}>⚠ {w}</p>):<p className="ok">✓ Inputs are within the preliminary simulator envelope. Confirm laboratory and safety data before vendor issue.</p>}</div>
       <section className="rx-advisor"><span className="rx-kicker">AI-ASSISTED ENGINEERING REVIEW</span><h3>Calculation-led design recommendations</h3><ul>{design.advisor.map(item=><li key={item}>{item}</li>)}</ul><p>Rule-based guidance—not autonomous process-safety approval. Confirm through laboratory development and authorized engineering review.</p></section>
     </section>
+    <section className="rx-seo-content"><span className="rx-kicker">INDUSTRIAL REACTOR ENGINEERING</span><h2>From feed basis to a review-ready reactor concept</h2><p>The simulator connects reaction basis, preliminary kinetics, vessel geometry, agitation, heat-transfer duty, utilities and plant arrangement in one auditable workflow for early project decisions.</p><div><article><h3>Batch, CSTR and PFR workflows</h3><p>Compare reactor type, working capacity and conversion while keeping feed, duty and equipment results synchronized.</p></article><article><h3>Live PFD and 3D arrangement</h3><p>Review tagged equipment, process flow, utility connections, vessel proportions and access spacing before purchasing the controlled package.</p></article><article><h3>Professional BEP deliverables</h3><p>Download branded schedules and editable engineering files after secure BNB, EDG or configured SHOPLINE hosted checkout.</p></article></div><p className="rx-seo-note">Preliminary engineering only. Final reaction kinetics, pressure-relief, mechanical design, materials, controls, HAZOP and statutory compliance require project-specific data and authorized professional review.</p></section>
   </main>;
 }
 
@@ -145,8 +154,10 @@ function Field({label,value,unit,min,max,step,onChange}) {
   return <label>{label}<small>{min}–{max}</small><span><input type="number" value={value} min={min} max={max} step={step} onChange={e=>onChange(e.target.value)} onBlur={blur}/>{unit}</span></label>;
 }
 function Kpi({name,value,unit}) { return <span><small>{name}</small><b>{value}</b><em>{unit}</em></span>; }
-function ReactorCheckout({payment,setPayment,status,message,startBnb,payEdg,download}) {
-  return <section className="rx-checkout"><small>PROFESSIONAL BEP · SECURE CHECKOUT</small><div className="rx-payment-choice"><button className={payment==="BNB"?"active":""} onClick={()=>setPayment("BNB")}><i className="bnb">◆</i><b>BNB</b><em>Live $100 equivalent</em></button><button className={payment==="EDG"?"active":""} onClick={()=>setPayment("EDG")}><i><img src="/assets/edg_logo.svg" alt="EDG"/></i><b>EDG</b><em>5,000 EDG</em></button></div><div className="rx-price"><span>Production reactor BEP</span><b>{payment==="EDG"?"5,000 EDG":"$100"}</b><em>{payment==="EDG"?"Direct token transfer on BNB Smart Chain":"BNB on BSC · NOWPayments secure checkout"}</em></div>{status==="paid"?<button onClick={download}>Download professional BEP ↓</button>:<button disabled={status==="pending"} onClick={payment==="EDG"?payEdg:startBnb}>{status==="pending"?"Confirming payment...":payment==="EDG"?"Pay 5,000 EDG with MetaMask":"Pay securely with BNB · $100"}</button>}{message&&<p className="rx-payment-message">{message}</p>}</section>;
+function ReactorCheckout({payment,setPayment,status,message,startBnb,payEdg,payShopline,shoplineEnabled,download}) {
+  const action=payment==="EDG"?payEdg:payment==="SHOPLINE"?payShopline:startBnb;
+  const cta=payment==="EDG"?"Pay 5,000 EDG with MetaMask":payment==="SHOPLINE"?"Continue to SHOPLINE checkout":"Pay securely with BNB · $100";
+  return <section className="rx-checkout"><div className={`rx-payment-choice ${shoplineEnabled?"has-shopline":""}`}><button className={payment==="BNB"?"active":""} onClick={()=>setPayment("BNB")}><i className="bnb">◆</i><b>BNB</b><em>Live $100 equivalent</em></button><button className={payment==="EDG"?"active":""} onClick={()=>setPayment("EDG")}><i><img src="/assets/edg_logo.svg" alt="EDG"/></i><b>EDG</b><em>5,000 EDG</em></button>{shoplineEnabled&&<button className={payment==="SHOPLINE"?"active":""} onClick={()=>setPayment("SHOPLINE")}><i className="shopline">S</i><b>Card</b><em>SHOPLINE hosted</em></button>}</div><div className="rx-price"><span>Production reactor BEP</span><b>{payment==="EDG"?"5,000 EDG":"$100 USD"}</b><em>{payment==="EDG"?"Direct token transfer on BNB Smart Chain":payment==="SHOPLINE"?"Secure hosted card checkout by SHOPLINE":"BNB on BSC · NOWPayments secure checkout"}</em></div>{status==="paid"?<button onClick={download}>Download professional BEP ↓</button>:<button disabled={status==="pending"} onClick={action}>{status==="pending"?"Confirming payment...":cta}</button>}{message&&<p className="rx-payment-message">{message}</p>}</section>;
 }
 
 function ReactorPfd({design,pfdRef}) {
@@ -182,10 +193,7 @@ function CostPanel({design}) {
   const rows=[["Reactor, internals and agitator",.34],["Heat-transfer and utility skid",.19],["Pumps, piping and valves",.14],["Instrumentation and electrical",.13],["Structure, installation and engineering",.2]];
   return <div className="rx-cost"><div><small>PRELIMINARY INSTALLED CAPEX</small><b>${money(total)}</b><span>₹{money(design.cost.installedInr)}</span></div><ul>{rows.map(([name,share])=><li key={name}><span>{name}</span><b>${money(Math.round(total*share))}</b><em>₹{money(Math.round(design.cost.installedInr*share))}</em></li>)}</ul><p><b>{design.cost.accuracy}.</b> Excludes land, taxes, building, major offsites, validation, statutory fees and owner costs.</p></div>;
 }
-function LockedPanel({payment,setPayment,status,message,startBnb,payEdg,download}) {
+function LockedPanel({status}) {
   return <div className="rx-locked"><span>{status==="paid"?"✓":"🔒"}</span><small>PROFESSIONAL BASIC ENGINEERING PACKAGE</small><h3>Controlled reactor design deliverables</h3><p>Branded report, feed and heat/mass balance, equipment schedule, line basis, PFD SVG, design JSON and editable concept OBJ are supplied after payment.</p><div>{[1,2,3,4,5].map(v=><i key={v}/>)}</div>
-    <section className="rx-pay"><button className={payment==="BNB"?"active":""} onClick={()=>setPayment("BNB")}>◆ BNB · $100</button><button className={payment==="EDG"?"active":""} onClick={()=>setPayment("EDG")}>◉ EDG · 5,000</button></section>
-    {status==="paid"?<button onClick={download}>Download professional reactor BEP ↓</button>:<button disabled={status==="pending"} onClick={payment==="EDG"?payEdg:startBnb}>{status==="pending"?"Confirming payment...":payment==="EDG"?"Pay 5,000 EDG with MetaMask":"Pay securely with BNB · $100"}</button>}
-    {message&&<p className="rx-payment-message">{message}</p>}
   </div>;
 }
