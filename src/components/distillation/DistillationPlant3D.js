@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import "./Distillation.css";
 
 const mat=(color,metalness=.35)=>new THREE.MeshStandardMaterial({color,metalness,roughness:.34});
 function box(g,size,pos,color){const m=new THREE.Mesh(new THREE.BoxGeometry(...size),mat(color));m.position.set(...pos);g.add(m);return m;}
@@ -10,7 +11,7 @@ function pump(g,pos,color){cyl(g,.18,.5,pos,color).rotation.z=Math.PI/2;box(g,[.
 function label(g,text,pos){const c=document.createElement("canvas");c.width=500;c.height=90;const x=c.getContext("2d");x.fillStyle="rgba(255,255,255,.94)";x.fillRect(2,2,496,86);x.strokeStyle="#9aa7b8";x.strokeRect(2,2,496,86);x.fillStyle="#172238";x.font="700 31px Arial";x.textAlign="center";x.textBaseline="middle";x.fillText(text,250,46);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));s.position.set(...pos);s.scale.set(2.6,.47,1);g.add(s);}
 
 export default function DistillationPlant3D({data,inputs}){
-  const mountRef=useRef(null);const [view,setView]=useState("iso");
+  const mountRef=useRef(null);const [view,setView]=useState("iso");const [showLabels,setShowLabels]=useState(true);
   useEffect(()=>{
     const mount=mountRef.current;if(!mount)return undefined;const w=mount.clientWidth||850,h=Math.max(420,Math.min(610,w*.62));
     const scene=new THREE.Scene();scene.background=new THREE.Color(0xf3f6fa);const camera=new THREE.PerspectiveCamera(38,w/h,.1,120);
@@ -30,11 +31,13 @@ export default function DistillationPlant3D({data,inputs}){
     pipe(p,[[6.3,2,-1.6],[5.35,2,-2.4],[5.35,columnH*.68,-2.4],[1.3,columnH*.68,0]],0x3b82f6,.07);
     pipe(p,[[0,.55,0],[2.25,.55,2.5],[3.4,1.2,2.5],[0,1.1,0]],0xe49a26,.08);
     pipe(p,[[6.3,1.1,-1.6],[6.2,1.1,-3.6]],0x7c4de8,.065);pipe(p,[[0,.5,0],[6.2,.5,3.6]],0xe49a26,.065);
-    label(p,"C-101 DISTILLATION COLUMN",[0,columnH+1.45,0]);label(p,"E-101 FEED PREHEATER",[-3.7,2.35,.25]);label(p,"E-102 CONDENSER",[4.1,columnH+1.2,-.2]);label(p,"V-101 REFLUX DRUM",[6.3,3.35,-1.6]);label(p,"E-103 REBOILER",[3.4,2.5,2.5]);label(p,"TK-101 FEED",[-6.2,2.75,2.4]);
+    if(showLabels){
+      label(p,"C-101 DISTILLATION COLUMN",[0,columnH+1.45,0]);label(p,"E-101 FEED PREHEATER",[-3.7,2.35,.25]);label(p,"E-102 CONDENSER",[4.1,columnH+1.2,-.2]);label(p,"V-101 REFLUX DRUM",[6.3,3.35,-1.6]);label(p,"E-103 REBOILER",[3.4,2.5,2.5]);label(p,"TK-101 FEED",[-6.2,2.75,2.4]);label(p,"TK-102 DISTILLATE",[6.2,2.35,-3.6]);label(p,"TK-103 BOTTOMS",[6.2,2.35,3.6]);
+    }
     p.rotation.y=-.28;let drag=false,last={x:0,y:0};const down=e=>{drag=true;last={x:e.clientX,y:e.clientY};},up=()=>drag=false,move=e=>{if(!drag)return;p.rotation.y+=(e.clientX-last.x)*.008;p.rotation.x=Math.max(-.25,Math.min(.3,p.rotation.x+(e.clientY-last.y)*.004));last={x:e.clientX,y:e.clientY};};
     renderer.domElement.addEventListener("pointerdown",down);window.addEventListener("pointerup",up);window.addEventListener("pointermove",move);let frame;const draw=()=>{frame=requestAnimationFrame(draw);renderer.render(scene,camera)};draw();
     const resize=()=>{const nw=mount.clientWidth||w;camera.aspect=nw/h;camera.updateProjectionMatrix();renderer.setSize(nw,h)};window.addEventListener("resize",resize);
     return()=>{cancelAnimationFrame(frame);window.removeEventListener("resize",resize);window.removeEventListener("pointerup",up);window.removeEventListener("pointermove",move);renderer.domElement.removeEventListener("pointerdown",down);renderer.dispose();scene.traverse(o=>{o.geometry?.dispose();o.material?.dispose?.()});if(renderer.domElement.parentNode===mount)mount.removeChild(renderer.domElement)};
-  },[data,inputs,view]);
-  return <section className="ds3"><header><div><b>Interactive industrial 3D plant</b><span>{inputs.system} · {Number(data.F).toFixed(1)} kmol/h feed</span></div><nav>{["iso","front","side","top"].map(v=><button key={v} className={view===v?"active":""} onClick={()=>setView(v)}>{v}</button>)}</nav></header><div ref={mountRef} className="ds3-canvas"/><footer>Drag to rotate · capacity-responsive preliminary GA · equipment spacing and access allowances shown</footer></section>;
+  },[data,inputs,view,showLabels]);
+  return <div className="ds3"><div className="ds3-toolbar"><div><b>Interactive 3D plant</b><span>{inputs.system} · {Number(data.F).toFixed(1)} kmol/h feed</span></div><div>{["iso","front","side","top"].map(v=><button key={v} className={view===v?"active":""} onClick={()=>setView(v)}>{v}</button>)}<button onClick={()=>setShowLabels(value=>!value)}>{showLabels?"Hide":"Show"} tags</button></div></div><div ref={mountRef} className="ds3-canvas"/><div className="ds3-key"><span><i className="feed"/>Feed</span><span><i className="vapor"/>Overhead vapor</span><span><i className="cooling"/>Reflux / cooling</span><span><i className="reboil"/>Reboiler circuit</span><span><i className="product"/>Products</span><small>Drag to rotate · capacity-responsive preliminary GA</small></div></div>;
 }
