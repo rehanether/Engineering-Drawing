@@ -7,6 +7,7 @@ import tokenMeta from "../../EnggDrawTokenABI.json";
 import { openShoplineCheckout, shoplineCheckoutEnabled } from "../payments/shoplineCheckout";
 import { useEdgLivePrice } from "../payments/useEdgLivePrice";
 import "./ReactorSimulator.css";
+import "../EngineeringProductParity.css";
 
 const DEFAULTS = { preset:"pharma", ...REACTOR_PRESETS.pharma, projectName:"Pharmaceutical API Intermediate Reactor", clientName:"Client / End User" };
 const configuredApiBase=process.env.REACT_APP_API_BASE_URL||"";
@@ -79,7 +80,7 @@ export default function ReactorSimulator() {
         <div className="rx-flow"><span><b>01</b> Process basis</span><span><b>02</b> Simulate reactor</span><span><b>03</b> Review plant</span></div>
       </div>
       <div className="rx-input-card">
-        <div className="rx-card-head"><div><small>COMMERCIAL CONCEPT DESIGN</small><h2>Reactor basis</h2></div><button onClick={reset}>Reset</button></div>
+        <div className="rx-card-head"><div><small>COMMERCIAL PLANT DESIGN</small><h2>Process basis</h2></div><span>1–5 m³</span></div>
         <button className="rx-reference" onClick={()=>applyPreset(inputs.preset)}>
           <strong>{activePreset.badge}</strong><span><b>{activePreset.label}</b><small>{activePreset.summary}</small></span><i>Use →</i>
         </button>
@@ -119,13 +120,13 @@ export default function ReactorSimulator() {
             </div>
           </details>
         </details>
-        <div className="rx-live"><span><i/> LIVE MODEL</span><b>{design.process.processVolumeM3} m³ process volume</b><small>{Math.abs(design.thermal.totalDutyKw)} kW thermal duty · {design.mechanical.connectedLoadKw} kW connected load</small></div>
+        <div className="rx-live"><span><i/> LIVE SIMULATION</span><small>Mass balance closed at {design.process.balanceClosureKgH} kg/h · {design.process.processVolumeM3} m³ process volume · {Math.abs(design.thermal.totalDutyKw)} kW thermal duty.</small><button type="button" onClick={reset}>Reset design basis</button></div>
       </div>
     </section>
 
     <section className="rx-results">
       <div className="rx-summary">
-        <div><span className="rx-kicker">PRELIMINARY BASIC ENGINEERING</span><h2>{design.inputs.capacity} {design.inputs.type==="Batch"?"m³":"m³/h"} {design.inputs.type} reactor system</h2><p>{design.process.productionM3Day} m³/day nominal production · {design.inputs.conversionPct}% conversion · {design.inputs.moc}</p></div>
+        <div><span className="rx-kicker">Preliminary basic engineering package</span><h2>{design.inputs.capacity} {design.inputs.type==="Batch"?"m³":"m³/h"} {design.inputs.type} reactor system</h2><p>{design.process.productionM3Day} m³/day nominal production · {design.inputs.conversionPct}% conversion · {design.inputs.moc}</p></div>
         <div className="rx-kpis">
           <Kpi name="DESIGN VOLUME" value={design.process.designVolumeM3} unit="m³"/>
           <Kpi name="HEAT DUTY" value={Math.abs(design.thermal.totalDutyKw)} unit="kW"/>
@@ -135,33 +136,28 @@ export default function ReactorSimulator() {
           <Kpi name="CAPEX" value={`$${money(design.cost.installedUsd)}`} unit="Class 4"/>
         </div>
       </div>
-      <div className="rx-tabs">{[["pfd","PFD + balance",false],["3d","3D plant",false],["cost","Budget estimate",false],["details","Engineering schedules",true]].map(([key,label,locked])=><button key={key} className={`${tab===key?"active":""} ${locked?"locked":""}`} onClick={()=>setTab(key)}>{locked&&<span aria-hidden="true">🔒</span>}{label}</button>)}</div>
+      <div className="rx-tabs">{[["pfd","PFD",false],["3d","3D plant",false],["cost","Budget estimate",false],["operation","Operating overview",true],["balance","Detailed balance",true],["equipment","Equipment schedule",true],["lines","Lines & valves",true]].map(([key,label,locked])=><button key={key} className={`${tab===key?"active":""} ${locked?"locked":""}`} onClick={()=>setTab(key)}>{locked&&<span aria-hidden="true">🔒</span>}{label}</button>)}</div>
       <div className="rx-workspace">
         <div className="rx-main">
           {tab==="pfd"&&<ReactorPfd design={design} pfdRef={pfdRef}/>}
           {tab==="3d"&&<ReactorPlant3D design={design}/>}
           {tab==="cost"&&<CostPanel design={design}/>}
-          {tab==="details"&&<LockedPanel status={paymentStatus}/>}
+          {tab==="operation"&&<LockedPanel title="Operating overview" description="Design setpoints, process sequence, equipment duties, temperatures, controls, alarms and operating envelope."/>}
+          {tab==="balance"&&<LockedPanel title="Feed, component and heat balance" description="Auditable stream-by-stream reactants, reagent, carrier, product, conversion, thermal duty and utility balance."/>}
+          {tab==="equipment"&&<LockedPanel title="Equipment schedule" description="Tagged reactors, tanks, exchangers, agitators, pumps, motors, materials and preliminary specifications."/>}
+          {tab==="lines"&&<LockedPanel title="Line and valve schedules" description="Line numbers, services, pipe sizes, velocities, materials, valves, instruments and control functions."/>}
+          {tab!=="pfd"&&<div className="rx-hidden-pfd"><ReactorPfd design={design} pfdRef={pfdRef}/></div>}
         </div>
         <aside className="rx-side">
           <small>PROFESSIONAL BEP · SECURE CHECKOUT</small><h3>Complete reactor engineering package</h3>
-          <ul className="rx-deliverables"><li>Controlled branded design report</li><li>Feed, component and heat balance</li><li>Equipment, motor and utility schedules</li><li>Line-sizing and preliminary valve basis</li><li>Editable PFD SVG, 3D OBJ and design JSON</li><li>Class 4 budgetary cost estimate</li></ul>
-          <h4>Live design snapshot</h4>
-          <dl>
-            <div><dt>Reactor geometry</dt><dd>Ø {design.geometry.diameterM} × {design.geometry.totalHeightM} m</dd></div>
-            <div><dt>Process line</dt><dd>{design.piping.process.nps} · {design.piping.process.velocityMS} m/s</dd></div>
-            <div><dt>Utility line</dt><dd>{design.piping.utility.nps} · {design.piping.utility.velocityMS} m/s</dd></div>
-            <div><dt>Feed pump</dt><dd>{design.mechanical.feedPumpKw} kW</dd></div>
-            <div><dt>Utility demand</dt><dd>{design.thermal.utilityFlowM3H} m³/h</dd></div>
-            <div><dt>Plant envelope</dt><dd>{design.layout.lengthM} × {design.layout.widthM} × {design.layout.heightM} m</dd></div>
-          </dl>
+          <ul className="rx-deliverables"><li>Controlled client document cover</li><li>Branded design report</li><li>Professional calculation workbook</li><li>Budgetary CAPEX estimate</li><li>Detailed preliminary P&amp;ID</li><li>Feed, component and heat balance</li><li>Equipment, line and valve schedules</li><li>Editable concept 3D model (.OBJ)</li><li>Design data JSON</li></ul>
           <ReactorCheckout payment={payment} setPayment={setPayment} status={paymentStatus} message={message} startBnb={startBnb} payEdg={payEdg} payShopline={payShopline} shoplineEnabled={shoplineEnabled} download={downloadPackage} edgLive={edgLive}/>
           <p className="rx-private-note">Detailed operating overview, feed and component balance, equipment schedule, line list and valve basis are included only in the purchased BEP.</p>
           <p>Reaction kinetics, calorimetry, relief sizing, HAZOP, hazardous-area classification and code design require project-specific professional review.</p>
         </aside>
       </div>
+      <section className="rx-advisor"><div><span>AI ENGINEERING REVIEW</span><b>Calculation-led design check</b></div><ul>{design.advisor.slice(0,3).map(item=><li key={item}>{item}</li>)}</ul></section>
       <div className="rx-warnings">{design.warnings.length?design.warnings.map(w=><p key={w}>⚠ {w}</p>):<p className="ok">✓ Inputs are within the preliminary simulator envelope. Confirm laboratory and safety data before vendor issue.</p>}</div>
-      <section className="rx-advisor"><span className="rx-kicker">AI-ASSISTED ENGINEERING REVIEW</span><h3>Calculation-led design recommendations</h3><ul>{design.advisor.map(item=><li key={item}>{item}</li>)}</ul><p>Rule-based guidance—not autonomous process-safety approval. Confirm through laboratory development and authorized engineering review.</p></section>
     </section>
     <section className="rx-seo-content"><span className="rx-kicker">INDUSTRIAL REACTOR ENGINEERING</span><h2>From feed basis to a review-ready reactor concept</h2><p>The simulator connects reaction basis, preliminary kinetics, vessel geometry, agitation, heat-transfer duty, utilities and plant arrangement in one auditable workflow for early project decisions.</p><div><article><h3>Batch, CSTR and PFR workflows</h3><p>Compare reactor type, working capacity and conversion while keeping feed, duty and equipment results synchronized.</p></article><article><h3>Live PFD and 3D arrangement</h3><p>Review tagged equipment, process flow, utility connections, vessel proportions and access spacing before purchasing the controlled package.</p></article><article><h3>Professional BEP deliverables</h3><p>Download branded schedules and editable engineering files after secure BNB, EDG or configured SHOPLINE hosted checkout.</p></article></div><p className="rx-seo-note">Preliminary engineering only. Final reaction kinetics, pressure-relief, mechanical design, materials, controls, HAZOP and statutory compliance require project-specific data and authorized professional review.</p></section>
   </main>;
@@ -181,15 +177,19 @@ function ReactorCheckout({payment,setPayment,status,message,startBnb,payEdg,payS
 function ReactorPfd({design,pfdRef}) {
   const d=design;
   return <div className="rx-pfd">
-    <div className="rx-pfd-head"><div><small>ED-RX-PFD-001 · REV 00</small><b>Live process flow diagram and balance</b></div><span>{d.inputs.type} · {d.inputs.capacity} {d.inputs.type==="Batch"?"m³/batch":"m³/h"}</span></div>
-    <div className="rx-balance">
-      <article><small>S-01 MAIN FEED</small><b>{d.process.feedKgH} kg/h</b><span>{d.process.feedVolumeM3H} m³/h · {d.inputs.feedTempC}°C</span></article>
-      <article><small>S-02 REAGENT B</small><b>{d.components.bAsChargedKgH} kg/h</b><span>{d.inputs.stoichBPerA} mol B/mol A · {d.inputs.purityBPct}% purity</span></article>
-      <article><small>S-05 PRODUCT</small><b>{d.process.productKgH} kg/h</b><span>closure {d.process.balanceClosureKgH} kg/h</span></article>
-      <article><small>REACTION DUTY</small><b>{d.thermal.reactionDutyKw} kW</b><span>ΔH {d.inputs.heatReactionKjMol} kJ/mol</span></article>
-      <article><small>TOTAL DUTY</small><b>{d.thermal.totalDutyKw} kW</b><span>{d.thermal.sensibleKw} kW sensible</span></article>
-      <article><small>UTILITY</small><b>{d.thermal.utilityFlowM3H} m³/h</b><span>{d.thermal.heatAreaM2} m² transfer area</span></article>
+    <div className="rx-pfd-head"><span>Process Flow Diagram (PFD)</span><small>{d.inputs.type} · {d.inputs.capacity} {d.inputs.type==="Batch"?"m³/batch":"m³/h"} · {d.inputs.moc}</small></div>
+    <div className="rx-hmb-live">
+      <div className="rx-hmb-heading"><span><i/> LIVE FEED, HEAT &amp; COMPONENT BALANCE</span><small>{d.process.productionM3Day} m³/day · {d.inputs.conversionPct}% conversion · {d.inputs.reactorTempC}°C reactor</small></div>
+      <div className="rx-balance">
+        <article><small>S-01 MAIN FEED</small><b>{d.process.feedKgH} kg/h</b><span>{d.process.feedVolumeM3H} m³/h · {d.inputs.feedTempC}°C</span></article>
+        <article><small>S-02 REAGENT B</small><b>{d.components.bAsChargedKgH} kg/h</b><span>{d.inputs.stoichBPerA} mol B/mol A · {d.inputs.purityBPct}% purity</span></article>
+        <article><small>S-05 PRODUCT</small><b>{d.process.productKgH} kg/h</b><span>closure {d.process.balanceClosureKgH} kg/h</span></article>
+        <article><small>REACTION DUTY</small><b>{d.thermal.reactionDutyKw} kW</b><span>ΔH {d.inputs.heatReactionKjMol} kJ/mol</span></article>
+        <article><small>TOTAL DUTY</small><b>{d.thermal.totalDutyKw} kW</b><span>{d.thermal.sensibleKw} kW sensible</span></article>
+        <article><small>UTILITY</small><b>{d.thermal.utilityFlowM3H} m³/h</b><span>{d.thermal.heatAreaM2} m² transfer area</span></article>
+      </div>
     </div>
+    <div className="rx-capacity-basis"><b>{d.inputs.type} reactor process configuration</b><span>R-101 Ø {d.geometry.diameterM} × {d.geometry.totalHeightM} m</span><span>{d.mechanical.agitatorMotorKw||0} kW agitator</span><span>{d.layout.lengthM} × {d.layout.widthM} × {d.layout.heightM} m plant</span></div>
     <svg ref={pfdRef} viewBox="0 0 1120 550" role="img" aria-label="Live reactor process flow diagram">
       <defs><marker id="rx-arrow-g" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8z" fill="#1f9d73"/></marker><marker id="rx-arrow-p" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8z" fill="#7c4de8"/></marker><marker id="rx-arrow-b" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8z" fill="#348bd6"/></marker></defs>
       <text x="45" y="40" className="title">ENGINEERING DRAWING · REACTOR PROCESS SIMULATION</text>
@@ -202,7 +202,8 @@ function ReactorPfd({design,pfdRef}) {
       <rect x="525" y="430" width="230" height="70" rx="10" className="utility"/><text x="640" y="458" className="tag">CU-101 UTILITY SKID</text><text x="640" y="482" className="note">{d.thermal.utilityFlowM3H} m³/h · {d.thermal.heatAreaM2} m²</text>
       <path d="M580 430 V370" className="util"/><path d="M700 370 V430" className="util"/>
       <path d="M640 75 V42 H820 V170" className="vent"/><text x="742" y="60" className="note">Vent / condenser connection</text>
-      <text x="50" y="520" className="footer">Preliminary PFD · green feed · purple product · blue utility · values update from simulator inputs</text>
+      <text x="50" y="505" className="footer">Live preliminary PFD · green feed · purple product · blue utility · values update from simulation inputs</text>
+      <g className="title-block"><rect x="50" y="516" width="1025" height="26"/><line x1="665" y1="516" x2="665" y2="542"/><line x1="850" y1="516" x2="850" y2="542"/><text x="64" y="534" className="company">ENGINEERING DRAWING</text><text x="680" y="533">Document: ED-RX-PFD-001</text><text x="866" y="533">Rev P01 · PRELIMINARY</text></g>
     </svg>
   </div>;
 }
@@ -211,7 +212,6 @@ function CostPanel({design}) {
   const rows=[["Reactor, internals and agitator",.34],["Heat-transfer and utility skid",.19],["Pumps, piping and valves",.14],["Instrumentation and electrical",.13],["Structure, installation and engineering",.2]];
   return <div className="rx-cost"><div><small>PRELIMINARY INSTALLED CAPEX</small><b>${money(total)}</b><span>₹{money(design.cost.installedInr)}</span></div><ul>{rows.map(([name,share])=><li key={name}><span>{name}</span><b>${money(Math.round(total*share))}</b><em>₹{money(Math.round(design.cost.installedInr*share))}</em></li>)}</ul><p><b>{design.cost.accuracy}.</b> Excludes land, taxes, building, major offsites, validation, statutory fees and owner costs.</p></div>;
 }
-function LockedPanel({status}) {
-  return <div className="rx-locked"><span>{status==="paid"?"✓":"🔒"}</span><small>PROFESSIONAL BASIC ENGINEERING PACKAGE</small><h3>Controlled reactor design deliverables</h3><p>Branded report, feed and heat/mass balance, equipment schedule, line basis, PFD SVG, design JSON and editable concept OBJ are supplied after payment.</p><div>{[1,2,3,4,5].map(v=><i key={v}/>)}</div>
-  </div>;
+function LockedPanel({title,description}) {
+  return <div className="rx-locked"><span>🔒</span><small>INCLUDED IN PROFESSIONAL BEP</small><h3>{title}</h3><p>{description}</p><div>{[1,2,3,4].map(v=><i key={v}/>)}</div><button type="button" onClick={()=>document.querySelector('.rx-side')?.scrollIntoView({behavior:'smooth',block:'center'})}>Unlock complete engineering package · $100</button></div>;
 }
