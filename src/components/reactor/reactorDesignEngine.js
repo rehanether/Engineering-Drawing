@@ -18,7 +18,9 @@ function standardMotor(requiredKw) {
 
 export const REACTOR_PRESETS = {
   pharma: {
-    label: "Pharmaceutical API intermediate (illustrative)",
+    label: "Pharmaceutical API intermediate (illustrative)", badge: "1 m³ batch",
+    summary: "8 h cycle · 90% conversion · jacketed SS316L vessel",
+    note: "Reference feed for a solvent-based pharmaceutical intermediate",
     type: "Batch", capacity: 1, concentrationMolM3: 850, conversionPct: 90, reactionOrder: 1,
     rateConstant: 0.0008, batchTimeH: 8, feedTempC: 25, reactorTempC: 65,
     densityKgM3: 950, cpKjKgK: 2.8, heatReactionKjMol: -85, viscosityCp: 5,
@@ -27,7 +29,9 @@ export const REACTOR_PRESETS = {
     utilityOutC: 30, moc: "SS316L", volatileService: true, cipRequired: true,
   },
   fineChemical: {
-    label: "General fine chemical synthesis",
+    label: "General fine chemical synthesis", badge: "1 m³ batch",
+    summary: "8 h cycle · 85% conversion · volatile solvent service",
+    note: "Flexible multipurpose fine-chemical batch reference",
     type: "Batch", capacity: 1, concentrationMolM3: 1000, conversionPct: 85, reactionOrder: 1,
     rateConstant: 0.0012, batchTimeH: 8, feedTempC: 30, reactorTempC: 75,
     densityKgM3: 1000, cpKjKgK: 3.2, heatReactionKjMol: -65, viscosityCp: 12,
@@ -36,7 +40,9 @@ export const REACTOR_PRESETS = {
     utilityOutC: 35, moc: "SS316L", volatileService: true, cipRequired: false,
   },
   aqueous: {
-    label: "Aqueous reaction / neutralization",
+    label: "Aqueous reaction / neutralization", badge: "1 m³/h",
+    summary: "Continuous CSTR · 95% conversion · aqueous duty",
+    note: "Reference feed for a continuous aqueous neutralization system",
     type: "CSTR", capacity: 1, concentrationMolM3: 700, conversionPct: 95, reactionOrder: 1,
     rateConstant: 0.003, batchTimeH: 6, feedTempC: 25, reactorTempC: 40,
     densityKgM3: 1030, cpKjKgK: 4, heatReactionKjMol: -55, viscosityCp: 2,

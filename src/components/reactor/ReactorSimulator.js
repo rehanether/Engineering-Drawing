@@ -1,17 +1,21 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { BrowserProvider, Contract, parseUnits } from "ethers";
+import { BrowserProvider, Contract, formatUnits, parseUnits } from "ethers";
 import ReactorPlant3D from "./ReactorPlant3D";
 import { calculateReactorDesign, REACTOR_PRESETS } from "./reactorDesignEngine";
 import { createReactorPackage } from "./downloadPackage";
 import tokenMeta from "../../EnggDrawTokenABI.json";
 import { openShoplineCheckout, shoplineCheckoutEnabled } from "../payments/shoplineCheckout";
+import { useEdgLivePrice } from "../payments/useEdgLivePrice";
 import "./ReactorSimulator.css";
 
 const DEFAULTS = { preset:"pharma", ...REACTOR_PRESETS.pharma, projectName:"Pharmaceutical API Intermediate Reactor", clientName:"Client / End User" };
 const configuredApiBase=process.env.REACT_APP_API_BASE_URL||"";
 const API_BASE=/^https?:\/\//.test(configuredApiBase)&&!configuredApiBase.includes("localhost")?configuredApiBase.replace(/\/$/,""):"";
+const EDG_CHAIN_ID="0x38";
+const EDG_AMOUNT="5000";
 const EDG_ADMIN_WALLET="0xD9738cc53E9746a01cAC8EF01aF17fF4e88DD25F";
 const EDG_ABI=["function balanceOf(address) view returns (uint256)","function transfer(address,uint256) returns (bool)"];
+const BSC_RPC=process.env.REACT_APP_BSC_RPC||"https://bsc-dataseed.bnbchain.org";
 
 const number = (value) => Number(value);
 const money = (value) => Number(value).toLocaleString("en-US");
@@ -22,9 +26,11 @@ export default function ReactorSimulator() {
   const [payment,setPayment]=useState("BNB");
   const [paymentStatus,setPaymentStatus]=useState(localStorage.getItem("reactorPackagePaid")?"paid":"idle");
   const [message,setMessage]=useState("");
+  const edgLive=useEdgLivePrice(Number(EDG_AMOUNT));
   const shoplineEnabled=shoplineCheckoutEnabled("reactor");
   const pfdRef=useRef(null);
   const design=useMemo(()=>calculateReactorDesign(inputs),[inputs]);
+  const activePreset=REACTOR_PRESETS[inputs.preset]||REACTOR_PRESETS.pharma;
   const update=(key,value)=>{setInputs(current=>({...current,[key]:value}));setTab("pfd");};
   const reset=()=>{setInputs(DEFAULTS);setTab("pfd");};
   const applyPreset=(key)=>{setInputs(current=>({...current,preset:key,...REACTOR_PRESETS[key]}));setTab("pfd");};
@@ -45,7 +51,15 @@ export default function ReactorSimulator() {
   async function payEdg(){
     if(!window.ethereum){setMessage("Install MetaMask or open this page in its wallet browser.");return;}
     setPaymentStatus("pending");setMessage("");
-    try{await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x38"}]});const provider=new BrowserProvider(window.ethereum);const signer=await provider.getSigner();const buyer=await signer.getAddress();const token=new Contract(tokenMeta.ADDRESS,EDG_ABI,signer);const amount=parseUnits("5000",18);const [balance,gas]=await Promise.all([token.balanceOf(buyer),provider.getBalance(buyer)]);if(balance<amount)throw new Error("This wallet needs at least 5,000 transferable EDG.");if(gas===0n)throw new Error("Add a small amount of BNB for the network fee.");const tx=await token.transfer(EDG_ADMIN_WALLET,amount);setMessage("Waiting for BNB Smart Chain confirmation...");const receipt=await tx.wait();if(receipt.status!==1)throw new Error("Transfer was not confirmed.");localStorage.setItem("reactorPackagePaid",`EDG-${tx.hash}`);setPaymentStatus("paid");setMessage("5,000 EDG confirmed. Professional reactor BEP unlocked.");}catch(error){setPaymentStatus("idle");setMessage(error.shortMessage||error.reason||error.message||"Payment cancelled.");}
+    try{
+      try{await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:EDG_CHAIN_ID}]});}
+      catch(error){if(error.code!==4902)throw error;await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:EDG_CHAIN_ID,chainName:"BNB Smart Chain",nativeCurrency:{name:"BNB",symbol:"BNB",decimals:18},rpcUrls:[BSC_RPC],blockExplorerUrls:["https://bscscan.com"]}]});}
+      const provider=new BrowserProvider(window.ethereum),signer=await provider.getSigner(),buyer=await signer.getAddress(),token=new Contract(tokenMeta.ADDRESS,EDG_ABI,signer),amount=parseUnits(EDG_AMOUNT,18);
+      const [balance,gas]=await Promise.all([token.balanceOf(buyer),provider.getBalance(buyer)]);
+      if(balance<amount){const available=Number(formatUnits(balance,18)).toLocaleString(undefined,{maximumFractionDigits:2}),shortfall=Number(formatUnits(amount-balance,18)).toLocaleString(undefined,{maximumFractionDigits:2});throw new Error(`Insufficient EDG balance. This wallet has ${available} EDG and needs ${shortfall} more EDG.`);}
+      if(gas===0n)throw new Error("Add a small amount of BNB to this wallet for the network fee.");
+      setMessage("Confirm the transfer of 5,000 EDG in your wallet...");const tx=await token.transfer(EDG_ADMIN_WALLET,amount);setMessage("Transaction submitted. Waiting for BNB Smart Chain confirmation...");const receipt=await tx.wait();if(!receipt||receipt.status!==1)throw new Error("The EDG transfer was not confirmed.");localStorage.setItem("reactorPackagePaid",`EDG-${tx.hash}`);setPaymentStatus("paid");setMessage("5,000 EDG confirmed. Professional reactor BEP unlocked.");
+    }catch(error){setPaymentStatus("idle");const providerMessage=error.shortMessage||error.reason||error.message||"";setMessage(/insufficient funds/i.test(providerMessage)?"Insufficient BNB for the network fee. Add a small amount of BNB and try again.":/execution reverted|unknown custom error|call exception/i.test(providerMessage)?"The EDG contract rejected this transfer. Confirm the wallet holds at least 5,000 transferable EDG.":providerMessage||"Payment cancelled.");}
   }
   function payShopline(){
     setMessage("");
@@ -66,6 +80,9 @@ export default function ReactorSimulator() {
       </div>
       <div className="rx-input-card">
         <div className="rx-card-head"><div><small>COMMERCIAL CONCEPT DESIGN</small><h2>Reactor basis</h2></div><button onClick={reset}>Reset</button></div>
+        <button className="rx-reference" onClick={()=>applyPreset(inputs.preset)}>
+          <strong>{activePreset.badge}</strong><span><b>{activePreset.label}</b><small>{activePreset.summary}</small></span><i>Use →</i>
+        </button>
         <div className="rx-primary">
           <label>INDUSTRY REFERENCE<select value={inputs.preset} onChange={e=>applyPreset(e.target.value)}>{Object.entries(REACTOR_PRESETS).map(([key,p])=><option key={key} value={key}>{p.label}</option>)}</select><small>Illustrative basis only — replace with laboratory and batch-record data</small></label>
           <label>REACTOR TYPE<select value={inputs.type} onChange={e=>update("type",e.target.value)}><option>Batch</option><option>CSTR</option><option>PFR</option></select><small>{inputs.type==="Batch"?"Jacketed stirred batch vessel":inputs.type==="CSTR"?"Continuous stirred-tank reactor":"Tubular plug-flow reactor"}</small></label>
@@ -138,7 +155,8 @@ export default function ReactorSimulator() {
             <div><dt>Utility demand</dt><dd>{design.thermal.utilityFlowM3H} m³/h</dd></div>
             <div><dt>Plant envelope</dt><dd>{design.layout.lengthM} × {design.layout.widthM} × {design.layout.heightM} m</dd></div>
           </dl>
-          <ReactorCheckout payment={payment} setPayment={setPayment} status={paymentStatus} message={message} startBnb={startBnb} payEdg={payEdg} payShopline={payShopline} shoplineEnabled={shoplineEnabled} download={downloadPackage}/>
+          <ReactorCheckout payment={payment} setPayment={setPayment} status={paymentStatus} message={message} startBnb={startBnb} payEdg={payEdg} payShopline={payShopline} shoplineEnabled={shoplineEnabled} download={downloadPackage} edgLive={edgLive}/>
+          <p className="rx-private-note">Detailed operating overview, feed and component balance, equipment schedule, line list and valve basis are included only in the purchased BEP.</p>
           <p>Reaction kinetics, calorimetry, relief sizing, HAZOP, hazardous-area classification and code design require project-specific professional review.</p>
         </aside>
       </div>
@@ -154,10 +172,10 @@ function Field({label,value,unit,min,max,step,onChange}) {
   return <label>{label}<small>{min}–{max}</small><span><input type="number" value={value} min={min} max={max} step={step} onChange={e=>onChange(e.target.value)} onBlur={blur}/>{unit}</span></label>;
 }
 function Kpi({name,value,unit}) { return <span><small>{name}</small><b>{value}</b><em>{unit}</em></span>; }
-function ReactorCheckout({payment,setPayment,status,message,startBnb,payEdg,payShopline,shoplineEnabled,download}) {
+function ReactorCheckout({payment,setPayment,status,message,startBnb,payEdg,payShopline,shoplineEnabled,download,edgLive}) {
   const action=payment==="EDG"?payEdg:payment==="SHOPLINE"?payShopline:startBnb;
   const cta=payment==="EDG"?"Pay 5,000 EDG with MetaMask":payment==="SHOPLINE"?"Continue to SHOPLINE checkout":"Pay securely with BNB · $100";
-  return <section className="rx-checkout"><div className={`rx-payment-choice ${shoplineEnabled?"has-shopline":""}`}><button className={payment==="BNB"?"active":""} onClick={()=>setPayment("BNB")}><i className="bnb">◆</i><b>BNB</b><em>Live $100 equivalent</em></button><button className={payment==="EDG"?"active":""} onClick={()=>setPayment("EDG")}><i><img src="/assets/edg_logo.svg" alt="EDG"/></i><b>EDG</b><em>5,000 EDG</em></button>{shoplineEnabled&&<button className={payment==="SHOPLINE"?"active":""} onClick={()=>setPayment("SHOPLINE")}><i className="shopline">S</i><b>Card</b><em>SHOPLINE hosted</em></button>}</div><div className="rx-price"><span>Production reactor BEP</span><b>{payment==="EDG"?"5,000 EDG":"$100 USD"}</b><em>{payment==="EDG"?"Direct token transfer on BNB Smart Chain":payment==="SHOPLINE"?"Secure hosted card checkout by SHOPLINE":"BNB on BSC · NOWPayments secure checkout"}</em></div>{status==="paid"?<button onClick={download}>Download professional BEP ↓</button>:<button disabled={status==="pending"} onClick={action}>{status==="pending"?"Confirming payment...":cta}</button>}{message&&<p className="rx-payment-message">{message}</p>}</section>;
+  return <section className="rx-checkout"><div className={`rx-payment-choice ${shoplineEnabled?"has-shopline":""}`}><button className={payment==="BNB"?"active":""} onClick={()=>setPayment("BNB")}><i className="bnb">◆</i><b>BNB</b><em>Live $100 equivalent</em></button><button className={payment==="EDG"?"active":""} onClick={()=>setPayment("EDG")}><i className="edg"><img src="/assets/edg_logo.svg" alt="EDG"/></i><b>EDG</b><em>5,000 EDG</em></button>{shoplineEnabled&&<button className={payment==="SHOPLINE"?"active":""} onClick={()=>setPayment("SHOPLINE")}><i className="shopline">S</i><b>Card</b><em>SHOPLINE hosted</em></button>}</div><div className="rx-price"><span>Production reactor BEP</span><b>{payment==="EDG"?"5,000 EDG":"$100"} <small>{payment==="EDG"?`≈ ${edgLive.bnb.toFixed(3)} BNB`:"USD equivalent"}</small></b><em>{payment==="EDG"?`Live BNB Chain price${edgLive.stage?` · presale stage ${edgLive.stage}`:""} · refreshed every 60 seconds`:payment==="SHOPLINE"?"Secure hosted card checkout by SHOPLINE":"BNB on BSC · NOWPayments secure checkout"}</em></div>{status==="paid"?<button onClick={download}>Download professional BEP ↓</button>:<button disabled={status==="pending"} onClick={action}>{status==="pending"?"Confirming payment...":cta}</button>}{message&&<p className="rx-payment-message">{message}</p>}</section>;
 }
 
 function ReactorPfd({design,pfdRef}) {
