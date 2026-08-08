@@ -5,6 +5,10 @@
   padding:42px clamp(16px,4vw,64px) 70px;color:var(--product-ink);
   background:radial-gradient(circle at 86% 4%,rgba(104,71,245,.12),transparent 28%),linear-gradient(180deg,#f7f8fc,#eef2f7)
 }
+.rx-page section,.dsp-page section{min-height:0;align-items:initial;justify-content:initial}
+.rx-checkout,.rx-seo-content,.dsp-pfd,.dsp-hidden,.dsp-locked,.dsp-seo{display:block;align-items:initial;justify-content:initial}
+.rx-checkout{padding:14px 0 0}
+.dsp-pfd,.dsp-hidden,.dsp-cost{padding:0}
 .rx-hero,.dsp-hero{width:min(1420px,100%);margin:0 auto 28px;grid-template-columns:minmax(0,1.05fr) minmax(420px,.95fr);gap:clamp(28px,5vw,76px);align-items:center}
 .rx-copy,.dsp-copy{padding:26px 0}
 .rx-kicker,.dsp-kicker{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
