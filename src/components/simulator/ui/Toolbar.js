@@ -5,8 +5,9 @@ import "../../process/Process.css";
 
 export default function Toolbar() {
   const { state, dispatch } = useSim();
+  const [filter,setFilter] = React.useState("");
 
-  const add = (nodeType, title) => (
+  const add = (nodeType, title) => !title.toLowerCase().includes(filter.toLowerCase()) ? null : (
     <div
       key={nodeType}
       className="edg-palette"
@@ -27,17 +28,27 @@ export default function Toolbar() {
   return (
     <aside className="edg-card edg-sim-toolbar">
       <div className="edg-toolbar-title"><span>Model library</span><small>Drag onto flowsheet</small></div>
+      <div className="edg-model-search"><input value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Search unit operations" aria-label="Search unit operations"/></div>
       <div className="edg-palette-list">
+        <small className="edg-library-group">STREAMS</small>
         {add("FEED", "Feed")}
+        {add("PRODUCT", "Product")}
+        <small className="edg-library-group">MIXING & PRESSURE</small>
         {add("MIXER", "Mixer")}
         {add("SPLITTER", "Splitter")}
-        {add("HEATER", "Heater")}
-        {add("VALVE", "Valve")}
-        {add("HX", "Heat Exchanger")}
         {add("PUMP", "Pump")}
+        {add("COMPRESSOR", "Compressor")}
+        {add("VALVE", "Valve")}
+        <small className="edg-library-group">HEAT TRANSFER</small>
+        {add("HEATER", "Heater")}
+        {add("COOLER", "Cooler")}
+        {add("HX", "Heat Exchanger")}
+        <small className="edg-library-group">SEPARATION</small>
         {add("FLASH", "Flash Drum")}
+        {add("SEP", "Component Separator")}
+        <small className="edg-library-group">REACTION & LOOPS</small>
+        {add("CSTR", "CSTR Reactor")}
         {add("RECYCLE", "Recycle")}
-        {add("PRODUCT", "Product")}
       </div>
     </aside>
   );

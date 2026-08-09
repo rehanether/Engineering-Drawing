@@ -98,7 +98,7 @@ export default function Inspector() {
           </>
         )}
 
-        {sel.type === "HEATER" && (
+        {(sel.type === "HEATER" || sel.type === "COOLER") && (
           <>
             <Num label="Target T (K)" value={s.Tset} onChange={(v) => change({ Tset: v })} />
             {m.duty_kW != null && (
@@ -137,6 +137,18 @@ export default function Inspector() {
               </div>
             )}
           </>
+        )}
+
+        {sel.type === "COMPRESSOR" && (
+          <><Num label="Outlet P (kPa)" value={s.Pout ?? 500} onChange={(v)=>change({Pout:v})}/><Num label="Isentropic efficiency" value={s.eta ?? .75} onChange={(v)=>change({eta:v})} step="0.01"/>{m.shaft_kW!=null&&<div className="edg-result-callout">Power: {m.shaft_kW.toFixed(3)} kW</div>}</>
+        )}
+
+        {sel.type === "SEP" && (
+          <><Num label="Light-key recovery" value={s.recovery ?? .95} onChange={(v)=>change({recovery:v})} step="0.01"/><div className="edg-help-note">Connect two outlets: recovered light key and heavy-key remainder.</div></>
+        )}
+
+        {sel.type === "CSTR" && (
+          <><Num label="Specified conversion" value={s.conversion ?? .7} onChange={(v)=>change({conversion:v})} step="0.01"/><Num label="Reactor temperature (K)" value={s.Tset ?? 350} onChange={(v)=>change({Tset:v})}/>{m.conversion!=null&&<div className="edg-result-callout">Conversion: {(m.conversion*100).toFixed(1)}%</div>}</>
         )}
 
         {sel.type === "FLASH" && (
