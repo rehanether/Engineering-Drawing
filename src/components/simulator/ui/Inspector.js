@@ -2,6 +2,7 @@
 import React from "react";
 import { useSim } from "../state/SimContext";
 import { COMPONENTS } from "../simCore/thermo";
+import "../Validation.css";
 
 function Num({ label, value, onChange, step = "any" }) {
   return (
@@ -38,6 +39,12 @@ export default function Inspector() {
   const s = sel.spec || {};
   const change = (obj) => dispatch({ type: "SET_NODE_SPEC", id: sel.id, spec: obj });
   const m = state.results.meta[sel?.id] || {};
+  const issues = [];
+  state.nodes.forEach(node=>{
+    if(node.type!=="FEED"&&!state.edges.some(edge=>edge.to===node.id))issues.push(`${node.name} has no inlet connection.`);
+    if(node.type!=="PRODUCT"&&!state.edges.some(edge=>edge.from===node.id))issues.push(`${node.name} has no outlet connection.`);
+    if(node.type==="FEED"&&(!(node.spec?.F>0)||!(node.spec?.T>0)||!(node.spec?.P>0)))issues.push(`${node.name} has an invalid feed specification.`);
+  });
 
   const sumMeta = (key) =>
     Object.values(state.results.meta || {}).reduce((t, x) => t + (x?.[key] || 0), 0);
@@ -50,10 +57,10 @@ export default function Inspector() {
           <select
             value={state.propPack}
             onChange={(e) => dispatch({ type: "SET_PROP", pack: e.target.value })}
-            className="edg-chip"
+            className="edg-method-select"
           >
             <option>Raoult</option>
-            <option disabled>Peng–Robinson (soon)</option>
+            <option>Peng–Robinson</option>
           </select>
           <span style={{ marginLeft: "auto", fontSize: 12, color: "#64748b" }}>
             Heater duty: {sumMeta("duty_kW").toFixed(3)} kW • Pump power:{" "}
@@ -61,11 +68,12 @@ export default function Inspector() {
           </span>
         </div>
         <div style={{ fontSize: 12, color: "#64748b" }}>
-          Selected: {sel?.name} ({sel?.type})
+          Selected block · {sel?.name} ({sel?.type})
         </div>
       </div>
 
       <div style={{ padding: 12, overflowY: "auto" }}>
+        <div className={`edg-validation ${issues.length?"warning":"ok"}`}><b>{issues.length?`${issues.length} flowsheet warning${issues.length===1?"":"s"}`:"Flowsheet specification complete"}</b><span>{issues[0]||"All blocks are connected and have usable specifications."}</span></div>
         {sel.type === "FEED" && (
           <>
             <Num label="Flow (mol/h)" value={s.F} onChange={(v) => change({ F: v })} />

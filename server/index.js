@@ -23,6 +23,7 @@ const CONSTRUCTION_PACKAGE_USD = Number(process.env.CONSTRUCTION_PACKAGE_USD || 
 const EVAPORATOR_PACKAGE_USD = Number(process.env.EVAPORATOR_PACKAGE_USD || 100);
 const REACTOR_PACKAGE_USD = Number(process.env.REACTOR_PACKAGE_USD || 100);
 const DISTILLATION_PACKAGE_USD = Number(process.env.DISTILLATION_PACKAGE_USD || 100);
+const PROCESS_PACKAGE_USD = Number(process.env.PROCESS_PACKAGE_USD || 10);
 const NOWPAYMENTS_PAY_CURRENCY = process.env.NOWPAYMENTS_PAY_CURRENCY || 'bnbbsc';
 const paymentOrders = new Map();
 const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
@@ -367,9 +368,48 @@ app.post('/api/payments/nowpayments/distillation/invoice', async (req, res) => {
   }
 });
 
+app.post('/api/payments/nowpayments/process/invoice', async (req, res) => {
+  if (!NOWPAYMENTS_API_KEY || !NOWPAYMENTS_IPN_SECRET) {
+    return res.status(503).json({ error: 'The BNB payment gateway is not configured yet.' });
+  }
+  if (!Number.isFinite(PROCESS_PACKAGE_USD) || PROCESS_PACKAGE_USD <= 0) {
+    return res.status(503).json({ error: 'The process simulation price is not configured.' });
+  }
+  const design = req.body?.design || {};
+  const projectName = String(design.projectName || '').trim().slice(0, 80);
+  const blockCount = Number(design.blockCount);
+  if (!projectName || !Number.isInteger(blockCount) || blockCount < 1 || blockCount > 250) {
+    return res.status(400).json({ error: 'Invalid process simulation details.' });
+  }
+  const orderId = `PD-${crypto.randomUUID()}`;
+  try {
+    const response = await axios.post('https://api.nowpayments.io/v1/invoice', {
+      price_amount: PROCESS_PACKAGE_USD,
+      price_currency: 'usd',
+      pay_currency: NOWPAYMENTS_PAY_CURRENCY,
+      order_id: orderId,
+      order_description: `${projectName} process simulation export (${blockCount} blocks)`,
+      ipn_callback_url: `${PUBLIC_API_URL}/api/payments/nowpayments/ipn`,
+      success_url: `${SITE_URL}/process-design?payment=return&order=${encodeURIComponent(orderId)}`,
+      cancel_url: `${SITE_URL}/process-design?payment=cancelled&order=${encodeURIComponent(orderId)}`,
+      is_fixed_rate: true,
+      is_fee_paid_by_user: true,
+    }, {
+      headers: { 'x-api-key': NOWPAYMENTS_API_KEY, 'Content-Type': 'application/json' },
+      timeout: 15_000,
+    });
+    if (!response.data?.invoice_url || !response.data?.id) throw new Error('NOWPayments returned an incomplete invoice.');
+    await savePaymentOrder(orderId, { invoiceId: String(response.data.id), status: 'waiting' });
+    return res.status(201).json({ orderId, invoiceId: String(response.data.id), invoiceUrl: response.data.invoice_url });
+  } catch (error) {
+    console.error('NOWPayments process invoice error:', error?.response?.status || error.message);
+    return res.status(502).json({ error: 'Could not create the secure BNB checkout. Please try again.' });
+  }
+});
+
 app.get('/api/payments/nowpayments/status/:orderId', async (req, res) => {
   const orderId = String(req.params.orderId || '');
-  if (!/^(CD|EV|RX|DS)-[0-9a-f-]{36}$/i.test(orderId)) {
+  if (!/^(CD|EV|RX|DS|PD)-[0-9a-f-]{36}$/i.test(orderId)) {
     return res.status(400).json({ error: 'Invalid payment order.' });
   }
   try {
@@ -389,7 +429,7 @@ app.post('/api/payments/nowpayments/ipn', async (req, res) => {
   }
   const orderId = String(req.body?.order_id || '');
   const paymentStatus = String(req.body?.payment_status || '').toLowerCase();
-  if (!/^(CD|EV|RX|DS)-[0-9a-f-]{36}$/i.test(orderId)) return res.status(400).json({ error: 'Invalid order.' });
+  if (!/^(CD|EV|RX|DS|PD)-[0-9a-f-]{36}$/i.test(orderId)) return res.status(400).json({ error: 'Invalid order.' });
 
   try {
     await savePaymentOrder(orderId, {

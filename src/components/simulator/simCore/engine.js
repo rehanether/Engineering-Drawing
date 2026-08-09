@@ -1,7 +1,7 @@
 import {
   cpMol,
   volumetricFlow_m3s,
-  flashRaoultBinary,
+  flashBinary,
   KPA_TO_PA,
 } from "./thermo";
 
@@ -196,13 +196,14 @@ function forwardPass(state, recycleOverrides = {}) {
         const z = one?.z ?? 0.5;
         const comp1 = n.spec?.comp1 || "Benzene";
         const comp2 = n.spec?.comp2 || "Toluene";
-        const { V, L, yLK, xLK, K1, K2 } = flashRaoultBinary({
+        const { V, L, yLK, xLK, K1, K2, Vfrac, method } = flashBinary({
           F,
           zLK: z,
           T_K: T,
           P_kPa: P,
           comp1,
           comp2,
+          method: state.propPack,
         });
         const vapor = {
           ...one,
@@ -227,9 +228,10 @@ function forwardPass(state, recycleOverrides = {}) {
         results.meta[n.id] = {
           K_LK: K1,
           K_HK: K2,
-          Vfrac: F > 0 ? V / F : 0,
+          Vfrac,
           xLK,
           yLK,
+          method,
         };
         continue;
       }

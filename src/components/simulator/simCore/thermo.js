@@ -1,75 +1,53 @@
-// src/components/simulator/simCore/thermo.js
-
 export const KPA_TO_PA = 1000;
-export const R = 8.314; // J/mol-K
+export const R = 8.314462618;
 
-// Simple Antoine constants DB (T in °C, P in mmHg)
-export const AntoineDB = {
-  water: { A: 8.07131, B: 1730.63, C: 233.426 },
-  ethanol: { A: 8.20417, B: 1642.89, C: 230.3 },
-  methanol: { A: 8.0724, B: 1582.27, C: 239.7 },
-  benzene: { A: 6.90565, B: 1211.033, C: 220.79 },
+export const COMPONENT_DB = {
+  Water:    { antoine:[8.07131,1730.63,233.426], Tc:647.10, Pc:22064, omega:0.344, mw:18.015, rho:997, cp:75.3 },
+  Ethanol:  { antoine:[8.20417,1642.89,230.300], Tc:514.00, Pc:6137,  omega:0.644, mw:46.069, rho:789, cp:112.4 },
+  Methanol: { antoine:[8.08097,1582.27,239.730], Tc:512.60, Pc:8090,  omega:0.565, mw:32.042, rho:792, cp:81.1 },
+  Benzene:  { antoine:[6.90565,1211.03,220.790], Tc:562.02, Pc:4894,  omega:0.212, mw:78.114, rho:876, cp:136.1 },
+  Toluene:  { antoine:[6.95464,1344.80,219.480], Tc:591.75, Pc:4126,  omega:0.264, mw:92.141, rho:867, cp:157.3 },
+  Acetone:  { antoine:[7.11714,1210.60,229.664], Tc:508.10, Pc:4700,  omega:0.307, mw:58.080, rho:784, cp:125.5 },
+  "n-Hexane": { antoine:[6.87630,1171.53,224.366], Tc:507.60, Pc:3025, omega:0.301, mw:86.178, rho:655, cp:195.0 },
 };
 
-// Unique, nicely-cased component names for dropdowns
-export const COMPONENTS = Array.from(
-  new Set(
-    Object.keys(AntoineDB).map(k => k[0].toUpperCase() + k.slice(1))
-  )
-).filter((v, i, arr) => arr.indexOf(v) === i);
+export const COMPONENTS = Object.keys(COMPONENT_DB);
+export const AntoineDB = Object.fromEntries(Object.entries(COMPONENT_DB).map(([name,c])=>[name,{A:c.antoine[0],B:c.antoine[1],C:c.antoine[2]}]));
 
-
-// Cp molar (rough constant)
-export function cpMol(comp = "water") {
-  switch (comp) {
-    case "ethanol": return 112; // J/mol-K
-    case "methanol": return 81;
-    case "benzene": return 136;
-    default: return 75;
-  }
+export function cpMol(component="Water") { return COMPONENT_DB[component]?.cp || 100; }
+export function volumetricFlow_m3s(F_mol_h, T_K=298, P_kPa=101, component="Water") {
+  const c=COMPONENT_DB[component] || COMPONENT_DB.Water;
+  return ((F_mol_h/3600)*c.mw/1000)/c.rho;
 }
 
-// Volumetric flow from molar
-export function volumetricFlow_m3s(n_mol_s, MW_gmol, rho_kgm3) {
-  const mass_kg_s = (n_mol_s * MW_gmol) / 1000;
-  return mass_kg_s / rho_kgm3;
+function psatKPa(component,T_K){
+  const c=COMPONENT_DB[component] || COMPONENT_DB.Water;
+  const T_C=T_K-273.15;
+  return Math.pow(10,c.antoine[0]-c.antoine[1]/(T_C+c.antoine[2]))/7.50062;
 }
 
-// Simple Raoult’s law isothermal flash (binary mix)
-export function flashRaoultBinary(z, T_C, P_kPa, comp1 = "water", comp2 = "ethanol") {
-  const T = T_C;
-  const P = P_kPa * 7.50062; // convert kPa → mmHg
-
-  const Psat1 = Math.pow(10, AntoineDB[comp1].A - AntoineDB[comp1].B / (T + AntoineDB[comp1].C));
-  const Psat2 = Math.pow(10, AntoineDB[comp2].A - AntoineDB[comp2].B / (T + AntoineDB[comp2].C));
-
-  const K1 = Psat1 / P;
-  const K2 = Psat2 / P;
-
-  // Rachford–Rice for binary
-  const f = v => (z[0] * (K1 - 1)) / (1 + v * (K1 - 1)) + (z[1] * (K2 - 1)) / (1 + v * (K2 - 1));
-  let v = 0.5;
-  for (let i = 0; i < 20; i++) {
-    const fv = f(v);
-    v -= fv / ((f(v + 1e-6) - fv) / 1e-6); // Newton
-    v = Math.min(Math.max(v, 0), 1);
-  }
-
-  const x1 = z[0] / (1 + v * (K1 - 1));
-  const x2 = 1 - x1;
-  const y1 = K1 * x1;
-  const y2 = 1 - y1;
-
-  return { vaporFrac: v, x: [x1, x2], y: [y1, y2] };
+function wilsonK(component,T_K,P_kPa){
+  const c=COMPONENT_DB[component] || COMPONENT_DB.Water;
+  return (c.Pc/P_kPa)*Math.exp(5.373*(1+c.omega)*(1-c.Tc/T_K));
 }
 
-// Existing stub
-export function flashVT(F_mol_s = 100, T_K = 373, P_kPa = 101) {
-  const Hvap = 40e3; // J/mol
-  const fracV = Math.min(1, Math.max(0, (T_K - 350) / 50));
-  return {
-    vapor: F_mol_s * fracV,
-    liquid: F_mol_s * (1 - fracV),
-    Q_W: F_mol_s * fracV * Hvap,
-  };
+function rachfordRice(z1,K1,K2){
+  const z=Math.max(0,Math.min(1,z1));
+  const f=v=>z*(K1-1)/(1+v*(K1-1))+(1-z)*(K2-1)/(1+v*(K2-1));
+  if(f(0)<=0) return 0;
+  if(f(1)>=0) return 1;
+  let lo=0,hi=1;
+  for(let i=0;i<80;i++){const mid=(lo+hi)/2;if(f(mid)>0)lo=mid;else hi=mid;}
+  return (lo+hi)/2;
 }
+
+export function flashBinary({F=0,zLK=0.5,T_K=340,P_kPa=101,comp1="Benzene",comp2="Toluene",method="Raoult"}){
+  const K1=method.startsWith("Peng")?wilsonK(comp1,T_K,P_kPa):psatKPa(comp1,T_K)/P_kPa;
+  const K2=method.startsWith("Peng")?wilsonK(comp2,T_K,P_kPa):psatKPa(comp2,T_K)/P_kPa;
+  const vf=rachfordRice(zLK,K1,K2);
+  const x1=zLK/(1+vf*(K1-1));
+  const y1=K1*x1;
+  return {V:F*vf,L:F*(1-vf),Vfrac:vf,xLK:x1,yLK:y1,K1,K2,method};
+}
+
+export const flashRaoultBinary = args => flashBinary({...args,method:"Raoult"});
