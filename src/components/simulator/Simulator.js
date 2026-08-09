@@ -26,6 +26,9 @@ function InnerSim() {
   const [paymentStatus,setPaymentStatus]=useState(localStorage.getItem("processSimulationPaid")?"paid":"idle");
   const [paymentMessage,setPaymentMessage]=useState("");
   const edgLive=useEdgLivePrice(Number(EDG_AMOUNT));
+  const [workspaceTab,setWorkspaceTab]=useState("Flowsheet");
+  const [runState,setRunState]=useState("Solved");
+  const runSimulation=()=>{setRunState("Solving");window.setTimeout(()=>{dispatch({type:"RUN"});setRunState("Solved");},350);};
 
   const downloadCase = () => {
     const blob = new Blob([JSON.stringify({...state, exportedAt:new Date().toISOString()}, null, 2)], {type:"application/json"});
@@ -81,12 +84,27 @@ function InnerSim() {
 
   return (
     <div className="edg-process-shell">
+      <nav className="edg-sim-menubar" aria-label="Simulation workspace">
+        <div className="edg-product-mark"><b>ED</b><span>Process Studio<small>Professional flowsheet simulation</small></span></div>
+        {["Properties","Simulation","Safety","Economics","Reports"].map(tab=><button key={tab} className={workspaceTab===tab?"active":""} onClick={()=>setWorkspaceTab(tab)}>{tab}</button>)}
+        <span className="edg-case-version">Case v1.0 · SI Units</span>
+      </nav>
+      <div className="edg-workspace-tabs">
+        {["Flowsheet","Components","Thermodynamics","Convergence","Analysis","Results"].map(tab=><button key={tab} className={workspaceTab===tab?"active":""} onClick={()=>setWorkspaceTab(tab)}>{tab}</button>)}
+      </div>
       <div className="edg-sim-topbar">
         <div><span className="edg-eyebrow">PROCESS DESIGN STUDIO</span><input value={state.projectName} onChange={e=>dispatch({type:"SET_NAME",name:e.target.value})} aria-label="Simulation name" /></div>
-        <div className="edg-solver-status"><i/>Solved <span>{Object.keys(state.results.streams||{}).length} streams</span></div>
+        <div className={`edg-solver-status ${runState.toLowerCase()}`}><i/>{runState} <span>{Object.keys(state.results.streams||{}).length} streams</span></div>
         <button className="edg-ghost-action" disabled={paymentStatus!=="paid"} onClick={downloadCase}>{paymentStatus==="paid"?"Save case":"🔒 Save case"}</button>
         <button className="edg-ghost-action" disabled={paymentStatus!=="paid"} onClick={downloadStreams}>{paymentStatus==="paid"?"Export CSV":"🔒 Export CSV"}</button>
-        <button className="edg-run-action" onClick={()=>dispatch({type:"RUN"})}>▶ Run simulation</button>
+        <button className="edg-run-action" onClick={runSimulation}>▶ Run simulation</button>
+      </div>
+      <div className="edg-ribbon">
+        <div><b>Case</b><button onClick={()=>dispatch({type:"RESET"})}>New</button><button onClick={downloadCase} disabled={paymentStatus!=="paid"}>Save</button></div>
+        <div><b>Flowsheet</b><button onClick={()=>dispatch({type:"RUN"})}>Validate</button><button onClick={runSimulation}>Solve</button></div>
+        <div><b>Property method</b><select value={state.propPack} onChange={e=>dispatch({type:"SET_PROP",pack:e.target.value})}><option>Raoult</option><option>Peng–Robinson</option></select></div>
+        <div><b>Solver</b><span>Wegstein recycle</span><span>Tolerance 1e-4</span></div>
+        <div className="edg-ribbon-summary"><span>Blocks <b>{state.nodes.length}</b></span><span>Connections <b>{state.edges.length}</b></span></div>
       </div>
       <div className="edg-sim-layout">
         <Toolbar />
@@ -103,6 +121,7 @@ function InnerSim() {
         {paymentStatus==="paid"?<button className="edg-paid-action" onClick={downloadCase}>Download simulation case</button>:<button className="edg-pay-action" disabled={paymentStatus==="pending"} onClick={payment==="EDG"?payEdg:startBnb}>{paymentStatus==="pending"?"Confirming payment...":payment==="EDG"?`Pay ${Number(EDG_AMOUNT).toLocaleString()} EDG with MetaMask`:"Pay securely with BNB · $10"}</button>}
         <div className="edg-price-note">{payment==="EDG"?`≈ ${edgLive.bnb.toFixed(3)} BNB · BNB Smart Chain`:"NOWPayments hosted invoice"}{paymentMessage&&<strong>{paymentMessage}</strong>}</div>
       </section>
+      <footer className="edg-statusbar"><span className="ready">● {runState}</span><span>Property environment: {state.propPack}</span><span>Units: SI</span><span>Model: steady state</span><span className="push">Engineering Drawing Process Studio</span></footer>
     </div>
   );
 }

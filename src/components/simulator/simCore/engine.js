@@ -130,7 +130,8 @@ function forwardPass(state, recycleOverrides = {}) {
         continue;
       }
 
-      case "HEATER": {
+      case "HEATER":
+      case "COOLER": {
         const Tin = one?.T ?? 298;
         const Tout = n.spec?.Tset ?? Tin;
         const F = one?.F ?? 0;
@@ -187,6 +188,27 @@ function forwardPass(state, recycleOverrides = {}) {
         };
         results.meta[n.id] = { shaft_kW: shaft_W / 1000 };
         break;
+      }
+
+      case "COMPRESSOR": {
+        const F=one?.F??0, Pin=Math.max(one?.P??101,1), Pout=Math.max(n.spec?.Pout??500,Pin);
+        const eta=Math.max(.1,Math.min(1,n.spec?.eta??.75)), gamma=1.4;
+        const Tout=(one?.T??298)*Math.pow(Pout/Pin,(gamma-1)/(gamma*eta));
+        const shaft_kW=(F/3600)*cpMol((Tout+(one?.T??298))/2)*(Tout-(one?.T??298))/1000;
+        outlet={...outlet,F,P:Pout,T:Tout,phase:"V"}; results.meta[n.id]={shaft_kW}; break;
+      }
+
+      case "SEP": {
+        const recovery=Math.max(0,Math.min(1,n.spec?.recovery??.95));
+        const s1={...outlet,name:`${n.name}-LK`,F:(one?.F??0)*recovery,z:Math.min(1,(one?.z??.5)/Math.max(recovery,.001))};
+        const s2={...outlet,name:`${n.name}-HK`,F:(one?.F??0)*(1-recovery),z:0};
+        if(outEdges[0])emit(outEdges[0],s1);if(outEdges[1])emit(outEdges[1],s2);results.meta[n.id]={recovery};continue;
+      }
+
+      case "CSTR": {
+        const conversion=Math.max(0,Math.min(1,n.spec?.conversion??.7));
+        outlet={...outlet,T:n.spec?.Tset??one?.T??350,z:(one?.z??.5)*(1-conversion)};
+        results.meta[n.id]={conversion};break;
       }
 
       case "FLASH": {

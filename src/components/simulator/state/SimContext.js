@@ -62,7 +62,11 @@ function reducer(state, action){
         MIXER:  {},
         FLASH:  { P:101, T:340, comp1:"Benzene", comp2:"Toluene" },
         HEATER: { Tset:350 },
+        COOLER: { Tset:290 },
         PUMP:   { dP:200, eta:0.7 },
+        COMPRESSOR:{ Pout:500, eta:0.75 },
+        SEP:    { recovery:0.95 },
+        CSTR:   { conversion:0.7, Tset:350 },
         PRODUCT:{}
       }[type] || {};
 

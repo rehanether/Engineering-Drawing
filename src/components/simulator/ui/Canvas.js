@@ -12,11 +12,11 @@ export default function Canvas() {
       state.nodes.map((n) => ({
         id: n.id,
         position: n.pos || { x: 100, y: 100 },
-        data: { label: `${n.name} (${n.type})` },
+        data: { label: `${n.type}\n${n.name}` },
         style: {
           padding: 8,
           border: "1px solid #334155",
-          borderRadius: 8,
+          borderRadius: n.type === "FLASH" ? 18 : 6,
           background: "#fff",
           fontSize: 12,
         },
@@ -69,6 +69,7 @@ export default function Canvas() {
       edges={edges}
       onNodesChange={onNodesChange}
       onConnect={onConnect}
+      onNodeClick={(_,node)=>dispatch({type:"SELECT",id:node.id})}
       onDrop={onDrop}
       onDragOver={onDragOver}
       fitView
