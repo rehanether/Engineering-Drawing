@@ -9,7 +9,7 @@ export default function Toolbar() {
   const add = (nodeType, title) => (
     <div
       key={nodeType}
-      className="edg-chip edg-palette"
+      className="edg-palette"
       draggable
       onDragStart={(e) => {
         e.dataTransfer.setData("application/edg-node-type", nodeType);
@@ -20,14 +20,14 @@ export default function Toolbar() {
       }
       title="Drag onto the canvas or click to chain after selected block"
     >
-      + {title}
+      <><span className={`edg-unit-icon edg-unit-${nodeType.toLowerCase()}`}>{title.slice(0,2).toUpperCase()}</span><span>{title}</span><b>＋</b></>
     </div>
   );
 
   return (
     <aside className="edg-card edg-sim-toolbar">
-      <div className="edg-toolbar-title">Toolbar</div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div className="edg-toolbar-title"><span>Model library</span><small>Drag onto flowsheet</small></div>
+      <div className="edg-palette-list">
         {add("FEED", "Feed")}
         {add("MIXER", "Mixer")}
         {add("SPLITTER", "Splitter")}

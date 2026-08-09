@@ -37,7 +37,8 @@ function makeId(type, counters) {
 
 function reducer(state, action){
   switch(action.type){
-    case "LOAD": return action.payload;
+    case "LOAD":
+    case "LOAD_STATE": return action.payload;
     case "RESET": return initial;
 
     case "SET_NAME": return {...state, projectName: action.name };
@@ -53,13 +54,13 @@ function reducer(state, action){
     case "CLEAR_CONNECT":    return { ...state, ui:{...state.ui, connectFrom: null } };
 
     case "ADD_NODE": {
-      const { type, pos, afterId } = action;
+      const { nodeType: type, pos, afterId } = action;
       const [ newId, counters ] = makeId(type, state._counters);
 
       const defaultSpec = {
         FEED:   { F:50, T:300, P:101, z:0.5 },
         MIXER:  {},
-        FLASH:  { P:101, T:340, LK:"Benzene", HK:"Toluene" },
+        FLASH:  { P:101, T:340, comp1:"Benzene", comp2:"Toluene" },
         HEATER: { Tset:350 },
         PUMP:   { dP:200, eta:0.7 },
         PRODUCT:{}
