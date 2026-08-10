@@ -2,6 +2,7 @@
 import React from "react";
 import { useSim } from "../state/SimContext";
 import { COMPONENTS } from "../simCore/thermo";
+import { validateFlowsheet } from "../simCore/engine";
 import "../Validation.css";
 
 function Num({ label, value, onChange, step = "any" }) {
@@ -39,12 +40,7 @@ export default function Inspector() {
   const s = sel.spec || {};
   const change = (obj) => dispatch({ type: "SET_NODE_SPEC", id: sel.id, spec: obj });
   const m = state.results.meta[sel?.id] || {};
-  const issues = [];
-  state.nodes.forEach(node=>{
-    if(node.type!=="FEED"&&!state.edges.some(edge=>edge.to===node.id))issues.push(`${node.name} has no inlet connection.`);
-    if(node.type!=="PRODUCT"&&!state.edges.some(edge=>edge.from===node.id))issues.push(`${node.name} has no outlet connection.`);
-    if(node.type==="FEED"&&(!(node.spec?.F>0)||!(node.spec?.T>0)||!(node.spec?.P>0)))issues.push(`${node.name} has an invalid feed specification.`);
-  });
+  const validation=validateFlowsheet(state),issues=[...validation.errors,...validation.warnings];
 
   const sumMeta = (key) =>
     Object.values(state.results.meta || {}).reduce((t, x) => t + (x?.[key] || 0), 0);
@@ -73,7 +69,7 @@ export default function Inspector() {
       </div>
 
       <div style={{ padding: 12, overflowY: "auto" }}>
-        <div className={`edg-validation ${issues.length?"warning":"ok"}`}><b>{issues.length?`${issues.length} flowsheet warning${issues.length===1?"":"s"}`:"Flowsheet specification complete"}</b><span>{issues[0]||"All blocks are connected and have usable specifications."}</span></div>
+        <div className={`edg-validation ${validation.errors.length?"error":issues.length?"warning":"ok"}`}><b>{validation.errors.length?`${validation.errors.length} blocking specification error${validation.errors.length===1?"":"s"}`:issues.length?`${issues.length} flowsheet warning${issues.length===1?"":"s"}`:"Flowsheet specification complete"}</b><span>{issues[0]||"All blocks are connected and have usable specifications."}</span></div>
         {sel.type === "FEED" && (
           <>
             <Num label="Flow (mol/h)" value={s.F} onChange={(v) => change({ F: v })} />

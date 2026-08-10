@@ -1,5 +1,5 @@
 // …existing imports…
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { BrowserProvider, Contract, formatUnits, parseUnits } from "ethers";
 import { ReactFlowProvider } from "reactflow";
 import { SimProvider, useSim } from "./state/SimContext";
@@ -10,6 +10,7 @@ import "../process/Process.css";
 import "./ProcessPayment.css";
 import "./ProcessLayoutFix.css";
 import "./ProfessionalWorkspace.css";
+import "./Reliability.css";
 import { useEdgLivePrice } from "../payments/useEdgLivePrice";
 import tokenMeta from "../../EnggDrawTokenABI.json";
 import { COMPONENT_DB } from "./simCore/thermo";
@@ -41,7 +42,9 @@ function InnerSim() {
   const edgLive=useEdgLivePrice(Number(EDG_AMOUNT));
   const [workspaceTab,setWorkspaceTab]=useState("Flowsheet");
   const [runState,setRunState]=useState("Solved");
+  const caseInput=useRef(null);
   const runSimulation=()=>{setRunState("Solving");window.setTimeout(()=>{dispatch({type:"RUN"});setRunState("Solved");},350);};
+  useEffect(()=>{const status=state.results?.diagnostics?.status;if(status==="invalid"||status==="error")setRunState("Needs input");else if(status==="not-converged")setRunState("Not converged");else if(status==="solved")setRunState("Solved");},[state.results?.diagnostics?.status]);
 
   const downloadCase = () => {
     const blob = new Blob([JSON.stringify({...state, exportedAt:new Date().toISOString()}, null, 2)], {type:"application/json"});
@@ -55,6 +58,7 @@ function InnerSim() {
     const url=URL.createObjectURL(new Blob([[head,...rows].join("\n")],{type:"text/csv"})); const a=document.createElement("a");
     a.href=url;a.download="edg-stream-table.csv";a.click();URL.revokeObjectURL(url);
   };
+  const loadCase=async event=>{const file=event.target.files?.[0];if(!file)return;try{const parsed=JSON.parse(await file.text());dispatch({type:"LOAD_STATE",payload:parsed});setPaymentMessage("Case loaded safely. Review specifications and run the solver.");}catch{setPaymentMessage("This case file is not valid JSON and was not loaded.");}finally{event.target.value="";}};
 
   useEffect(()=>{
     const query=new URLSearchParams(window.location.search),result=query.get("payment"),order=query.get("order")||localStorage.getItem("processPaymentOrder");
@@ -107,14 +111,14 @@ function InnerSim() {
       </div>
       <div className="edg-sim-topbar">
         <div><span className="edg-eyebrow">PROCESS DESIGN STUDIO</span><input value={state.projectName} onChange={e=>dispatch({type:"SET_NAME",name:e.target.value})} aria-label="Simulation name" /></div>
-        <div className={`edg-solver-status ${runState.toLowerCase()}`}><i/>{runState} <span>{Object.keys(state.results.streams||{}).length} streams</span></div>
+        <div className={`edg-solver-status ${runState.toLowerCase().replaceAll(" ","-")}`}><i/>{runState} <span>{Object.keys(state.results.streams||{}).length} streams</span></div>
         <button className="edg-ghost-action" disabled={paymentStatus!=="paid"} onClick={downloadCase}>{paymentStatus==="paid"?"Save case":"🔒 Save case"}</button>
         <button className="edg-ghost-action" disabled={paymentStatus!=="paid"} onClick={downloadStreams}>{paymentStatus==="paid"?"Export CSV":"🔒 Export CSV"}</button>
         <button className="edg-run-action" onClick={runSimulation}>▶ Run simulation</button>
       </div>
       <div className="edg-ribbon">
-        <div><b>Case</b><button onClick={()=>dispatch({type:"RESET"})}>New</button><button onClick={downloadCase} disabled={paymentStatus!=="paid"}>Save</button></div>
-        <div><b>Flowsheet</b><button onClick={()=>dispatch({type:"RUN"})}>Validate</button><button onClick={runSimulation}>Solve</button></div>
+        <div><b>Case</b><button onClick={()=>dispatch({type:"RESET"})}>New</button><button onClick={()=>caseInput.current?.click()}>Open</button><button onClick={downloadCase} disabled={paymentStatus!=="paid"}>Save</button><input ref={caseInput} type="file" accept="application/json,.json" onChange={loadCase} hidden/></div>
+        <div><b>Flowsheet</b><button onClick={()=>dispatch({type:"RUN"})}>Validate</button><button onClick={runSimulation}>Solve</button><button disabled={!state.selection} onClick={()=>dispatch({type:"DELETE_NODE",id:state.selection})}>Delete</button></div>
         <div><b>Property method</b><select value={state.propPack} onChange={e=>dispatch({type:"SET_PROP",pack:e.target.value})}><option>Raoult</option><option>Peng–Robinson</option></select></div>
         <div><b>Solver</b><span>Wegstein recycle</span><span>Tolerance 1e-4</span></div>
         <div className="edg-ribbon-summary"><span>Blocks <b>{state.nodes.length}</b></span><span>Connections <b>{state.edges.length}</b></span></div>

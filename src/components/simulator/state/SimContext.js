@@ -25,10 +25,15 @@ const initial = {
     { id:"eP1PR", from:"P1", to:"PRD" },
   ],
   selection: null,
-  results: { streams:{}, meta:{} },
+  results: { streams:{}, meta:{}, diagnostics:{status:"ready",errors:[],warnings:[],iterations:0} },
   _counters: { FEED:2, MIXER:1, FLASH:1, HEATER:1, PUMP:1, PRODUCT:1 },
   ui: { connectFrom: null }   // <-- connect mode
 };
+
+function normalizeCase(value){
+  if(!value||typeof value!=="object")return initial;
+  return {...initial,...value,projectName:String(value.projectName||"Untitled Simulation").slice(0,100),nodes:Array.isArray(value.nodes)?value.nodes:initial.nodes,edges:Array.isArray(value.edges)?value.edges:initial.edges,results:{streams:{},meta:{},diagnostics:{status:"ready",errors:[],warnings:[],iterations:0}},_counters:{...initial._counters,...(value._counters||{})},ui:{...initial.ui,...(value.ui||{})}};
+}
 
 function makeId(type, counters) {
   const next = (counters[type] || 0) + 1;
@@ -38,8 +43,8 @@ function makeId(type, counters) {
 function reducer(state, action){
   switch(action.type){
     case "LOAD":
-    case "LOAD_STATE": return action.payload;
-    case "RESET": return initial;
+    case "LOAD_STATE": return normalizeCase(action.payload);
+    case "RESET": return normalizeCase(initial);
 
     case "SET_NAME": return {...state, projectName: action.name };
     case "SET_PROP": return {...state, propPack: action.pack };
@@ -98,8 +103,8 @@ function reducer(state, action){
     }
 
     case "RUN": {
-      const results = runFlowsheet(state);
-      return {...state, results};
+      try{return {...state,results:runFlowsheet(state)};}
+      catch(error){return {...state,results:{streams:{},meta:{},diagnostics:{status:"error",errors:[error?.message||"The solver could not complete this case."],warnings:[],iterations:0}}};}
     }
     default: return state;
   }
@@ -107,7 +112,7 @@ function reducer(state, action){
 
 export function SimProvider({ children }){
   const [state, dispatch] = useReducer(reducer, initial, (init)=>{
-    try{ const raw = localStorage.getItem(LS_KEY); return raw? JSON.parse(raw) : init; } catch{ return init; }
+    try{ const raw = localStorage.getItem(LS_KEY); return raw? normalizeCase(JSON.parse(raw)) : init; } catch{ return init; }
   });
   useEffect(()=>{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }, [state]);
   useEffect(()=>{ dispatch({ type:"RUN" }); }, []);
