@@ -1,30 +1,26 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Navigate, Routes, Route } from 'react-router-dom';
 
 import Header from './components/Header';
 import Footer from './components/Footer';
 
 import Home from './components/Home';
-import ProjectOverview from './components/ProjectOverview';
-import Tokenomics from './components/Tokenomics';
-import Presale from './components/Presale';
-import Contact from './components/Contact';
-
-import Evaporators from './components/Evaporators';
-import ReactorSimulator from "./components/reactor/ReactorSimulator";
-import Distillation from './components/distillation/DistillationProduction';
-
-/* Category pages (clean slates) */
-import IndustrialDesign from './components/IndustrialDesign';
-import ConstructionDesign from './components/ConstructionDesign';
-import ProcessDesign from './components/process/ProcessDesign';
 import Seo from './components/Seo';
 import InstallApp from './components/InstallApp';
-
-import Privacy from "./components/Privacy";
-import FAQ from "./components/FAQ";
-
 import './App.css';
+
+const ProjectOverview=lazy(()=>import('./components/ProjectOverview'));
+const Tokenomics=lazy(()=>import('./components/Tokenomics'));
+const Presale=lazy(()=>import('./components/Presale'));
+const Contact=lazy(()=>import('./components/Contact'));
+const Evaporators=lazy(()=>import('./components/Evaporators'));
+const ReactorSimulator=lazy(()=>import('./components/reactor/ReactorSimulator'));
+const Distillation=lazy(()=>import('./components/distillation/DistillationProduction'));
+const IndustrialDesign=lazy(()=>import('./components/IndustrialDesign'));
+const ConstructionDesign=lazy(()=>import('./components/ConstructionDesign'));
+const ProcessDesign=lazy(()=>import('./components/process/ProcessDesign'));
+const Privacy=lazy(()=>import('./components/Privacy'));
+const FAQ=lazy(()=>import('./components/FAQ'));
 
 const App = () => {
   return (
@@ -32,7 +28,7 @@ const App = () => {
       <Seo />
       <Header />
       <InstallApp />
-      <Routes>
+      <Suspense fallback={<main className="route-loading" role="status" aria-live="polite"><span/>Loading engineering workspace…</main>}><Routes>
         <Route path="/" element={<Home />} />
         <Route path="/project-overview" element={<ProjectOverview />} />
         <Route path="/tokenomics" element={<Tokenomics />} />
@@ -53,7 +49,8 @@ const App = () => {
 
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/faq" element={<FAQ />} />
-      </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes></Suspense>
       <Footer />
     </div>
   );

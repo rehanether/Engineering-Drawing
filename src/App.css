@@ -78,3 +78,4 @@ footer {
   max-height: 50px;
   width: auto;
 }
+.route-loading{min-height:70vh;display:grid;place-items:center;align-content:center;gap:12px;color:#35516d;font:600 14px Arial}.route-loading span{width:34px;height:34px;border:3px solid #d8e7f4;border-top-color:#1677c8;border-radius:50%;animation:route-spin .8s linear infinite}@keyframes route-spin{to{transform:rotate(360deg)}}

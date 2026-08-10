@@ -8,7 +8,7 @@
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
     "@walletconnect/ethereum-provider": "^2.21.8",
-    "axios": "^1.11.0",
+    "axios": "^1.18.0",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "ethers": "^6.15.0",
@@ -56,5 +56,9 @@
     "ajv": "^6.12.6",
     "ajv-keywords": "^3.5.2",
     "react-scripts": "^5.0.1"
+  },
+  "overrides": {
+    "axios": "$axios",
+    "nanoid": "3.3.17"
   }
 }

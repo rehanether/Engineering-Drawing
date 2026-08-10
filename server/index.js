@@ -64,6 +64,7 @@ app.use(
 );
 
 app.get('/health', (_req, res) => {
+  res.set('Cache-Control', 'no-store');
   res.json({ ok: true });
 });
 
@@ -447,7 +448,9 @@ app.use((error, _req, res, next) => {
   if (error.message === 'Origin is not allowed by CORS.') {
     return res.status(403).json({ error: 'Origin is not allowed.' });
   }
-  return next(error);
+  console.error(JSON.stringify({ level:'error', message:'Unhandled API error', error:error?.message||'Unknown error' }));
+  if(res.headersSent)return next(error);
+  return res.status(500).json({error:'The service could not complete this request.'});
 });
 
 if (require.main === module) {
