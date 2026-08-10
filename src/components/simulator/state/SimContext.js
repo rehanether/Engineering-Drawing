@@ -4,7 +4,7 @@ import { runFlowsheet } from "../simCore/engine";
 const SimCtx = createContext(null);
 const LS_KEY = "edg_sim_project_v1";
 
-const initial = {
+export const initialSimState = {
   projectName: "Untitled Simulation",
   propPack: "Raoult",
   nodes: [
@@ -27,12 +27,12 @@ const initial = {
   selection: null,
   results: { streams:{}, meta:{}, diagnostics:{status:"ready",errors:[],warnings:[],iterations:0} },
   _counters: { FEED:2, MIXER:1, FLASH:1, HEATER:1, PUMP:1, PRODUCT:1 },
-  ui: { connectFrom: null }   // <-- connect mode
+  ui: { connectFrom: null, selectedEdge: null }
 };
 
 function normalizeCase(value){
-  if(!value||typeof value!=="object")return initial;
-  return {...initial,...value,projectName:String(value.projectName||"Untitled Simulation").slice(0,100),nodes:Array.isArray(value.nodes)?value.nodes:initial.nodes,edges:Array.isArray(value.edges)?value.edges:initial.edges,results:{streams:{},meta:{},diagnostics:{status:"ready",errors:[],warnings:[],iterations:0}},_counters:{...initial._counters,...(value._counters||{})},ui:{...initial.ui,...(value.ui||{})}};
+  if(!value||typeof value!=="object")return initialSimState;
+  return {...initialSimState,...value,projectName:String(value.projectName||"Untitled Simulation").slice(0,100),nodes:Array.isArray(value.nodes)?value.nodes:initialSimState.nodes,edges:Array.isArray(value.edges)?value.edges:initialSimState.edges,results:{streams:{},meta:{},diagnostics:{status:"ready",errors:[],warnings:[],iterations:0}},_counters:{...initialSimState._counters,...(value._counters||{})},ui:{...initialSimState.ui,...(value.ui||{})}};
 }
 
 function makeId(type, counters) {
@@ -40,11 +40,11 @@ function makeId(type, counters) {
   return [ `${type[0]}${next}`, { ...counters, [type]: next } ];
 }
 
-function reducer(state, action){
+export function simReducer(state, action){
   switch(action.type){
     case "LOAD":
     case "LOAD_STATE": return normalizeCase(action.payload);
-    case "RESET": return normalizeCase(initial);
+    case "RESET": return normalizeCase(initialSimState);
 
     case "SET_NAME": return {...state, projectName: action.name };
     case "SET_PROP": return {...state, propPack: action.pack };
@@ -53,7 +53,8 @@ function reducer(state, action){
       return {...state, nodes};
     }
 
-    case "SELECT": return {...state, selection: action.id };
+    case "SELECT": return {...state, selection: action.id,ui:{...state.ui,selectedEdge:null} };
+    case "SELECT_EDGE": return {...state,selection:null,ui:{...state.ui,selectedEdge:action.id,connectFrom:null}};
 
     case "SET_CONNECT_FROM": return { ...state, ui:{...state.ui, connectFrom: action.id } };
     case "CLEAR_CONNECT":    return { ...state, ui:{...state.ui, connectFrom: null } };
@@ -93,7 +94,14 @@ function reducer(state, action){
       if (action.from === action.to) return state;
       const id = `e${action.from}${action.to}`;
       if (state.edges.some(e=>e.from===action.from && e.to===action.to)) return state;
-      return { ...state, edges:[...state.edges, { id, from:action.from, to:action.to }] };
+      return { ...state, edges:[...state.edges, { id, from:action.from, to:action.to }],ui:{...state.ui,connectFrom:null,selectedEdge:null},selection:action.to };
+    }
+
+    case "DELETE_EDGE": return {...state,edges:state.edges.filter(e=>e.id!==action.id),ui:{...state.ui,selectedEdge:null}};
+    case "DELETE_SELECTION": {
+      if(state.ui?.selectedEdge)return {...state,edges:state.edges.filter(e=>e.id!==state.ui.selectedEdge),ui:{...state.ui,selectedEdge:null}};
+      if(!state.selection)return state;
+      return {...state,nodes:state.nodes.filter(n=>n.id!==state.selection),edges:state.edges.filter(e=>e.from!==state.selection&&e.to!==state.selection),selection:null};
     }
 
     case "DELETE_NODE": {
@@ -111,7 +119,7 @@ function reducer(state, action){
 }
 
 export function SimProvider({ children }){
-  const [state, dispatch] = useReducer(reducer, initial, (init)=>{
+  const [state, dispatch] = useReducer(simReducer, initialSimState, (init)=>{
     try{ const raw = localStorage.getItem(LS_KEY); return raw? normalizeCase(JSON.parse(raw)) : init; } catch{ return init; }
   });
   useEffect(()=>{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }, [state]);
