@@ -40,6 +40,28 @@ function topoOrder(nodes, edges) {
 }
 const clone = (o) => JSON.parse(JSON.stringify(o));
 
+export function validateFlowsheet(state) {
+  const errors=[], warnings=[], nodes=Array.isArray(state?.nodes)?state.nodes:[], edges=Array.isArray(state?.edges)?state.edges:[];
+  const ids=new Set(nodes.map(n=>n.id));
+  if(!nodes.length) errors.push("Add at least one feed and one product block.");
+  if(new Set(nodes.map(n=>n.id)).size!==nodes.length) errors.push("Every block must have a unique identifier.");
+  edges.forEach(e=>{if(!ids.has(e.from)||!ids.has(e.to))errors.push(`Connection ${e.id||"unnamed"} references a missing block.`);});
+  nodes.forEach(n=>{
+    const incoming=edges.filter(e=>e.to===n.id), outgoing=edges.filter(e=>e.from===n.id), s=n.spec||{};
+    if(n.type==="FEED"){
+      if(!(s.F>0))errors.push(`${n.name}: flow must be greater than zero.`);
+      if(!(s.T>0))errors.push(`${n.name}: temperature must be greater than 0 K.`);
+      if(!(s.P>0))errors.push(`${n.name}: pressure must be greater than zero.`);
+      if(!(s.z>=0&&s.z<=1))errors.push(`${n.name}: light-key fraction must be between 0 and 1.`);
+    } else if(n.type!=="RECYCLE"&&!incoming.length) warnings.push(`${n.name}: no inlet connection.`);
+    if(!["PRODUCT","RECYCLE"].includes(n.type)&&!outgoing.length)warnings.push(`${n.name}: no outlet connection.`);
+    if(["PUMP","COMPRESSOR"].includes(n.type)&&!(s.eta>0&&s.eta<=1))errors.push(`${n.name}: efficiency must be greater than 0 and at most 1.`);
+    if(n.type==="FLASH"&&(!(s.T>0)||!(s.P>0)))errors.push(`${n.name}: flash temperature and pressure must be positive.`);
+    if(n.type==="RECYCLE"&&(incoming.length!==1||outgoing.length!==1))errors.push(`${n.name}: recycle requires exactly one inlet and one outlet.`);
+  });
+  return {errors:[...new Set(errors)],warnings:[...new Set(warnings)]};
+}
+
 // ---------- core, single forward pass (no recycle convergence) ----------
 function forwardPass(state, recycleOverrides = {}) {
   const { nodes, edges } = state;
@@ -165,7 +187,8 @@ function forwardPass(state, recycleOverrides = {}) {
         const dT = n.spec?.dT ?? 20; // approach or desired change
         // crude: Q = eff * UA * dT_lm  ~ eff*UA*dT (placeholder)
         const Q_kW = eff * UA_kWperK * dT;
-        const dT_fromQ = Q_kW / (F / 3600 * (Cp * 1000) / 1000); // convert back safely
+        const heatCapacityRate = F / 3600 * Cp;
+        const dT_fromQ = heatCapacityRate > 1e-12 ? Q_kW / heatCapacityRate : 0;
         const Tout = (one?.T ?? 298) + dT_fromQ;
         outlet = { ...outlet, F, T: Tout };
         results.meta[n.id] = { Q_kW };
@@ -294,6 +317,8 @@ function mixStreams(a, b, lambda) {
 
 export function runFlowsheet(state) {
   const { nodes, edges } = state;
+  const validation=validateFlowsheet(state);
+  if(validation.errors.length)return {streams:{},meta:{},diagnostics:{status:"invalid",...validation,iterations:0}};
 
   // Identify recycle nodes (node.type === "RECYCLE") and their loop edges:
   // convention: recycle node must have exactly 1 incoming edge (return stream)
@@ -307,8 +332,8 @@ export function runFlowsheet(state) {
     });
 
   if (recycles.length === 0) {
-    // simple case: no recycles
-    return forwardPass(state);
+    const result=forwardPass(state);
+    return {...result,diagnostics:{status:"solved",...validation,iterations:1}};
   }
 
   // Initialize guesses (from node spec or a tiny stream)
@@ -339,7 +364,7 @@ export function runFlowsheet(state) {
     const newOut = {};
     for (const r of recycles) {
       const key = `${r.incoming.from}->${r.incoming.to}`;
-      newOut[r.id] = clone(res.streams[key]) || clone(guess[r.id]);
+      newOut[r.id] = res.streams[key] ? clone(res.streams[key]) : clone(guess[r.id]);
     }
 
     // Check convergence
@@ -349,7 +374,7 @@ export function runFlowsheet(state) {
     }
     if (maxErr < tol) {
       // converged, return this solution
-      return res;
+      return {...res,diagnostics:{status:"solved",...validation,iterations:k+1,maxResidual:maxErr}};
     }
 
     // Wegstein acceleration
@@ -380,5 +405,6 @@ export function runFlowsheet(state) {
   }
 
   // if we get here, didn’t converge: return last forward pass
-  return forwardPass(state, guess);
+  const result=forwardPass(state,guess);
+  return {...result,diagnostics:{status:"not-converged",errors:[],warnings:[...validation.warnings,"Recycle solver reached the 50-iteration limit."],iterations:maxIter}};
 }
