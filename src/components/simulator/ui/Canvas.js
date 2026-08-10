@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useEffect } from "react";
 import ReactFlow, { Background, Controls, MiniMap, useReactFlow } from "reactflow";
 import "reactflow/dist/style.css";
 import { useSim } from "../state/SimContext";
@@ -25,8 +25,8 @@ export default function Canvas() {
   );
 
   const edges = useMemo(
-    () => state.edges.map((e) => ({ id: e.id, source: e.from, target: e.to, animated: true })),
-    [state.edges]
+    () => state.edges.map((e) => ({ id: e.id, source: e.from, target: e.to, animated: true,selected:e.id===state.ui?.selectedEdge,style:e.id===state.ui?.selectedEdge?{stroke:"#e24a3b",strokeWidth:4}:{},label:e.id===state.ui?.selectedEdge?"Selected · Disconnect":"" })),
+    [state.edges,state.ui?.selectedEdge]
   );
 
   const onDragOver = useCallback((evt) => {
@@ -62,6 +62,8 @@ export default function Canvas() {
     },
     [dispatch]
   );
+  const selectNode=useCallback((_,node)=>{const from=state.ui?.connectFrom;if(from&&from!==node.id){dispatch({type:"ADD_EDGE",from,to:node.id});return;}dispatch({type:"SELECT",id:node.id});},[dispatch,state.ui?.connectFrom]);
+  useEffect(()=>{const key=e=>{if((e.key==="Delete"||e.key==="Backspace")&&!/INPUT|TEXTAREA|SELECT/.test(e.target?.tagName))dispatch({type:"DELETE_SELECTION"});};window.addEventListener("keydown",key);return()=>window.removeEventListener("keydown",key);},[dispatch]);
 
   return (
     <ReactFlow
@@ -69,10 +71,16 @@ export default function Canvas() {
       edges={edges}
       onNodesChange={onNodesChange}
       onConnect={onConnect}
-      onNodeClick={(_,node)=>dispatch({type:"SELECT",id:node.id})}
+      onNodeClick={selectNode}
+      onEdgeClick={(_,edge)=>dispatch({type:"SELECT_EDGE",id:edge.id})}
+      onEdgeDoubleClick={(_,edge)=>dispatch({type:"DELETE_EDGE",id:edge.id})}
+      onPaneClick={()=>dispatch({type:"CLEAR_CONNECT"})}
       onDrop={onDrop}
       onDragOver={onDragOver}
       fitView
+      fitViewOptions={{ padding: 0.15, minZoom: 0.55, maxZoom: 1 }}
+      connectionRadius={28}
+      elementsSelectable
     >
       <Background />
       <Controls />

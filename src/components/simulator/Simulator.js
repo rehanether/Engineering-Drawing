@@ -11,6 +11,8 @@ import "./ProcessPayment.css";
 import "./ProcessLayoutFix.css";
 import "./ProfessionalWorkspace.css";
 import "./Reliability.css";
+import "./MobileEditor.css";
+import "./MobileNarrow.css";
 import { useEdgLivePrice } from "../payments/useEdgLivePrice";
 import tokenMeta from "../../EnggDrawTokenABI.json";
 import { COMPONENT_DB } from "./simCore/thermo";
@@ -118,11 +120,12 @@ function InnerSim() {
       </div>
       <div className="edg-ribbon">
         <div><b>Case</b><button onClick={()=>dispatch({type:"RESET"})}>New</button><button onClick={()=>caseInput.current?.click()}>Open</button><button onClick={downloadCase} disabled={paymentStatus!=="paid"}>Save</button><input ref={caseInput} type="file" accept="application/json,.json" onChange={loadCase} hidden/></div>
-        <div><b>Flowsheet</b><button onClick={()=>dispatch({type:"RUN"})}>Validate</button><button onClick={runSimulation}>Solve</button><button disabled={!state.selection} onClick={()=>dispatch({type:"DELETE_NODE",id:state.selection})}>Delete</button></div>
+        <div><b>Flowsheet</b><button onClick={()=>dispatch({type:"RUN"})}>Validate</button><button onClick={runSimulation}>Solve</button><button className={state.ui?.connectFrom?"active":""} disabled={!state.selection} onClick={()=>dispatch({type:state.ui?.connectFrom?"CLEAR_CONNECT":"SET_CONNECT_FROM",id:state.selection})}>{state.ui?.connectFrom?"Cancel":"Connect"}</button><button disabled={!state.selection&&!state.ui?.selectedEdge} onClick={()=>dispatch({type:"DELETE_SELECTION"})}>{state.ui?.selectedEdge?"Disconnect":"Delete"}</button></div>
         <div><b>Property method</b><select value={state.propPack} onChange={e=>dispatch({type:"SET_PROP",pack:e.target.value})}><option>Raoult</option><option>Peng–Robinson</option></select></div>
         <div><b>Solver</b><span>Wegstein recycle</span><span>Tolerance 1e-4</span></div>
         <div className="edg-ribbon-summary"><span>Blocks <b>{state.nodes.length}</b></span><span>Connections <b>{state.edges.length}</b></span></div>
       </div>
+      {state.ui?.connectFrom&&<div className="edg-connect-hint">Connecting from <b>{state.nodes.find(n=>n.id===state.ui.connectFrom)?.name}</b> — tap the destination block or Cancel.</div>}
       {workspaceTab==="Flowsheet"||workspaceTab==="Simulation"?<div className="edg-sim-layout">
         <Toolbar />
         <div className="edg-card edg-canvas-card">
