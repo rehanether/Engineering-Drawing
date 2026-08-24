@@ -11,5 +11,5 @@ jest.mock('three/examples/jsm/controls/OrbitControls.js', () => ({
 
 test('renders the Engineering Drawing home page', () => {
   render(<MemoryRouter><App /></MemoryRouter>);
-  expect(screen.getByRole('heading', { name: 'Tell us what you want to build.', level: 1 })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Engineering Drawing', level: 1 })).toBeInTheDocument();
 });

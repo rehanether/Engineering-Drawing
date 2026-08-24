@@ -19,7 +19,6 @@ function Header() {
       <nav className={menuOpen ? "nav-open" : ""}>
         <ul>
           <li><Link to="/" onClick={() => setMenuOpen(false)}>Home</Link></li>
-          <li><Link to="/workspace" onClick={() => setMenuOpen(false)}>EDG Engine</Link></li>
           <li><Link to="/project-overview" onClick={() => setMenuOpen(false)}>Project Overview</Link></li>
           <li><Link to="/tokenomics" onClick={() => setMenuOpen(false)}>Tokenomics</Link></li>
           <li><Link to="/presale" onClick={() => setMenuOpen(false)}>Presale</Link></li>
