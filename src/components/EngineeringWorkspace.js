@@ -77,11 +77,11 @@ const EngineeringWorkspace = () => {
 
   useEffect(() => {
     getAiStatus().then((status) => setEntitlement(status.entitlement)).catch(() => {});
-    if (!initialRequest.current && project.prompt && project.id !== 'edg-new') {
+    if (!initialRequest.current && !savedModel && project.prompt && project.id !== 'edg-new') {
       initialRequest.current = true;
       runAi(project.prompt);
     }
-  }, [project.id, project.prompt, runAi]);
+  }, [project.id, project.prompt, runAi, savedModel]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -103,7 +103,16 @@ const EngineeringWorkspace = () => {
           }
           return;
         }
-        if (!stopped && attempts < 30 && !['failed', 'expired', 'refunded'].includes(payment.status)) window.setTimeout(check, 4000);
+        if (!stopped && ['failed', 'expired', 'refunded'].includes(payment.status)) {
+          setCheckoutState('error');
+          setAiError(`Payment ${payment.status}. No credits were added.`);
+          return;
+        }
+        if (!stopped && attempts < 30) window.setTimeout(check, 4000);
+        if (!stopped && attempts >= 30) {
+          setCheckoutState('error');
+          setAiError('Payment confirmation timed out. Your order remains safe; reopen this page to check again.');
+        }
       } catch (_error) {
         if (!stopped) setCheckoutState('error');
       }

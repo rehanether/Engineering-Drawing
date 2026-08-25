@@ -11,22 +11,37 @@ function fallbackUuid() {
 }
 
 export function getEdgAccountId() {
-  const existing = localStorage.getItem('edg-account-id');
-  if (existing) return existing;
+  try {
+    const existing = localStorage.getItem('edg-account-id');
+    if (existing) return existing;
+  } catch (_error) {
+    // Continue with an in-memory identifier when storage is unavailable.
+  }
   const accountId = window.crypto?.randomUUID?.() || fallbackUuid();
-  localStorage.setItem('edg-account-id', accountId);
+  try { localStorage.setItem('edg-account-id', accountId); } catch (_error) { /* Private mode may block storage. */ }
   return accountId;
 }
 
 async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-EDG-Account-ID': getEdgAccountId(),
-      ...(options.headers || {}),
-    },
-  });
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 65_000);
+  let response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      signal: options.signal || controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-EDG-Account-ID': getEdgAccountId(),
+        ...(options.headers || {}),
+      },
+    });
+  } catch (error) {
+    if (error.name === 'AbortError') throw new Error('The EDG service timed out. Please try again.');
+    throw new Error('The EDG service is unreachable. Check your connection and try again.');
+  } finally {
+    window.clearTimeout(timeout);
+  }
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     const error = new Error(body.error || 'The EDG service could not complete this request.');

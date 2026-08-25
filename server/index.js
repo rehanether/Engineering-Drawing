@@ -67,7 +67,7 @@ app.use(
   })
 );
 
-app.get('/health', (_req, res) => {
+app.get(['/health', '/api/health'], (_req, res) => {
   res.set('Cache-Control', 'no-store');
   res.json({ ok: true });
 });
@@ -479,9 +479,11 @@ app.post('/api/payments/nowpayments/ai-credits/invoice', async (req, res) => {
 app.get('/api/payments/nowpayments/ai-credits/status/:orderId', async (req, res) => {
   const orderId = String(req.params.orderId || '');
   if (!/^AI-[0-9a-f-]{36}$/i.test(orderId)) return res.status(400).json({ error: 'Invalid AI credit order.' });
+  const accountId = accountIdFrom(req);
+  if (!aiService.validAccountId(accountId)) return res.status(400).json({ error: 'A valid EDG account identifier is required.' });
   try {
     const order = await aiService.getPaymentOrder(orderId);
-    if (!order) return res.status(404).json({ error: 'AI credit order was not found.' });
+    if (!order || String(order.account_id || order.accountId) !== accountId) return res.status(404).json({ error: 'AI credit order was not found.' });
     return res.json({ orderId, status: order.status, credits: Number(order.credits) });
   } catch (error) {
     console.error('AI credit payment status error:', error.message);
