@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 const crypto = require('crypto');
 const { neon } = require('@neondatabase/serverless');
+const { createAiService, AI_MODEL } = require('./ai-service');
 
 dotenv.config();
 dotenv.config({ path: path.resolve(__dirname, '../.env'), override: false });
@@ -25,9 +26,12 @@ const REACTOR_PACKAGE_USD = Number(process.env.REACTOR_PACKAGE_USD || 100);
 const DISTILLATION_PACKAGE_USD = Number(process.env.DISTILLATION_PACKAGE_USD || 100);
 const PROCESS_PACKAGE_USD = Number(process.env.PROCESS_PACKAGE_USD || 10);
 const NOWPAYMENTS_PAY_CURRENCY = process.env.NOWPAYMENTS_PAY_CURRENCY || 'bnbbsc';
+const AI_CREDITS_PRICE_USD = Number(process.env.AI_CREDITS_PRICE_USD || 19);
+const AI_CREDITS_PER_PACK = Number(process.env.AI_CREDITS_PER_PACK || 100);
 const paymentOrders = new Map();
 const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
 const sql = databaseUrl ? neon(databaseUrl) : null;
+const aiService = createAiService(sql);
 let paymentsTableReady = false;
 const allowedOrigins = new Set(
   (process.env.CORS_ORIGINS ||
@@ -47,7 +51,7 @@ app.use(
       return callback(new Error('Origin is not allowed by CORS.'));
     },
     methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type'],
+    allowedHeaders: ['Content-Type', 'X-EDG-Account-ID'],
     optionsSuccessStatus: 204,
   })
 );
@@ -66,6 +70,34 @@ app.use(
 app.get('/health', (_req, res) => {
   res.set('Cache-Control', 'no-store');
   res.json({ ok: true });
+});
+
+function accountIdFrom(req) {
+  return String(req.get('x-edg-account-id') || req.body?.accountId || '').trim();
+}
+
+app.get('/api/ai/status', async (req, res) => {
+  const accountId = accountIdFrom(req);
+  if (!aiService.validAccountId(accountId)) return res.status(400).json({ error: 'A valid EDG account identifier is required.' });
+  try {
+    const entitlement = await aiService.usage(accountId, aiService.hashIp(req.ip));
+    return res.json({ configured: Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN), model: AI_MODEL, entitlement });
+  } catch (error) {
+    console.error('AI status error:', error.message);
+    return res.status(503).json({ error: 'AI usage storage is unavailable.' });
+  }
+});
+
+app.post('/api/ai/generations', async (req, res) => {
+  const prompt = typeof req.body?.prompt === 'string' ? req.body.prompt.trim() : '';
+  try {
+    const generation = await aiService.createGeneration({ accountId: accountIdFrom(req), ip: req.ip, prompt });
+    res.set('Cache-Control', 'no-store');
+    return res.status(201).json(generation);
+  } catch (error) {
+    if (error.status >= 500) console.error('AI generation error:', error.code || error.message);
+    return res.status(error.status || 500).json({ error: error.message, code: error.code, entitlement: error.usage });
+  }
 });
 
 app.post('/api/generate-image', async (req, res) => {
@@ -408,6 +440,55 @@ app.post('/api/payments/nowpayments/process/invoice', async (req, res) => {
   }
 });
 
+app.post('/api/payments/nowpayments/ai-credits/invoice', async (req, res) => {
+  if (!NOWPAYMENTS_API_KEY || !NOWPAYMENTS_IPN_SECRET) {
+    return res.status(503).json({ error: 'The AI credit checkout is not configured yet.' });
+  }
+  if (!Number.isFinite(AI_CREDITS_PRICE_USD) || AI_CREDITS_PRICE_USD <= 0 || !Number.isInteger(AI_CREDITS_PER_PACK) || AI_CREDITS_PER_PACK <= 0) {
+    return res.status(503).json({ error: 'The AI credit pack is not configured.' });
+  }
+  const accountId = accountIdFrom(req);
+  if (!aiService.validAccountId(accountId)) return res.status(400).json({ error: 'A valid EDG account identifier is required.' });
+
+  const orderId = `AI-${crypto.randomUUID()}`;
+  try {
+    const response = await axios.post('https://api.nowpayments.io/v1/invoice', {
+      price_amount: AI_CREDITS_PRICE_USD,
+      price_currency: 'usd',
+      pay_currency: NOWPAYMENTS_PAY_CURRENCY,
+      order_id: orderId,
+      order_description: `${AI_CREDITS_PER_PACK} EDG AI engineering credits`,
+      ipn_callback_url: `${PUBLIC_API_URL}/api/payments/nowpayments/ipn`,
+      success_url: `${SITE_URL}/workspace?payment=return&order=${encodeURIComponent(orderId)}`,
+      cancel_url: `${SITE_URL}/workspace?payment=cancelled&order=${encodeURIComponent(orderId)}`,
+      is_fixed_rate: true,
+      is_fee_paid_by_user: true,
+    }, {
+      headers: { 'x-api-key': NOWPAYMENTS_API_KEY, 'Content-Type': 'application/json' },
+      timeout: 15_000,
+    });
+    if (!response.data?.invoice_url || !response.data?.id) throw new Error('NOWPayments returned an incomplete invoice.');
+    await aiService.savePaymentOrder({ orderId, accountId, credits: AI_CREDITS_PER_PACK, invoiceId: String(response.data.id) });
+    return res.status(201).json({ orderId, invoiceId: String(response.data.id), invoiceUrl: response.data.invoice_url, credits: AI_CREDITS_PER_PACK });
+  } catch (error) {
+    console.error('NOWPayments AI credit invoice error:', error?.response?.status || error.message);
+    return res.status(502).json({ error: 'Could not create the secure AI credit checkout. Please try again.' });
+  }
+});
+
+app.get('/api/payments/nowpayments/ai-credits/status/:orderId', async (req, res) => {
+  const orderId = String(req.params.orderId || '');
+  if (!/^AI-[0-9a-f-]{36}$/i.test(orderId)) return res.status(400).json({ error: 'Invalid AI credit order.' });
+  try {
+    const order = await aiService.getPaymentOrder(orderId);
+    if (!order) return res.status(404).json({ error: 'AI credit order was not found.' });
+    return res.json({ orderId, status: order.status, credits: Number(order.credits) });
+  } catch (error) {
+    console.error('AI credit payment status error:', error.message);
+    return res.status(503).json({ error: 'Payment verification storage is unavailable.' });
+  }
+});
+
 app.get('/api/payments/nowpayments/status/:orderId', async (req, res) => {
   const orderId = String(req.params.orderId || '');
   if (!/^(CD|EV|RX|DS|PD)-[0-9a-f-]{36}$/i.test(orderId)) {
@@ -430,9 +511,18 @@ app.post('/api/payments/nowpayments/ipn', async (req, res) => {
   }
   const orderId = String(req.body?.order_id || '');
   const paymentStatus = String(req.body?.payment_status || '').toLowerCase();
-  if (!/^(CD|EV|RX|DS|PD)-[0-9a-f-]{36}$/i.test(orderId)) return res.status(400).json({ error: 'Invalid order.' });
+  if (!/^(CD|EV|RX|DS|PD|AI)-[0-9a-f-]{36}$/i.test(orderId)) return res.status(400).json({ error: 'Invalid order.' });
 
   try {
+    if (orderId.startsWith('AI-')) {
+      const found = await aiService.applyPayment({
+        orderId,
+        paymentId: req.body?.payment_id ? String(req.body.payment_id) : null,
+        status: paymentStatus,
+      });
+      if (!found) return res.status(404).json({ error: 'AI credit order was not found.' });
+      return res.status(200).json({ received: true });
+    }
     await savePaymentOrder(orderId, {
       paymentId: req.body?.payment_id ? String(req.body.payment_id) : null,
       status: paymentStatus,

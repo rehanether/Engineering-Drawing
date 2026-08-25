@@ -8,6 +8,7 @@
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
     "@walletconnect/ethereum-provider": "^2.21.8",
+    "ai": "^6.0.266",
     "axios": "^1.18.0",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
@@ -20,13 +21,15 @@
     "react-router-dom": "^6.28.0",
     "reactflow": "^11.11.4",
     "three": "^0.185.1",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "zod": "^4.4.3"
   },
   "scripts": {
     "start": "react-scripts start",
     "server": "node server/index.js",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "test:server": "node --test server/ai-service.test.js",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
