@@ -81,7 +81,7 @@ app.get('/api/ai/status', async (req, res) => {
   if (!aiService.validAccountId(accountId)) return res.status(400).json({ error: 'A valid EDG account identifier is required.' });
   try {
     const entitlement = await aiService.usage(accountId, aiService.hashIp(req.ip));
-    return res.json({ configured: Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN), model: AI_MODEL, entitlement });
+    return res.json({ configured: Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || process.env.VERCEL), model: AI_MODEL, entitlement });
   } catch (error) {
     console.error('AI status error:', error.message);
     return res.status(503).json({ error: 'AI usage storage is unavailable.' });

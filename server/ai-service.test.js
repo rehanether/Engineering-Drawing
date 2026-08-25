@@ -25,8 +25,10 @@ test('reports free allowance and grants purchased credits idempotently', async (
 test('fails safely when no server-side model credential is configured', async () => {
   const gatewayKey = process.env.AI_GATEWAY_API_KEY;
   const oidcToken = process.env.VERCEL_OIDC_TOKEN;
+  const vercelRuntime = process.env.VERCEL;
   delete process.env.AI_GATEWAY_API_KEY;
   delete process.env.VERCEL_OIDC_TOKEN;
+  delete process.env.VERCEL;
   const service = createAiService(null);
   await assert.rejects(
     service.createGeneration({ accountId, ip: '127.0.0.1', prompt: 'Design an evaporator.' }),
@@ -34,4 +36,5 @@ test('fails safely when no server-side model credential is configured', async ()
   );
   if (gatewayKey) process.env.AI_GATEWAY_API_KEY = gatewayKey;
   if (oidcToken) process.env.VERCEL_OIDC_TOKEN = oidcToken;
+  if (vercelRuntime) process.env.VERCEL = vercelRuntime;
 });

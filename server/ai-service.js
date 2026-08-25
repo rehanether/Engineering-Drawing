@@ -175,7 +175,7 @@ function createAiService(sql) {
       error.status = 400;
       throw error;
     }
-    if (!process.env.AI_GATEWAY_API_KEY && !process.env.VERCEL_OIDC_TOKEN) {
+    if (!process.env.AI_GATEWAY_API_KEY && !process.env.VERCEL_OIDC_TOKEN && !process.env.VERCEL) {
       const error = new Error('EDG AI is not configured yet. Add AI_GATEWAY_API_KEY or enable Vercel OIDC.');
       error.status = 503;
       error.code = 'AI_NOT_CONFIGURED';
