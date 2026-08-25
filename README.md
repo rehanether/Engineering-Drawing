@@ -92,6 +92,12 @@ The AI endpoint uses Vercel OIDC automatically on a linked Vercel deployment. Fo
 
 AI credit checkout reuses NOWPayments. Set `NOWPAYMENTS_API_KEY`, `NOWPAYMENTS_IPN_SECRET`, `PUBLIC_API_URL`, `SITE_URL`, and `DATABASE_URL`. The pack defaults to 100 generations for $19 and can be changed with `AI_CREDITS_PER_PACK` and `AI_CREDITS_PRICE_USD`.
 
+### Structured industrial Project Model
+
+Every generated brief now also returns a structured Project Model containing the design basis, streams, unit operations, tagged equipment, verified calculations, utilities, quality controls, cost drivers, missing inputs, deliverables, and safety-review items. The workspace exposes these as functional sections with local version history, design-basis editing, print support, and portable JSON export.
+
+Numerical concentration, LMTD, and cylindrical-volume results are calculated by deterministic server functions. If a Gateway model omits its requested structured tool call, EDG returns a safe deterministic process route instead of leaving the workspace unusable; paid generation credits are refunded for that degraded path. All outputs remain concept-stage and require qualified professional review before real-world use.
+
 ## Blockchain
 
 - Solidity

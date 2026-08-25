@@ -40,7 +40,20 @@
     {
       "source": "/api/:path*",
       "destination": "/api?path=:path"
-    }
+    },
+    { "source": "/project-overview", "destination": "/index.html" },
+    { "source": "/tokenomics", "destination": "/index.html" },
+    { "source": "/presale", "destination": "/index.html" },
+    { "source": "/contact", "destination": "/index.html" },
+    { "source": "/workspace", "destination": "/index.html" },
+    { "source": "/evaporators", "destination": "/index.html" },
+    { "source": "/reactors", "destination": "/index.html" },
+    { "source": "/distillation", "destination": "/index.html" },
+    { "source": "/industrial-design", "destination": "/index.html" },
+    { "source": "/construction-design", "destination": "/index.html" },
+    { "source": "/process-design", "destination": "/index.html" },
+    { "source": "/privacy", "destination": "/index.html" },
+    { "source": "/faq", "destination": "/index.html" }
   ],
   "headers": [
     {

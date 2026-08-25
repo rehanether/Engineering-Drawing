@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createAiService, renderBrief, renderCalculation } = require('./ai-service');
+const { buildProjectModel, createAiService, createFallbackBrief, inferMassBalanceRequest, renderBrief, renderCalculation } = require('./ai-service');
 
 const accountId = '0f4bbd9f-1c52-4efb-9d51-c55ad62d5a17';
 
@@ -66,4 +66,31 @@ test('assembles the engineering brief with fixed safety sections', () => {
   for (const heading of ['Engineering interpretation', 'Preliminary calculations', 'Missing inputs', 'Safety and professional review']) {
     assert.match(response, new RegExp(heading));
   }
+});
+
+test('builds a structured project model with code-verified calculations', () => {
+  const project = buildProjectModel({
+    interpretation: 'Concentrate an aqueous feed.',
+    designBasis: ['Feed is 5000 kg/day at 5 wt% solids.'],
+    route: ['MVR evaporation'],
+    calculationRequests: [{ type: 'mass_balance', feedMassFlow: 5000, flowUnit: 'kg/day', feedSolidsMassFraction: 0.05, productSolidsMassFraction: 0.35 }],
+    deliverables: ['PFD'],
+    missingInputs: ['Boiling-point elevation'],
+    safetyReview: ['Qualified review required'],
+  });
+  assert.equal(project.title, 'MVR evaporation project');
+  assert.equal(project.calculations[0].status, 'verified');
+  assert.deepEqual(project.calculations[0].rows[2], { label: 'Concentrate', value: '714.286', unit: 'kg/day' });
+  assert.equal(project.equipment[0].tag, 'E-001');
+});
+
+test('recovers a safe milk-powder project and mass balance when a model omits its tool call', () => {
+  const prompt = 'Build milk powder from 10,000 kg/day feed at 12 percent solids to product at 96 percent solids.';
+  const request = inferMassBalanceRequest(prompt);
+  assert.deepEqual(request, {
+    type: 'mass_balance', feedMassFlow: 10000, flowUnit: 'kg/day', feedSolidsMassFraction: 0.12, productSolidsMassFraction: 0.96,
+  });
+  const brief = createFallbackBrief(prompt);
+  assert.deepEqual(brief.route.slice(-3), ['Spray drying', 'Cooling', 'Packaging']);
+  assert.match(renderCalculation(brief.calculationRequests[0]), /Concentrate: 1,250 kg\/day/);
 });

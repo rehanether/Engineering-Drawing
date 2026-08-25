@@ -35,8 +35,14 @@ const Home = () => {
   const handleFile = (event) => {
     const selected = event.target.files?.[0];
     if (selected) {
+      if (selected.size > 10 * 1024 * 1024) {
+        setFile(null);
+        event.target.value = '';
+        setNotice('Choose a file smaller than 10 MB.');
+        return;
+      }
       setFile(selected);
-      setNotice('');
+      setNotice('File selected. Its name is added as project context; file-content analysis is not enabled yet.');
     }
   };
 
@@ -70,8 +76,8 @@ const Home = () => {
             <h1 id="home-title">Engineering Drawing</h1>
             <p>We are bringing Industry 4.0 to engineering with state-of-the-art AI-driven design, cost-efficient solutions, and sustainable industrial processes.</p>
             <div className="legacy-actions">
-              <a href="/assets/Whitepaper_Engineering_Drawing.pdf" download><button className="download-button" type="button">White Paper</button></a>
-              <Link to="/presale"><button className="presale-button" type="button">Join Presale</button></Link>
+              <a className="download-button" href="/assets/Whitepaper_Engineering_Drawing.pdf" download>White Paper</a>
+              <Link className="presale-button" to="/presale">Join Presale</Link>
             </div>
           </div>
 
@@ -102,9 +108,9 @@ const Home = () => {
       </section>
 
       <section className="categories-section" aria-label="Engineering design categories">
-        <article className="category industrial"><img src="/assets/industrial.webp" alt="Industrial process design visualization" loading="lazy" decoding="async" /><h3>Industrial Design</h3><Link to="/industrial-design"><button type="button">Learn More</button></Link></article>
-        <article className="category constraction"><img src="/assets/construction.webp" alt="Construction design visualization" loading="lazy" decoding="async" /><h3>Construction Design</h3><Link to="/construction-design"><button type="button">Learn More</button></Link></article>
-        <article className="category process"><img src="/assets/process.webp" alt="Process design visualization" loading="lazy" decoding="async" /><h3>Process Design</h3><Link to="/process-design"><button type="button">Learn More</button></Link></article>
+        <article className="category industrial"><img src="/assets/industrial.webp" alt="Industrial process design visualization" loading="lazy" decoding="async" /><h3>Industrial Design</h3><Link to="/industrial-design">Learn More</Link></article>
+        <article className="category constraction"><img src="/assets/construction.webp" alt="Construction design visualization" loading="lazy" decoding="async" /><h3>Construction Design</h3><Link to="/construction-design">Learn More</Link></article>
+        <article className="category process"><img src="/assets/process.webp" alt="Process design visualization" loading="lazy" decoding="async" /><h3>Process Design</h3><Link to="/process-design">Learn More</Link></article>
       </section>
     </main>
   );

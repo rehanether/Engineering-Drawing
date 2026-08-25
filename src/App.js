@@ -7,6 +7,7 @@ import Footer from './components/Footer';
 import Home from './components/Home';
 import Seo from './components/Seo';
 import InstallApp from './components/InstallApp';
+import AppErrorBoundary from './components/AppErrorBoundary';
 import './App.css';
 
 const ProjectOverview=lazy(()=>import('./components/ProjectOverview'));
@@ -29,7 +30,7 @@ const App = () => {
       <Seo />
       <Header />
       <InstallApp />
-      <Suspense fallback={<main className="route-loading" role="status" aria-live="polite"><span/>Loading engineering workspace…</main>}><Routes>
+      <AppErrorBoundary><Suspense fallback={<main className="route-loading" role="status" aria-live="polite"><span/>Loading engineering workspace…</main>}><Routes>
         <Route path="/" element={<Home />} />
         <Route path="/project-overview" element={<ProjectOverview />} />
         <Route path="/tokenomics" element={<Tokenomics />} />
@@ -52,7 +53,7 @@ const App = () => {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes></Suspense>
+      </Routes></Suspense></AppErrorBoundary>
       <Footer />
     </div>
   );
