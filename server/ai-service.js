@@ -1,88 +1,98 @@
 const crypto = require('crypto');
-const { generateText, jsonSchema, stepCountIs, tool } = require('ai');
+const { generateText, tool } = require('ai');
+const { z } = require('zod');
 
 const FREE_DAILY_GENERATIONS = Number(process.env.AI_FREE_DAILY_GENERATIONS || 3);
-const AI_MODEL = process.env.AI_MODEL || 'openai/gpt-5.6-luna';
+const AI_MODEL = process.env.AI_MODEL || 'minimax/minimax-m3-free';
 const AI_MAX_OUTPUT_TOKENS = Number(process.env.AI_MAX_OUTPUT_TOKENS || 2400);
 
 const SYSTEM_INSTRUCTIONS = `You are EDG AI, a cautious multidisciplinary engineering copilot.
 Create useful concept-stage engineering work while keeping facts, calculations, assumptions, and unknowns distinct.
-When numerical inputs are sufficient, use the supplied calculation tools instead of mental arithmetic.
+Never calculate or state a derived numerical result in any narrative field. Put a calculation request in calculationRequests only when every required input and its unit are explicitly supplied by the user. Preserve the user's flow unit exactly and never convert units.
 Never claim a conceptual response is a stamped, certified, construction-ready, or safety-approved design.
-Structure every answer with these headings: Engineering interpretation, Design basis, Recommended route, Preliminary calculations, Deliverables, Missing inputs, Safety and professional review.
-Use SI units and show assumptions. Do not invent code compliance, material compatibility, kinetics, physical properties, prices, or site conditions. If they are absent, list them as missing inputs.
+Use SI units and show assumptions. Do not invent equipment sizes, duties, efficiencies, residence times, code compliance, material compatibility, kinetics, physical properties, prices, or site conditions. If they are absent, list them as missing inputs.
 Keep the answer concise enough to work as an actionable project brief.`;
 
-const tools = {
-  massBalance: tool({
-    description: 'Calculate a steady-state single-solute concentration mass balance with no solute loss.',
-    inputSchema: jsonSchema({
-      type: 'object',
-      properties: {
-        feedMassFlowKgH: { type: 'number', exclusiveMinimum: 0 },
-        feedSolidsMassFraction: { type: 'number', exclusiveMinimum: 0, maximum: 1 },
-        productSolidsMassFraction: { type: 'number', exclusiveMinimum: 0, maximum: 1 },
-      },
-      required: ['feedMassFlowKgH', 'feedSolidsMassFraction', 'productSolidsMassFraction'],
-      additionalProperties: false,
+const briefSchema = z.object({
+  interpretation: z.string().min(1).max(1200),
+  designBasis: z.array(z.string().min(1).max(500)).max(12),
+  route: z.array(z.string().min(1).max(300)).max(12),
+  calculationRequests: z.array(z.discriminatedUnion('type', [
+    z.object({
+      type: z.literal('mass_balance'),
+      feedMassFlow: z.number().positive(),
+      flowUnit: z.enum(['kg/h', 'kg/day', 't/h', 't/day']),
+      feedSolidsMassFraction: z.number().positive().lt(1),
+      productSolidsMassFraction: z.number().positive().lt(1),
     }),
-    execute: async ({ feedMassFlowKgH, feedSolidsMassFraction, productSolidsMassFraction }) => {
-      if (productSolidsMassFraction <= feedSolidsMassFraction) {
-        return { error: 'Product solids fraction must exceed feed solids fraction.' };
-      }
-      const solidsKgH = feedMassFlowKgH * feedSolidsMassFraction;
-      const productKgH = solidsKgH / productSolidsMassFraction;
-      return {
-        solidsKgH,
-        productKgH,
-        removedLiquidKgH: feedMassFlowKgH - productKgH,
-        basis: 'Steady state, one conserved non-volatile solute, no entrainment or solute loss.',
-      };
-    },
-  }),
-  lmtd: tool({
-    description: 'Calculate counter-current log mean temperature difference for a heat exchanger.',
-    inputSchema: jsonSchema({
-      type: 'object',
-      properties: {
-        hotInC: { type: 'number' }, hotOutC: { type: 'number' },
-        coldInC: { type: 'number' }, coldOutC: { type: 'number' },
-      },
-      required: ['hotInC', 'hotOutC', 'coldInC', 'coldOutC'],
-      additionalProperties: false,
+    z.object({
+      type: z.literal('counter_current_lmtd'),
+      hotInC: z.number(), hotOutC: z.number(), coldInC: z.number(), coldOutC: z.number(),
     }),
-    execute: async ({ hotInC, hotOutC, coldInC, coldOutC }) => {
-      const deltaT1 = hotInC - coldOutC;
-      const deltaT2 = hotOutC - coldInC;
-      if (deltaT1 <= 0 || deltaT2 <= 0) return { error: 'Temperature cross or non-positive terminal difference.' };
-      const lmtdC = Math.abs(deltaT1 - deltaT2) < 1e-9
-        ? deltaT1
-        : (deltaT1 - deltaT2) / Math.log(deltaT1 / deltaT2);
-      return { deltaT1C: deltaT1, deltaT2C: deltaT2, lmtdC, basis: 'Counter-current flow; correction factor not applied.' };
-    },
-  }),
-  cylindricalVesselVolume: tool({
-    description: 'Calculate the internal volume of a straight cylindrical vessel section.',
-    inputSchema: jsonSchema({
-      type: 'object',
-      properties: {
-        internalDiameterM: { type: 'number', exclusiveMinimum: 0 },
-        straightLengthM: { type: 'number', exclusiveMinimum: 0 },
-        fillFraction: { type: 'number', exclusiveMinimum: 0, maximum: 1 },
-      },
-      required: ['internalDiameterM', 'straightLengthM', 'fillFraction'],
-      additionalProperties: false,
+    z.object({
+      type: z.literal('cylindrical_volume'),
+      internalDiameterM: z.number().positive(), straightLengthM: z.number().positive(), fillFraction: z.number().positive().lte(1),
     }),
-    execute: async ({ internalDiameterM, straightLengthM, fillFraction }) => {
-      const totalVolumeM3 = Math.PI * internalDiameterM ** 2 * straightLengthM / 4;
-      return {
-        totalVolumeM3,
-        workingVolumeM3: totalVolumeM3 * fillFraction,
-        basis: 'Straight cylindrical section only; heads, internals, and nozzles excluded.',
-      };
-    },
-  }),
-};
+  ])).max(4),
+  deliverables: z.array(z.string().min(1).max(300)).max(12),
+  missingInputs: z.array(z.string().min(1).max(300)).max(16),
+  safetyReview: z.array(z.string().min(1).max(400)).max(12),
+});
+
+const submitBrief = tool({
+  description: 'Submit the concept-stage engineering brief and any calculation inputs explicitly supplied by the user.',
+  inputSchema: briefSchema,
+  execute: async (brief) => brief,
+});
+
+function formatNumber(value) {
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 3 }).format(value);
+}
+
+function renderCalculation(request) {
+  if (request.type === 'mass_balance') {
+    if (request.productSolidsMassFraction <= request.feedSolidsMassFraction) return 'Mass balance not run: product solids must exceed feed solids.';
+    const solids = request.feedMassFlow * request.feedSolidsMassFraction;
+    const product = solids / request.productSolidsMassFraction;
+    const removed = request.feedMassFlow - product;
+    return [
+      'Verified single-solute mass balance',
+      `Feed: ${formatNumber(request.feedMassFlow)} ${request.flowUnit}`,
+      `Conserved solids: ${formatNumber(solids)} ${request.flowUnit}`,
+      `Concentrate: ${formatNumber(product)} ${request.flowUnit}`,
+      `Removed liquid: ${formatNumber(removed)} ${request.flowUnit}`,
+      'Basis: steady state; one conserved non-volatile solute; no solute loss or entrainment.',
+    ].join('\n');
+  }
+  if (request.type === 'counter_current_lmtd') {
+    const deltaT1 = request.hotInC - request.coldOutC;
+    const deltaT2 = request.hotOutC - request.coldInC;
+    if (deltaT1 <= 0 || deltaT2 <= 0) return 'LMTD not run: terminal temperature difference is non-positive.';
+    const lmtd = Math.abs(deltaT1 - deltaT2) < 1e-9 ? deltaT1 : (deltaT1 - deltaT2) / Math.log(deltaT1 / deltaT2);
+    return `Verified counter-current LMTD\nTerminal differences: ${formatNumber(deltaT1)} °C and ${formatNumber(deltaT2)} °C\nLMTD: ${formatNumber(lmtd)} °C\nBasis: correction factor not applied.`;
+  }
+  const total = Math.PI * request.internalDiameterM ** 2 * request.straightLengthM / 4;
+  return `Verified straight-cylinder volume\nInternal volume: ${formatNumber(total)} m³\nWorking volume: ${formatNumber(total * request.fillFraction)} m³\nBasis: heads, internals, and nozzles excluded.`;
+}
+
+function renderList(items, emptyText) {
+  return items.length ? items.map((item) => `- ${item}`).join('\n') : `- ${emptyText}`;
+}
+
+function renderBrief(brief) {
+  const calculations = brief.calculationRequests.length
+    ? brief.calculationRequests.map(renderCalculation).join('\n\n')
+    : 'No verified calculation was run because the complete numerical basis was not supplied.';
+  return [
+    'Engineering interpretation', brief.interpretation,
+    '', 'Design basis', renderList(brief.designBasis, 'Design basis requires confirmation.'),
+    '', 'Recommended route', renderList(brief.route, 'Route requires a confirmed design basis.'),
+    '', 'Preliminary calculations', calculations,
+    '', 'Deliverables', renderList(brief.deliverables, 'Deliverables require definition.'),
+    '', 'Missing inputs', renderList(brief.missingInputs, 'No additional inputs identified.'),
+    '', 'Safety and professional review', renderList(brief.safetyReview, 'Qualified professional review is required before use.'),
+  ].join('\n');
+}
 
 function createAiService(sql) {
   const memoryGenerations = new Map();
@@ -209,12 +219,13 @@ function createAiService(sql) {
         model: AI_MODEL,
         system: SYSTEM_INSTRUCTIONS,
         prompt,
-        tools,
-        stopWhen: stepCountIs(4),
+        tools: { submitBrief },
+        toolChoice: { type: 'tool', toolName: 'submitBrief' },
         maxOutputTokens: AI_MAX_OUTPUT_TOKENS,
         maxRetries: 2,
       });
-      const response = result.text.trim();
+      const submittedBrief = result.toolResults.find((item) => item.toolName === 'submitBrief')?.output;
+      const response = renderBrief(briefSchema.parse(submittedBrief));
       const completedAt = new Date().toISOString();
       const tokenUsage = {
         inputTokens: result.usage?.inputTokens || 0,
@@ -228,12 +239,19 @@ function createAiService(sql) {
       return { id, response, model: AI_MODEL, usage: tokenUsage, entitlement: await usage(accountId, ipHash) };
     } catch (providerError) {
       const errorCode = providerError?.name || 'AI_PROVIDER_ERROR';
+      console.error('AI provider failure:', JSON.stringify({ name: errorCode, status: providerError?.statusCode || null, message: providerError?.message || 'Unknown provider failure' }));
       if (!sql) memoryGenerations.set(id, { ...generation, status: 'failed', errorCode });
       else await sql`UPDATE edg_ai_generations SET status = 'failed', error_code = ${errorCode}, completed_at = NOW() WHERE id = ${id}`;
       if (chargeType === 'credit') await addCredits(accountId, 1, 'generation_refund', `refund:${id}`);
-      const error = new Error('The engineering model could not complete this request. No paid credit was consumed.');
+      const capacityLimited = /rate-limited|rate limit/i.test(providerError?.message || '');
+      const modelRestricted = /do not have access|restricted model/i.test(providerError?.message || '');
+      const error = new Error(capacityLimited
+        ? 'EDG AI free capacity is temporarily busy. Please retry shortly. No paid credit was consumed.'
+        : modelRestricted
+          ? 'This AI model requires provider credits. Configure a free model or add AI Gateway balance. No paid credit was consumed.'
+          : 'The engineering model could not complete this request. No paid credit was consumed.');
       error.status = 502;
-      error.code = 'AI_PROVIDER_ERROR';
+      error.code = capacityLimited ? 'AI_CAPACITY' : modelRestricted ? 'AI_MODEL_RESTRICTED' : 'AI_PROVIDER_ERROR';
       throw error;
     }
   }
@@ -297,4 +315,4 @@ function createAiService(sql) {
   return { applyPayment, createGeneration, getPaymentOrder, hashIp, savePaymentOrder, usage, validAccountId };
 }
 
-module.exports = { createAiService, FREE_DAILY_GENERATIONS, AI_MODEL };
+module.exports = { createAiService, renderBrief, renderCalculation, FREE_DAILY_GENERATIONS, AI_MODEL };

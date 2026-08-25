@@ -88,7 +88,7 @@ Our vision is to build the **AI Copilot for Industrial Engineering** and acceler
 
 ### EDG AI configuration
 
-The AI endpoint uses Vercel OIDC automatically on a linked Vercel deployment. For local or non-Vercel hosting, set `AI_GATEWAY_API_KEY`. Optional controls are `AI_MODEL` (default `openai/gpt-5.6-luna`), `AI_MAX_OUTPUT_TOKENS`, `AI_FREE_DAILY_GENERATIONS`, and `AI_USAGE_SALT`.
+The AI endpoint uses Vercel OIDC automatically on a linked Vercel deployment. For local or non-Vercel hosting, set `AI_GATEWAY_API_KEY`. Optional controls are `AI_MODEL` (default `minimax/minimax-m3-free`; set a premium Gateway model after adding provider credits), `AI_MAX_OUTPUT_TOKENS`, `AI_FREE_DAILY_GENERATIONS`, and `AI_USAGE_SALT`.
 
 AI credit checkout reuses NOWPayments. Set `NOWPAYMENTS_API_KEY`, `NOWPAYMENTS_IPN_SECRET`, `PUBLIC_API_URL`, `SITE_URL`, and `DATABASE_URL`. The pack defaults to 100 generations for $19 and can be changed with `AI_CREDITS_PER_PACK` and `AI_CREDITS_PRICE_USD`.
 

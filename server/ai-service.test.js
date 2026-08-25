@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createAiService } = require('./ai-service');
+const { createAiService, renderBrief, renderCalculation } = require('./ai-service');
 
 const accountId = '0f4bbd9f-1c52-4efb-9d51-c55ad62d5a17';
 
@@ -37,4 +37,33 @@ test('fails safely when no server-side model credential is configured', async ()
   if (gatewayKey) process.env.AI_GATEWAY_API_KEY = gatewayKey;
   if (oidcToken) process.env.VERCEL_OIDC_TOKEN = oidcToken;
   if (vercelRuntime) process.env.VERCEL = vercelRuntime;
+});
+
+test('renders a dimensionally consistent verified concentration balance', () => {
+  const result = renderCalculation({
+    type: 'mass_balance',
+    feedMassFlow: 5000,
+    flowUnit: 'kg/day',
+    feedSolidsMassFraction: 0.05,
+    productSolidsMassFraction: 0.35,
+  });
+  assert.match(result, /Conserved solids: 250 kg\/day/);
+  assert.match(result, /Concentrate: 714\.286 kg\/day/);
+  assert.match(result, /Removed liquid: 4,285\.714 kg\/day/);
+  assert.doesNotMatch(result, /17,143|102,857/);
+});
+
+test('assembles the engineering brief with fixed safety sections', () => {
+  const response = renderBrief({
+    interpretation: 'Concept-stage evaporator request.',
+    designBasis: ['Feed basis supplied by user.'],
+    route: ['Confirm properties', 'Run thermal design'],
+    calculationRequests: [],
+    deliverables: ['Mass balance'],
+    missingInputs: ['Boiling-point elevation'],
+    safetyReview: ['Qualified process review required.'],
+  });
+  for (const heading of ['Engineering interpretation', 'Preliminary calculations', 'Missing inputs', 'Safety and professional review']) {
+    assert.match(response, new RegExp(heading));
+  }
 });
