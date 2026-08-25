@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { planProject } from './engineeringPlanner';
+import { buyAiCredits, generateEngineeringBrief, getAiPaymentStatus, getAiStatus } from '../services/edgAi';
 import './EngineeringWorkspace.css';
 
 const readSavedProject = () => {
@@ -15,9 +16,67 @@ const EngineeringWorkspace = () => {
   };
   const [project, setProject] = useState(initial);
   const [revision, setRevision] = useState('');
+  const [aiBrief, setAiBrief] = useState('');
+  const [aiState, setAiState] = useState('idle');
+  const [aiError, setAiError] = useState('');
+  const [entitlement, setEntitlement] = useState(null);
+  const [checkoutState, setCheckoutState] = useState('idle');
+  const initialRequest = useRef(false);
   const plan = useMemo(() => planProject(project.prompt, Boolean(project.fileName)), [project]);
 
-  const applyRevision = (event) => {
+  const runAi = useCallback(async (prompt) => {
+    setAiState('loading');
+    setAiError('');
+    try {
+      const result = await generateEngineeringBrief(prompt);
+      setAiBrief(result.response);
+      setEntitlement(result.entitlement);
+      setAiState('complete');
+    } catch (error) {
+      setAiError(error.message);
+      if (error.entitlement) setEntitlement(error.entitlement);
+      setAiState(error.code === 'CREDITS_REQUIRED' ? 'credits' : 'error');
+    }
+  }, []);
+
+  useEffect(() => {
+    getAiStatus().then((status) => setEntitlement(status.entitlement)).catch(() => {});
+    if (!initialRequest.current && project.prompt && project.id !== 'edg-new') {
+      initialRequest.current = true;
+      runAi(project.prompt);
+    }
+  }, [project.id, project.prompt, runAi]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get('order') || localStorage.getItem('edg-ai-payment-order');
+    if (params.get('payment') !== 'return' || !orderId?.startsWith('AI-')) return undefined;
+    let stopped = false;
+    let attempts = 0;
+    const check = async () => {
+      attempts += 1;
+      try {
+        const payment = await getAiPaymentStatus(orderId);
+        if (['confirmed', 'finished'].includes(payment.status)) {
+          const status = await getAiStatus();
+          if (!stopped) {
+            setEntitlement(status.entitlement);
+            setCheckoutState('paid');
+            localStorage.removeItem('edg-ai-payment-order');
+            window.history.replaceState({}, '', window.location.pathname);
+          }
+          return;
+        }
+        if (!stopped && attempts < 30 && !['failed', 'expired', 'refunded'].includes(payment.status)) window.setTimeout(check, 4000);
+      } catch (_error) {
+        if (!stopped) setCheckoutState('error');
+      }
+    };
+    check();
+    return () => { stopped = true; };
+  }, []);
+
+  const applyRevision = async (event) => {
     event.preventDefault();
     const clean = revision.trim();
     if (!clean) return;
@@ -25,6 +84,13 @@ const EngineeringWorkspace = () => {
     setProject(next);
     setRevision('');
     try { localStorage.setItem('edg-active-project', JSON.stringify(next)); } catch (_error) { /* state remains available */ }
+    await runAi(clean);
+  };
+
+  const openCheckout = async () => {
+    setCheckoutState('loading');
+    try { await buyAiCredits(); }
+    catch (error) { setCheckoutState('error'); setAiError(error.message); }
   };
 
   return (
@@ -58,6 +124,20 @@ const EngineeringWorkspace = () => {
           </div>
           <p className="plan-summary">{plan.summary}</p>
 
+          <article className={`ai-engineering-brief ${aiState}`} aria-live="polite">
+            <div className="ai-brief-heading">
+              <div><p className="workspace-kicker">EDG AI · PERSISTED GENERATION</p><h3>Engineering brief</h3></div>
+              <div className="ai-usage">
+                {entitlement && <span>{entitlement.freeRemaining} free today · {entitlement.paidCredits} credits</span>}
+                <button type="button" onClick={openCheckout} disabled={checkoutState === 'loading'}>{checkoutState === 'loading' ? 'Opening…' : 'Add 100 credits · $19'}</button>
+              </div>
+            </div>
+            {aiState === 'loading' && <div className="ai-loading"><span /><span /><span /> Building a traceable engineering brief…</div>}
+            {aiBrief && <div className="ai-brief-content">{aiBrief}</div>}
+            {aiError && <div className="ai-error"><b>AI service notice</b><span>{aiError}</span>{aiState === 'error' && <small>The deterministic project route below remains available.</small>}</div>}
+            {checkoutState === 'paid' && <div className="ai-paid">Payment confirmed. Your AI credits are ready.</div>}
+          </article>
+
           <div className="process-route" aria-label="Recommended process route">
             {plan.steps.map((step, index) => (
               <React.Fragment key={step}>
@@ -80,7 +160,7 @@ const EngineeringWorkspace = () => {
       <form className="workspace-revision" onSubmit={applyRevision}>
         <label htmlFor="project-revision" className="sr-only">Revise this engineering project</label>
         <input id="project-revision" value={revision} onChange={(event) => setRevision(event.target.value)} placeholder="Refine the project: change capacity, material, process, or required output…" />
-        <button type="submit">Update project →</button>
+        <button type="submit" disabled={aiState === 'loading'}>{aiState === 'loading' ? 'Working…' : 'Update project →'}</button>
       </form>
     </main>
   );
