@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BrowserProvider, Contract, JsonRpcProvider, formatEther, formatUnits } from 'ethers';
 import tokenMeta from '../EnggDrawTokenABI.json';
@@ -8,8 +8,18 @@ import { buyAiCredits } from '../services/edgAi';
 import './Profile.css';
 
 const BSC_RPC = process.env.REACT_APP_BSC_RPC || 'https://bsc-dataseed.bnbchain.org';
+const WC_PROJECT_ID = process.env.REACT_APP_WC_PROJECT_ID || '';
 const TOKEN_ABI = ['function balanceOf(address) view returns (uint256)', 'function decimals() view returns (uint8)'];
 const emptyBalances = { bnb: '—', edg: '—' };
+
+function injectedWallet(kind) {
+  const ethereum = window.ethereum;
+  if (!ethereum) return null;
+  const providers = ethereum.providers || [ethereum];
+  if (kind === 'metamask') return providers.find((provider) => provider.isMetaMask) || null;
+  if (kind === 'coinbase') return providers.find((provider) => provider.isCoinbaseWallet) || null;
+  return providers[0] || ethereum;
+}
 
 function shortAddress(address) {
   return address ? `${address.slice(0, 6)}…${address.slice(-4)}` : 'Not linked';
@@ -27,6 +37,8 @@ export default function Profile() {
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [walletMethod, setWalletMethod] = useState('metamask');
+  const walletConnectRef = useRef(null);
 
   const loadProfile = useCallback(async () => {
     if (!isSignedIn) return;
@@ -77,19 +89,46 @@ export default function Profile() {
   };
 
   const linkWallet = async () => {
-    if (!window.ethereum) return setStatus('Install MetaMask or open this page inside a compatible wallet browser.');
     setLoading(true);
-    setStatus('Confirm the wallet link. No transaction or payment will be made.');
+    setStatus('Choose your wallet account, then sign the verification message. No payment will be made.');
     try {
-      const provider = new BrowserProvider(window.ethereum);
-      await provider.send('eth_requestAccounts', []);
+      let eip1193;
+      if (walletMethod === 'walletconnect') {
+        if (!WC_PROJECT_ID) throw new Error('WalletConnect is not configured for this environment.');
+        const module = await import('@walletconnect/ethereum-provider');
+        const EthereumProvider = module.default || module.EthereumProvider;
+        eip1193 = await EthereumProvider.init({
+          projectId: WC_PROJECT_ID,
+          chains: [56],
+          rpcMap: { 56: BSC_RPC },
+          showQrModal: true,
+          methods: ['eth_accounts', 'eth_requestAccounts', 'personal_sign'],
+          events: ['accountsChanged', 'chainChanged', 'disconnect'],
+          metadata: {
+            name: 'Engineering Drawing',
+            description: 'Securely link a wallet to your Engineering Drawing account',
+            url: window.location.origin,
+            icons: [`${window.location.origin}/assets/edg_logo.svg`],
+          },
+        });
+        walletConnectRef.current = eip1193;
+        await eip1193.enable();
+      } else {
+        eip1193 = injectedWallet(walletMethod);
+        if (!eip1193) {
+          const walletName = walletMethod === 'coinbase' ? 'Coinbase Wallet' : 'MetaMask';
+          throw new Error(`${walletName} was not detected. Install it or choose WalletConnect.`);
+        }
+        await eip1193.request({ method: 'eth_requestAccounts' });
+      }
+      const provider = new BrowserProvider(eip1193);
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
       const token = await auth.getToken();
       const challenge = await createWalletChallenge(token);
       const signature = await signer.signMessage(challenge.message);
       await verifyWallet(token, address, signature);
-      setStatus('Wallet verified and linked.');
+      setStatus('Wallet ownership verified. Your BNB and EDG balances are now connected to this account.');
       await loadProfile();
     } catch (error) {
       setStatus(error.shortMessage || error.message || 'Wallet linking was cancelled.');
@@ -117,7 +156,7 @@ export default function Profile() {
   if (!auth.isLoaded) return <main className="profile-page"><p className="profile-loading">Loading secure account…</p></main>;
   if (!auth.isSignedIn) return (
     <main className="profile-page">
-      <section className="profile-auth-card"><span>ENGINEERING DRAWING ACCOUNT</span><h1>Your engineering work, rewards and wallet in one place</h1><p>Sign in to save projects, protect purchases, collect AI credits and participate in the referral campaign.</p><div className="auth-provider-list" aria-label="Available account methods"><span>Email code</span><span>MetaMask</span><span>Coinbase Wallet</span></div><button onClick={auth.signIn}>Sign in or create account</button><small>Wallet linking comes after sign-in. Engineering Drawing never asks for or stores your private key.</small></section>
+      <section className="profile-auth-card"><span>ENGINEERING DRAWING ACCOUNT</span><h1>One secure account for every engineering project</h1><p>First create your professional identity. After sign-in, you can connect a Web3 wallet for EDG, BNB and presale activity.</p><div className="account-steps"><div><b>1</b><span><strong>Sign in securely</strong><small>Google, Microsoft, GitHub or verified email</small></span></div><div><b>2</b><span><strong>Connect Web3 wallet</strong><small>MetaMask, Coinbase or WalletConnect</small></span></div></div><button onClick={auth.signIn}>Continue to secure sign-in</button><small>Social providers appear when their production OAuth credentials are active. Wallet connection is always a separate step and never exposes your private key.</small></section>
     </main>
   );
 
@@ -135,7 +174,19 @@ export default function Profile() {
         <article><span>AI credits</span><strong>{data?.entitlement?.paidCredits ?? '—'}</strong><small>{data?.entitlement ? `${data.entitlement.freeRemaining} free uses remaining today` : 'Loading ledger'}</small><button onClick={addAiFunds} disabled={checkoutLoading || !auth.accountId}>{checkoutLoading ? 'Opening…' : 'Add 100 credits · $19'}</button></article>
         <article><span>BNB balance</span><strong>{balances.bnb}</strong><small>BNB Smart Chain</small></article>
         <article><span>EDG balance</span><strong>{balances.edg}</strong><small>Official EDG contract</small></article>
-        <article><span>Linked wallet</span><strong className="wallet-address">{shortAddress(data?.profile?.walletAddress)}</strong><small>MetaMask or compatible EVM wallet</small><button onClick={linkWallet} disabled={loading}>{data?.profile?.walletAddress ? 'Verify another wallet' : 'Link wallet securely'}</button></article>
+        <article><span>Linked wallet</span><strong className="wallet-address">{shortAddress(data?.profile?.walletAddress)}</strong><small>{data?.profile?.walletAddress ? 'Ownership verified' : 'No wallet connected'}</small></article>
+      </section>
+      <section className="wallet-connect-card" aria-labelledby="wallet-connect-title">
+        <div className="wallet-connect-copy"><span>CONNECTED WALLETS</span><h2 id="wallet-connect-title">Connect your Web3 wallet</h2><p>Choose a provider and sign a short-lived verification message. This does not send a transaction, approve token spending, or give Engineering Drawing access to your funds.</p></div>
+        <div className="wallet-provider-panel">
+          <div className="wallet-provider-grid" role="group" aria-label="Wallet provider">
+            <button className={walletMethod === 'metamask' ? 'active' : ''} onClick={() => setWalletMethod('metamask')}><b>MetaMask</b><small>Browser or mobile app</small></button>
+            <button className={walletMethod === 'coinbase' ? 'active' : ''} onClick={() => setWalletMethod('coinbase')}><b>Coinbase Wallet</b><small>Extension wallet</small></button>
+            <button className={walletMethod === 'walletconnect' ? 'active' : ''} onClick={() => setWalletMethod('walletconnect')}><b>WalletConnect</b><small>QR · Trust Wallet & more</small></button>
+          </div>
+          <button className="wallet-connect-action" onClick={linkWallet} disabled={loading}>{loading ? 'Waiting for wallet…' : data?.profile?.walletAddress ? 'Verify and replace linked wallet' : 'Connect and verify wallet'}</button>
+          <div className="wallet-safety"><span>✓ No private keys</span><span>✓ No token approval</span><span>✓ BNB Smart Chain balances</span></div>
+        </div>
       </section>
       <section className="profile-columns">
         <article className="referral-card">

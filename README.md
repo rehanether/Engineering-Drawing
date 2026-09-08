@@ -210,6 +210,7 @@ The `/profile` experience uses Clerk for authenticated accounts and Neon for the
 REACT_APP_CLERK_PUBLISHABLE_KEY
 CLERK_PUBLISHABLE_KEY
 CLERK_SECRET_KEY
+REACT_APP_WC_PROJECT_ID
 REFERRAL_WELCOME_CREDITS=10
 REFERRAL_REWARD_CREDITS=25
 REFERRAL_REWARD_EDG=0
@@ -218,7 +219,7 @@ REFERRAL_REWARD_BNB=0
 
 EDG and BNB referral rewards default to zero. Set non-zero campaign values only after treasury, anti-fraud and eligibility rules are approved. Token rewards are recorded as `pending`; this application never stores a treasury private key or automatically transfers treasury assets.
 
-Referral flow: a visitor opens `/?ref=CODE`, signs in, receives the welcome credits once, and becomes qualified after the first confirmed AI-credit purchase. The referrer credit is idempotent. Wallets are linked only after signing a short-lived challenge message; linking never requests a payment transaction.
+Referral flow: a visitor opens `/?ref=CODE`, signs in, receives the welcome credits once, and becomes qualified after the first confirmed AI-credit purchase. The referrer credit is idempotent. Wallets are linked only after signing a short-lived challenge message; linking never requests a payment transaction. The profile supports injected MetaMask/Coinbase wallets and WalletConnect for compatible mobile wallets.
 
 Production authentication enables only with Clerk `pk_live_` credentials. Development keys fail closed on the live site so production visitors cannot be enrolled into a temporary Clerk tenant.
 
