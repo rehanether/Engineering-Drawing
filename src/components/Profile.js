@@ -29,6 +29,12 @@ function formatBalance(value, maximumFractionDigits = 4) {
   return Number(value).toLocaleString(undefined, { maximumFractionDigits });
 }
 
+function AuthProviderIcon({ provider }) {
+  if (provider === 'google') return <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.8 12.2c0-.7-.1-1.4-.2-2H12v3.9h5.5a4.7 4.7 0 0 1-2 3.1v2.6h3.3c1.9-1.8 3-4.4 3-7.6Z"/><path fill="#34A853" d="M12 22c2.7 0 5-.9 6.8-2.3l-3.3-2.6c-.9.6-2.1 1-3.5 1a6 6 0 0 1-5.6-4.1H3v2.7A10.3 10.3 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.4 14a6.2 6.2 0 0 1 0-4V7.3H3a10.1 10.1 0 0 0 0 9.4L6.4 14Z"/><path fill="#EA4335" d="M12 5.9c1.6 0 3 .5 4.1 1.6l3.1-3.1A10.2 10.2 0 0 0 3 7.3L6.4 10A6 6 0 0 1 12 5.9Z"/></svg>;
+  if (provider === 'github') return <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .7a11.5 11.5 0 0 0-3.6 22.4c.6.1.8-.2.8-.5v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.4-1.3-1.7-1.3-1.7-1.1-.8.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.6.1-3.2 0 0 1-.3 3.3 1.2A11.4 11.4 0 0 1 12 6.7c1 0 2 .1 3 .4 2.2-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.2c0 .3.2.6.8.5A11.5 11.5 0 0 0 12 .7Z"/></svg>;
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#0A66C2" d="M20.5 2h-17A1.5 1.5 0 0 0 2 3.5v17A1.5 1.5 0 0 0 3.5 22h17a1.5 1.5 0 0 0 1.5-1.5v-17A1.5 1.5 0 0 0 20.5 2ZM8 19H5V9.5h3V19ZM6.5 8.2A1.7 1.7 0 1 1 6.5 4.8a1.7 1.7 0 0 1 0 3.4ZM19 19h-3v-4.6c0-1.1 0-2.6-1.6-2.6s-1.8 1.2-1.8 2.5V19h-3V9.5h2.9v1.3h.1a3.2 3.2 0 0 1 2.8-1.6c3 0 3.6 2 3.6 4.5V19Z"/></svg>;
+}
+
 export default function Profile() {
   const auth = useEdgAuth();
   const { getToken, isSignedIn } = auth;
@@ -156,7 +162,7 @@ export default function Profile() {
   if (!auth.isLoaded) return <main className="profile-page"><p className="profile-loading">Loading secure account…</p></main>;
   if (!auth.isSignedIn) return (
     <main className="profile-page">
-      <section className="profile-auth-card"><span>ENGINEERING DRAWING ACCOUNT</span><h1>One secure account for every engineering project</h1><p>First create your professional identity. After sign-in, you can connect a Web3 wallet for EDG, BNB and presale activity.</p><div className="account-steps"><div><b>1</b><span><strong>Sign in securely</strong><small>Google, Microsoft, GitHub or verified email</small></span></div><div><b>2</b><span><strong>Connect Web3 wallet</strong><small>MetaMask, Coinbase or WalletConnect</small></span></div></div><button onClick={auth.signIn}>Continue to secure sign-in</button><small>Social providers appear when their production OAuth credentials are active. Wallet connection is always a separate step and never exposes your private key.</small></section>
+      <section className="profile-auth-card"><span>ENGINEERING DRAWING ACCOUNT</span><h1>One secure account for every engineering project</h1><p>First create your professional identity. After sign-in, you can connect a Web3 wallet for EDG, BNB and presale activity.</p><div className="professional-providers" aria-label="Professional sign-in providers"><div><AuthProviderIcon provider="google"/><strong>Google</strong></div><div><AuthProviderIcon provider="github"/><strong>GitHub</strong></div><div><AuthProviderIcon provider="linkedin"/><strong>LinkedIn</strong></div></div><div className="account-steps"><div><b>1</b><span><strong>Sign in securely</strong><small>Google, GitHub, LinkedIn or verified email</small></span></div><div><b>2</b><span><strong>Connect Web3 wallet</strong><small>MetaMask, Coinbase or WalletConnect</small></span></div></div><button onClick={auth.signIn}>Continue to secure sign-in</button><small>Verified email remains available as a reliable fallback. Wallet connection is always a separate step and never exposes your private key.</small></section>
     </main>
   );
 
