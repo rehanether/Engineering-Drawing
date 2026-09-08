@@ -65,9 +65,9 @@ app.use(helmet({
   crossOriginResourcePolicy: false,
   contentSecurityPolicy: {
     directives: {
-      scriptSrc: ["'self'", "'unsafe-inline'", 'https://*.clerk.accounts.dev', 'https://*.clerk.com'],
+      scriptSrc: ["'self'", "'unsafe-inline'", 'https://clerk.engineeringdrawing.io', 'https://*.clerk.accounts.dev', 'https://*.clerk.com'],
       connectSrc: ["'self'", 'https:'],
-      frameSrc: ["'self'", 'https://*.clerk.accounts.dev', 'https://*.clerk.com', 'https://nowpayments.io'],
+      frameSrc: ["'self'", 'https://clerk.engineeringdrawing.io', 'https://accounts.engineeringdrawing.io', 'https://*.clerk.accounts.dev', 'https://*.clerk.com', 'https://nowpayments.io'],
       imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
     },
   },
