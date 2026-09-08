@@ -3,7 +3,7 @@ import { ClerkProvider, useAuth, useClerk, useUser } from '@clerk/react';
 import { useNavigate } from 'react-router-dom';
 import { bootstrapProfile } from '../services/profile';
 
-const guestValue = { configured: false, isLoaded: true, isSignedIn: false, accountId: '', user: null, getToken: async () => '', signIn: () => {}, signOut: () => {} };
+const guestValue = { configured: false, isLoaded: true, isSignedIn: false, accountId: '', user: null, getToken: async () => '', signIn: () => {}, manageAccount: () => {}, signOut: () => {} };
 const AuthContext = createContext(guestValue);
 const configuredPublishableKey = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY || '';
 const publishableKey = process.env.NODE_ENV === 'production' && !configuredPublishableKey.startsWith('pk_live_') ? '' : configuredPublishableKey;
@@ -43,6 +43,7 @@ function ClerkAuthBridge({ children }) {
     user,
     getToken: async () => (await getToken()) || '',
     signIn: () => clerk.openSignIn({}),
+    manageAccount: () => clerk.openUserProfile({}),
     signOut: () => clerk.signOut({ redirectUrl: '/' }),
   }), [accountId, clerk, getToken, isLoaded, isSignedIn, user]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

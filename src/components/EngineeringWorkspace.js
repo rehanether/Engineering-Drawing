@@ -38,6 +38,7 @@ const EngineeringWorkspace = () => {
   const [savedModel, setSavedModel] = useState(() => readJson(modelKey(initial.id)));
   const [versions, setVersions] = useState(() => readJson(versionKey(initial.id), []));
   const initialRequest = useRef(false);
+  const exhaustedPromptShown = useRef(false);
   const plan = useMemo(() => planProject(project.prompt, Boolean(project.fileName)), [project]);
   const fallbackModel = useMemo(() => createFallbackProjectModel(plan, project.prompt), [plan, project.prompt]);
   const model = useMemo(() => normalizeProjectModel(savedModel, fallbackModel), [savedModel, fallbackModel]);
@@ -74,11 +75,18 @@ const EngineeringWorkspace = () => {
       if (result.degraded) setAiError('The model returned no structured tool call, so EDG completed this project with its deterministic engineering route. No paid credit was consumed.');
       setAiState('complete');
     } catch (error) {
-      setAiError(error.message);
+      const creditsRequired = error.code === 'CREDITS_REQUIRED';
+      setAiError(creditsRequired && !isSignedIn
+        ? 'Your free AI generations are used. Sign in to continue with a protected account and welcome credits.'
+        : error.message);
       if (error.entitlement) setEntitlement(error.entitlement);
-      setAiState(error.code === 'CREDITS_REQUIRED' ? 'credits' : 'error');
+      setAiState(creditsRequired ? 'credits' : 'error');
+      if (creditsRequired && !isSignedIn && !exhaustedPromptShown.current) {
+        exhaustedPromptShown.current = true;
+        window.setTimeout(() => signIn(), 0);
+      }
     }
-  }, [applyModel, getIdentity]);
+  }, [applyModel, getIdentity, isSignedIn, signIn]);
 
   useEffect(() => {
     getIdentity().then((identity) => getAiStatus(identity)).then((status) => setEntitlement(status.entitlement)).catch(() => {});

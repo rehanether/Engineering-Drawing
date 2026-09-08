@@ -4,6 +4,7 @@ import { BrowserProvider, Contract, JsonRpcProvider, formatEther, formatUnits } 
 import tokenMeta from '../EnggDrawTokenABI.json';
 import { clearPendingReferralCode, pendingReferralCode, useEdgAuth } from '../auth/EdgAuth';
 import { bootstrapProfile, createWalletChallenge, verifyWallet } from '../services/profile';
+import { buyAiCredits } from '../services/edgAi';
 import './Profile.css';
 
 const BSC_RPC = process.env.REACT_APP_BSC_RPC || 'https://bsc-dataseed.bnbchain.org';
@@ -25,6 +26,7 @@ export default function Profile() {
   const [balances, setBalances] = useState(emptyBalances);
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const loadProfile = useCallback(async () => {
     if (!isSignedIn) return;
@@ -96,6 +98,17 @@ export default function Profile() {
     }
   };
 
+  const addAiFunds = async () => {
+    setCheckoutLoading(true);
+    setStatus('Opening secure crypto checkout…');
+    try {
+      await buyAiCredits({ accountId: auth.accountId, authToken: await auth.getToken() });
+    } catch (error) {
+      setCheckoutLoading(false);
+      setStatus(error.message || 'Could not open checkout. Please try again.');
+    }
+  };
+
   if (!auth.configured) return (
     <main className="profile-page">
       <section className="profile-auth-card"><span>ACCOUNT SETUP</span><h1>User profiles are ready for activation</h1><p>Add the Clerk production publishable and secret keys in Vercel to enable secure accounts, referrals, credits and linked wallets.</p></section>
@@ -104,7 +117,7 @@ export default function Profile() {
   if (!auth.isLoaded) return <main className="profile-page"><p className="profile-loading">Loading secure account…</p></main>;
   if (!auth.isSignedIn) return (
     <main className="profile-page">
-      <section className="profile-auth-card"><span>ENGINEERING DRAWING ACCOUNT</span><h1>Your engineering work, rewards and wallet in one place</h1><p>Sign in to save projects, protect purchases, collect AI credits and participate in the referral campaign.</p><button onClick={auth.signIn}>Sign in or create account</button></section>
+      <section className="profile-auth-card"><span>ENGINEERING DRAWING ACCOUNT</span><h1>Your engineering work, rewards and wallet in one place</h1><p>Sign in to save projects, protect purchases, collect AI credits and participate in the referral campaign.</p><div className="auth-provider-list" aria-label="Available account methods"><span>Email code</span><span>MetaMask</span><span>Coinbase Wallet</span></div><button onClick={auth.signIn}>Sign in or create account</button><small>Wallet linking comes after sign-in. Engineering Drawing never asks for or stores your private key.</small></section>
     </main>
   );
 
@@ -114,15 +127,15 @@ export default function Profile() {
   return (
     <main className="profile-page">
       <section className="profile-hero">
-        <div><span>ENGINEERING DRAWING PROFILE</span><h1>Welcome, {name}</h1><p>Manage engineering credits, wallet balances, referrals and purchases.</p></div>
-        <button className="profile-signout" onClick={auth.signOut}>Sign out</button>
+        <div><span>ENGINEERING DRAWING PROFILE</span><h1>Welcome, {name}</h1><p>Manage engineering credits, wallet balances, security, referrals and purchases.</p></div>
+        <div className="profile-hero-actions"><button className="profile-security" onClick={auth.manageAccount}>Security & sign-in</button><button className="profile-signout" onClick={auth.signOut}>Sign out</button></div>
       </section>
       {status && <div className="profile-status" role="status">{status}</div>}
       <section className="balance-grid" aria-label="Account balances">
-        <article><span>AI credits</span><strong>{data?.entitlement?.paidCredits ?? '—'}</strong><small>{data?.entitlement ? `${data.entitlement.freeRemaining} free uses remaining today` : 'Loading ledger'}</small></article>
+        <article><span>AI credits</span><strong>{data?.entitlement?.paidCredits ?? '—'}</strong><small>{data?.entitlement ? `${data.entitlement.freeRemaining} free uses remaining today` : 'Loading ledger'}</small><button onClick={addAiFunds} disabled={checkoutLoading || !auth.accountId}>{checkoutLoading ? 'Opening…' : 'Add 100 credits · $19'}</button></article>
         <article><span>BNB balance</span><strong>{balances.bnb}</strong><small>BNB Smart Chain</small></article>
         <article><span>EDG balance</span><strong>{balances.edg}</strong><small>Official EDG contract</small></article>
-        <article><span>Linked wallet</span><strong className="wallet-address">{shortAddress(data?.profile?.walletAddress)}</strong><button onClick={linkWallet} disabled={loading}>{data?.profile?.walletAddress ? 'Verify another wallet' : 'Link wallet securely'}</button></article>
+        <article><span>Linked wallet</span><strong className="wallet-address">{shortAddress(data?.profile?.walletAddress)}</strong><small>MetaMask or compatible EVM wallet</small><button onClick={linkWallet} disabled={loading}>{data?.profile?.walletAddress ? 'Verify another wallet' : 'Link wallet securely'}</button></article>
       </section>
       <section className="profile-columns">
         <article className="referral-card">
@@ -132,7 +145,7 @@ export default function Profile() {
           <div className="referral-stats"><div><strong>{data?.campaign?.referrals?.total || 0}</strong><small>Invited</small></div><div><strong>{data?.campaign?.referrals?.qualified || 0}</strong><small>Qualified</small></div><div><strong>{rewards.creditEarned || 0}</strong><small>Credits earned</small></div></div>
           <p className="campaign-note">EDG and BNB campaign rewards are tracked as pending only when the treasury campaign is enabled. No private keys are stored by this website.</p>
         </article>
-        <article className="activity-card"><span>ACCOUNT ACTIVITY</span><h2>Reward balances</h2><dl><div><dt>EDG pending</dt><dd>{rewards.edgPending || 0}</dd></div><div><dt>BNB pending</dt><dd>{rewards.bnbPending || 0}</dd></div><div><dt>Member since</dt><dd>{data?.profile?.createdAt ? new Date(data.profile.createdAt).toLocaleDateString() : '—'}</dd></div></dl><Link to="/workspace">Open engineering workspace →</Link></article>
+        <article className="activity-card"><span>ACCOUNT & SECURITY</span><h2>Protected engineering account</h2><dl><div><dt>EDG rewards pending</dt><dd>{rewards.edgPending || 0}</dd></div><div><dt>BNB rewards pending</dt><dd>{rewards.bnbPending || 0}</dd></div><div><dt>Member since</dt><dd>{data?.profile?.createdAt ? new Date(data.profile.createdAt).toLocaleDateString() : '—'}</dd></div></dl><button className="security-action" onClick={auth.manageAccount}>Manage sign-in methods</button><p className="security-note">Email verification protects sign-in today. Authenticator 2FA and backup codes can be enabled after the identity security plan upgrade. Your linked wallet remains non-custodial.</p><Link to="/workspace">Open engineering workspace →</Link></article>
       </section>
     </main>
   );
