@@ -6,8 +6,11 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const crypto = require('crypto');
+const { verifyMessage, isAddress, getAddress } = require('ethers');
 const { neon } = require('@neondatabase/serverless');
+const { clerkMiddleware, getAuth } = require('@clerk/express');
 const { createAiService, AI_MODEL } = require('./ai-service');
+const { createProfileService } = require('./profile-service');
 
 dotenv.config();
 dotenv.config({ path: path.resolve(__dirname, '../.env'), override: false });
@@ -32,6 +35,15 @@ const paymentOrders = new Map();
 const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
 const sql = databaseUrl ? neon(databaseUrl) : null;
 const aiService = createAiService(sql);
+const clerkPublishableKey = process.env.CLERK_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || '';
+const clerkProductionReady = process.env.VERCEL_ENV !== 'production' || clerkPublishableKey.startsWith('pk_live_');
+const clerkConfigured = Boolean(clerkPublishableKey && process.env.CLERK_SECRET_KEY && clerkProductionReady);
+const profileService = createProfileService(sql, {
+  referralCredits: process.env.REFERRAL_REWARD_CREDITS || 25,
+  welcomeCredits: process.env.REFERRAL_WELCOME_CREDITS || 10,
+  referralEdg: process.env.REFERRAL_REWARD_EDG || 0,
+  referralBnb: process.env.REFERRAL_REWARD_BNB || 0,
+});
 let paymentsTableReady = false;
 const allowedOrigins = new Set(
   (process.env.CORS_ORIGINS ||
@@ -43,7 +55,23 @@ const allowedOrigins = new Set(
 
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
-app.use(helmet({ crossOriginResourcePolicy: false }));
+if (clerkConfigured) {
+  app.use(clerkMiddleware({
+    publishableKey: clerkPublishableKey,
+    secretKey: process.env.CLERK_SECRET_KEY,
+  }));
+}
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      scriptSrc: ["'self'", "'unsafe-inline'", 'https://*.clerk.accounts.dev', 'https://*.clerk.com'],
+      connectSrc: ["'self'", 'https:'],
+      frameSrc: ["'self'", 'https://*.clerk.accounts.dev', 'https://*.clerk.com', 'https://nowpayments.io'],
+      imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+    },
+  },
+}));
 app.use(
   cors({
     origin(origin, callback) {
@@ -51,7 +79,7 @@ app.use(
       return callback(new Error('Origin is not allowed by CORS.'));
     },
     methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'X-EDG-Account-ID'],
+    allowedHeaders: ['Authorization', 'Content-Type', 'X-EDG-Account-ID'],
     optionsSuccessStatus: 204,
   })
 );
@@ -76,10 +104,130 @@ function accountIdFrom(req) {
   return String(req.get('x-edg-account-id') || req.body?.accountId || '').trim();
 }
 
-app.get('/api/ai/status', async (req, res) => {
-  const accountId = accountIdFrom(req);
-  if (!aiService.validAccountId(accountId)) return res.status(400).json({ error: 'A valid EDG account identifier is required.' });
+function authenticatedUserId(req) {
+  if (!clerkConfigured) return '';
   try {
+    const auth = getAuth(req);
+    return auth?.isAuthenticated && auth?.userId ? String(auth.userId) : '';
+  } catch {
+    return '';
+  }
+}
+
+async function authenticatedProfile(req, res) {
+  if (!clerkConfigured) {
+    res.status(503).json({ error: 'User accounts are waiting for Clerk production keys.' });
+    return null;
+  }
+  const userId = authenticatedUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: 'Sign in to access your Engineering Drawing profile.' });
+    return null;
+  }
+  try {
+    return await profileService.bootstrap(userId, '');
+  } catch (error) {
+    console.error('Profile authentication error:', error.message);
+    res.status(503).json({ error: 'Profile storage is temporarily unavailable.' });
+    return null;
+  }
+}
+
+async function accountIdFor(req) {
+  const userId = authenticatedUserId(req);
+  if (!userId) return accountIdFrom(req);
+  const profile = await profileService.bootstrap(userId, '');
+  return String(profile.account_id);
+}
+
+app.get('/api/account/config', (_req, res) => {
+  res.set('Cache-Control', 'no-store');
+  return res.json({
+    authentication: clerkConfigured,
+    referral: {
+      welcomeCredits: profileService.welcomeCredits,
+      qualifiedCredits: Number(process.env.REFERRAL_REWARD_CREDITS || 25),
+      edgEnabled: Number(process.env.REFERRAL_REWARD_EDG || 0) > 0,
+      bnbEnabled: Number(process.env.REFERRAL_REWARD_BNB || 0) > 0,
+    },
+  });
+});
+
+app.post('/api/profile/bootstrap', async (req, res) => {
+  if (!clerkConfigured) return res.status(503).json({ error: 'User accounts are waiting for Clerk production keys.' });
+  const userId = authenticatedUserId(req);
+  if (!userId) return res.status(401).json({ error: 'Sign in to create your Engineering Drawing profile.' });
+  try {
+    const profile = await profileService.bootstrap(userId, req.body?.referralCode);
+    if (profile.referred_by && profileService.welcomeCredits > 0) {
+      await aiService.addCredits(String(profile.account_id), profileService.welcomeCredits, 'referral_welcome', `referral-welcome:${profile.account_id}`);
+    }
+    const [campaign, entitlement] = await Promise.all([
+      profileService.summary(String(profile.account_id)),
+      aiService.usage(String(profile.account_id), aiService.hashIp(req.ip)),
+    ]);
+    res.set('Cache-Control', 'no-store');
+    return res.json({
+      profile: { accountId: String(profile.account_id), referralCode: profile.referral_code, walletAddress: profile.wallet_address || '', createdAt: profile.created_at },
+      campaign: { ...campaign, policy: profileService.policy },
+      entitlement,
+    });
+  } catch (error) {
+    console.error('Profile bootstrap error:', error.message);
+    return res.status(503).json({ error: 'Profile storage is temporarily unavailable.' });
+  }
+});
+
+app.get('/api/profile', async (req, res) => {
+  const profile = await authenticatedProfile(req, res);
+  if (!profile) return undefined;
+  try {
+    const [campaign, entitlement] = await Promise.all([
+      profileService.summary(String(profile.account_id)),
+      aiService.usage(String(profile.account_id), aiService.hashIp(req.ip)),
+    ]);
+    res.set('Cache-Control', 'no-store');
+    return res.json({ profile: { accountId: String(profile.account_id), referralCode: profile.referral_code, walletAddress: profile.wallet_address || '', createdAt: profile.created_at }, campaign: { ...campaign, policy: profileService.policy }, entitlement });
+  } catch (error) {
+    console.error('Profile summary error:', error.message);
+    return res.status(503).json({ error: 'Profile summary is temporarily unavailable.' });
+  }
+});
+
+app.post('/api/profile/wallet/challenge', async (req, res) => {
+  const profile = await authenticatedProfile(req, res);
+  if (!profile) return undefined;
+  try {
+    const challenge = await profileService.issueWalletChallenge(String(profile.account_id), SITE_URL);
+    res.set('Cache-Control', 'no-store');
+    return res.json(challenge);
+  } catch (error) {
+    console.error('Wallet challenge error:', error.message);
+    return res.status(503).json({ error: 'Could not create a wallet verification challenge.' });
+  }
+});
+
+app.post('/api/profile/wallet/verify', async (req, res) => {
+  const profile = await authenticatedProfile(req, res);
+  if (!profile) return undefined;
+  const address = String(req.body?.address || '');
+  const signature = String(req.body?.signature || '');
+  if (!isAddress(address) || !/^0x[0-9a-f]+$/i.test(signature)) return res.status(400).json({ error: 'A valid wallet address and signature are required.' });
+  try {
+    const result = await profileService.consumeWalletChallenge(String(profile.account_id), getAddress(address), signature, verifyMessage);
+    if (!result.ok) return res.status(400).json({ error: result.reason });
+    return res.json({ walletAddress: getAddress(address) });
+  } catch (error) {
+    if (/unique/i.test(error.message || '')) return res.status(409).json({ error: 'That wallet is already linked to another account.' });
+    console.error('Wallet verification error:', error.message);
+    return res.status(503).json({ error: 'Could not link this wallet.' });
+  }
+});
+
+app.get('/api/ai/status', async (req, res) => {
+  try {
+    const accountId = await accountIdFor(req);
+    if (!aiService.validAccountId(accountId)) return res.status(400).json({ error: 'A valid EDG account identifier is required.' });
     const entitlement = await aiService.usage(accountId, aiService.hashIp(req.ip));
     return res.json({ configured: Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || process.env.VERCEL), model: AI_MODEL, entitlement });
   } catch (error) {
@@ -91,7 +239,7 @@ app.get('/api/ai/status', async (req, res) => {
 app.post('/api/ai/generations', async (req, res) => {
   const prompt = typeof req.body?.prompt === 'string' ? req.body.prompt.trim() : '';
   try {
-    const generation = await aiService.createGeneration({ accountId: accountIdFrom(req), ip: req.ip, prompt });
+    const generation = await aiService.createGeneration({ accountId: await accountIdFor(req), ip: req.ip, prompt });
     res.set('Cache-Control', 'no-store');
     return res.status(201).json(generation);
   } catch (error) {
@@ -447,8 +595,9 @@ app.post('/api/payments/nowpayments/ai-credits/invoice', async (req, res) => {
   if (!Number.isFinite(AI_CREDITS_PRICE_USD) || AI_CREDITS_PRICE_USD <= 0 || !Number.isInteger(AI_CREDITS_PER_PACK) || AI_CREDITS_PER_PACK <= 0) {
     return res.status(503).json({ error: 'The AI credit pack is not configured.' });
   }
-  const accountId = accountIdFrom(req);
-  if (!aiService.validAccountId(accountId)) return res.status(400).json({ error: 'A valid EDG account identifier is required.' });
+  const profile = await authenticatedProfile(req, res);
+  if (!profile) return undefined;
+  const accountId = String(profile.account_id);
 
   const orderId = `AI-${crypto.randomUUID()}`;
   try {
@@ -479,8 +628,9 @@ app.post('/api/payments/nowpayments/ai-credits/invoice', async (req, res) => {
 app.get('/api/payments/nowpayments/ai-credits/status/:orderId', async (req, res) => {
   const orderId = String(req.params.orderId || '');
   if (!/^AI-[0-9a-f-]{36}$/i.test(orderId)) return res.status(400).json({ error: 'Invalid AI credit order.' });
-  const accountId = accountIdFrom(req);
-  if (!aiService.validAccountId(accountId)) return res.status(400).json({ error: 'A valid EDG account identifier is required.' });
+  const profile = await authenticatedProfile(req, res);
+  if (!profile) return undefined;
+  const accountId = String(profile.account_id);
   try {
     const order = await aiService.getPaymentOrder(orderId);
     if (!order || String(order.account_id || order.accountId) !== accountId) return res.status(404).json({ error: 'AI credit order was not found.' });
@@ -517,12 +667,19 @@ app.post('/api/payments/nowpayments/ipn', async (req, res) => {
 
   try {
     if (orderId.startsWith('AI-')) {
+      const order = await aiService.getPaymentOrder(orderId);
       const found = await aiService.applyPayment({
         orderId,
         paymentId: req.body?.payment_id ? String(req.body.payment_id) : null,
         status: paymentStatus,
       });
       if (!found) return res.status(404).json({ error: 'AI credit order was not found.' });
+      if (order && ['confirmed', 'finished'].includes(paymentStatus)) {
+        const referral = await profileService.activateReferral(String(order.account_id || order.accountId));
+        if (referral?.credits > 0) {
+          await aiService.addCredits(referral.referrerId, referral.credits, 'qualified_referral', `referral-qualified:${referral.referredId}`);
+        }
+      }
       return res.status(200).json({ received: true });
     }
     await savePaymentOrder(orderId, {

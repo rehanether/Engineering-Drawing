@@ -23,6 +23,7 @@ const ProcessDesign=lazy(()=>import('./components/process/ProcessDesign'));
 const Privacy=lazy(()=>import('./components/Privacy'));
 const FAQ=lazy(()=>import('./components/FAQ'));
 const EngineeringWorkspace=lazy(()=>import('./components/EngineeringWorkspace'));
+const Profile=lazy(()=>import('./components/Profile'));
 
 const App = () => {
   return (
@@ -37,6 +38,7 @@ const App = () => {
         <Route path="/presale" element={<Presale />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/workspace" element={<EngineeringWorkspace />} />
+        <Route path="/profile" element={<Profile />} />
 
         {/* Product */}
         <Route path="/evaporators" element={<Evaporators />} />

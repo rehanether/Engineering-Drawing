@@ -860,6 +860,10 @@ export default function Presale() {
   const bnbUsd        = Number(formatUnits(bnbUsd1e18 || 0n, 18));
   const tokenPriceUsd = Number(stagePricesUsd[stage] ? formatUnits(stagePricesUsd[stage], 18) : "0");
   const tokenPriceBnb = bnbUsd > 0 && tokenPriceUsd > 0 ? tokenPriceUsd / bnbUsd : 0;
+  const saleValid = Boolean(
+    dataReady && codeOk && !paused && bnbUsd > 0 && tokenPriceUsd > 0 &&
+    (stageCaps[stage] || 0n) > 0n && (stageRemain[stage] || 0n) > 0n && maxPerWallet > 0n
+  );
 
   const youCanBuyUpTo = (() => {
     try {
@@ -934,8 +938,8 @@ export default function Presale() {
 
       <h2 className="title">Engineering Drawing — EDG Presale (Mainnet)</h2>
 
-      <div className={`sale-status ${!dataReady ? "checking" : paused || !codeOk ? "closed" : "open"}`} role="status">
-        {!dataReady ? "Checking live BNB Smart Chain presale data…" : !codeOk ? "Presale contract unavailable — purchases are disabled." : paused ? "Presale is currently paused — purchases are disabled." : "Public presale is open on BNB Smart Chain."}
+      <div className={`sale-status ${!dataReady ? "checking" : saleValid ? "open" : "closed"}`} role="status">
+        {!dataReady ? "Checking live BNB Smart Chain presale data…" : !codeOk ? "Presale contract unavailable — purchases are disabled." : paused ? "Presale is currently paused — purchases are disabled." : !saleValid ? "Presale configuration is incomplete — purchases are safely disabled." : "Public presale is open on BNB Smart Chain."}
       </div>
 
       {!codeOk && (
@@ -947,16 +951,16 @@ export default function Presale() {
 
       {/* KPIs */}
       <div className="cards">
-        <div className="card"><div className="label">Presale Status</div><div className={paused ? "value red":"value green"}>{paused?"Closed":"Open"}</div></div>
-        <div className="card"><div className="label">Current Stage</div><div className="value">Stage {stage+1}</div><div className="sub">Detected base: 0-based</div></div>
-        <div className="card"><div className="label">Token Price</div><div className="value">{fmt(tokenPriceBnb,10)} BNB <span className="sub">(≈ ${fmt(tokenPriceUsd)} USDT)</span></div></div>
+        <div className="card"><div className="label">Presale Status</div><div className={saleValid ? "value green":"value red"}>{saleValid?"Open":"Unavailable"}</div></div>
+        <div className="card"><div className="label">Current Stage</div><div className="value">{saleValid ? `Stage ${stage+1}` : "Unavailable"}</div><div className="sub">Live contract state</div></div>
+        <div className="card"><div className="label">Token Price</div><div className="value">{saleValid ? <>{fmt(tokenPriceBnb,10)} BNB <span className="sub">(≈ ${fmt(tokenPriceUsd)} USDT)</span></> : "Unavailable"}</div></div>
         <div className="card"><div className="label">BNB Price</div><div className="value">1 BNB = ${fmt(bnbUsd)} USDT</div><div className="sub">Mode: {priceMode===0?"ORACLE":"MANUAL"}</div></div>
         <div className="card">
           <div className="label">Total Sold</div>
           <div className="value">
-            {fmtInt(Number(formatUnits(tokensSold, decimals)))} / {fmtInt(Number(formatUnits(stageCaps.reduce((a,b)=>a+b,0n), decimals)))} EDG
+            {saleValid ? `${fmtInt(Number(formatUnits(tokensSold, decimals)))} / ${fmtInt(Number(formatUnits(stageCaps.reduce((a,b)=>a+b,0n), decimals)))} EDG` : "Unavailable"}
           </div>
-          <div className="sub">Stage {stage+1} cap: {fmtInt(Number(formatUnits(stageCaps[stage]||0n, decimals)))} EDG</div>
+          <div className="sub">{saleValid ? `Stage ${stage+1} cap: ${fmtInt(Number(formatUnits(stageCaps[stage]||0n, decimals)))} EDG` : "Waiting for complete contract data"}</div>
         </div>
       </div>
 
@@ -970,7 +974,7 @@ export default function Presale() {
             <div key={i} className={`stage ${i===stage?"live":""}`}>
               <div className="stage-head">
                 <span>Stage {i+1}</span>
-                {i===stage && <span className="pill">LIVE</span>}
+                {i===stage && saleValid && <span className="pill">LIVE</span>}
                 <span className="muted">— {fmtInt(sold)} / {fmtInt(cap)} EDG</span>
               </div>
               <div className="bar"><div className="fill" style={{width:`${pct}%`}}/></div>
@@ -1059,7 +1063,7 @@ export default function Presale() {
         )}
 
         <div className="sub">
-          Estimated Tokens: {fmtInt(Number(formatUnits(estTokens || 0n, decimals)))} EDG {estStage!==null ? `(est. stage ${Number(estStage)+1})` : ""}
+          Estimated Tokens: {saleValid ? `${fmtInt(Number(formatUnits(estTokens || 0n, decimals)))} EDG${estStage!==null ? ` (est. stage ${Number(estStage)+1})` : ""}` : "Unavailable until live sale data is complete"}
         </div>
 
         <div className="sub">
@@ -1072,8 +1076,8 @@ export default function Presale() {
           </div>
         )}
 
-        <button className="btn buy" onClick={doBuy} disabled={!account || Boolean(busy) || !dataReady || !codeOk || paused || !hasEnoughBnb || estTokens <= 0n || estTokens > youCanBuyUpTo}>
-          {!account ? "Connect wallet to buy" : busy ? busy : !hasEnoughBnb ? "Insufficient BNB" : paused ? "Presale paused" : "Buy Tokens"}
+        <button className="btn buy" onClick={doBuy} disabled={!account || Boolean(busy) || !saleValid || !hasEnoughBnb || estTokens <= 0n || estTokens > youCanBuyUpTo}>
+          {!saleValid ? "Presale unavailable" : !account ? "Connect wallet to buy" : busy ? busy : !hasEnoughBnb ? "Insufficient BNB" : "Buy Tokens"}
         </button>
         </div>
       </div>

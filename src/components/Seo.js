@@ -53,6 +53,11 @@ const PAGE_META = {
     description: "Construction Design resources from Engineering Drawing.",
     robots: "noindex,follow",
   },
+  "/profile": {
+    title: "Engineering Drawing User Profile",
+    description: "Manage Engineering Drawing projects, AI credits, linked wallets and referral rewards.",
+    robots: "noindex,nofollow",
+  },
 };
 
 const LEGACY_PATHS = {

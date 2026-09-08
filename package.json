@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@clerk/express": "^1.7.82",
+    "@clerk/react": "^6.15.1",
     "@metamask/connect": "^0.2.0",
     "@neondatabase/serverless": "^0.10.4",
     "@vercel/analytics": "^1.5.0",
@@ -29,7 +31,7 @@
     "server": "node server/index.js",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "test:server": "node --test server/ai-service.test.js",
+    "test:server": "node --test server/ai-service.test.js server/profile-service.test.js",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -51,7 +53,7 @@
     ]
   },
   "engines": {
-    "node": ">=20.19.0"
+    "node": "22.x"
   },
   "jest": {
     "moduleNameMapper": {

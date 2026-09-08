@@ -27,12 +27,14 @@ async function request(path, options = {}) {
   const timeout = window.setTimeout(() => controller.abort(), 65_000);
   let response;
   try {
+    const { authToken, accountId, ...fetchOptions } = options;
     response = await fetch(`${API_BASE}${path}`, {
-      ...options,
+      ...fetchOptions,
       signal: options.signal || controller.signal,
       headers: {
         'Content-Type': 'application/json',
-        'X-EDG-Account-ID': getEdgAccountId(),
+        'X-EDG-Account-ID': accountId || getEdgAccountId(),
+        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         ...(options.headers || {}),
       },
     });
@@ -52,21 +54,21 @@ async function request(path, options = {}) {
   return body;
 }
 
-export function generateEngineeringBrief(prompt) {
-  return request('/api/ai/generations', { method: 'POST', body: JSON.stringify({ prompt }) });
+export function generateEngineeringBrief(prompt, identity = {}) {
+  return request('/api/ai/generations', { ...identity, method: 'POST', body: JSON.stringify({ prompt }) });
 }
 
-export function getAiStatus() {
-  return request('/api/ai/status');
+export function getAiStatus(identity = {}) {
+  return request('/api/ai/status', identity);
 }
 
-export async function buyAiCredits() {
-  const body = await request('/api/payments/nowpayments/ai-credits/invoice', { method: 'POST', body: '{}' });
+export async function buyAiCredits(identity = {}) {
+  const body = await request('/api/payments/nowpayments/ai-credits/invoice', { ...identity, method: 'POST', body: '{}' });
   if (!body.invoiceUrl) throw new Error('The checkout provider returned no payment link.');
   localStorage.setItem('edg-ai-payment-order', body.orderId);
   window.location.assign(body.invoiceUrl);
 }
 
-export function getAiPaymentStatus(orderId) {
-  return request(`/api/payments/nowpayments/ai-credits/status/${encodeURIComponent(orderId)}`);
+export function getAiPaymentStatus(orderId, identity = {}) {
+  return request(`/api/payments/nowpayments/ai-credits/status/${encodeURIComponent(orderId)}`, identity);
 }

@@ -2,11 +2,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import logo from '../assets/logo.png';
+import { useEdgAuth } from '../auth/EdgAuth';
 import './Header.css';
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
+  const auth = useEdgAuth();
 
   useEffect(() => setMenuOpen(false), [location.pathname]);
 
@@ -37,6 +39,7 @@ function Header() {
           <li><Link to="/tokenomics" onClick={() => setMenuOpen(false)}>Tokenomics</Link></li>
           <li><Link to="/presale" onClick={() => setMenuOpen(false)}>Presale</Link></li>
           <li><Link to="/contact" onClick={() => setMenuOpen(false)}>Contact</Link></li>
+          <li><Link className="profile-nav-link" to="/profile" onClick={() => setMenuOpen(false)}>{auth.isSignedIn ? 'My Profile' : 'Profile'}</Link></li>
         </ul>
       </nav>
     </header>

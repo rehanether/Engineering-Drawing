@@ -4,6 +4,7 @@ import { planProject } from './engineeringPlanner';
 import ProjectSectionPanel from './ProjectSectionPanel';
 import { createFallbackProjectModel, normalizeProjectModel, PROJECT_SECTIONS, sectionForOutput } from './projectModel';
 import { buyAiCredits, generateEngineeringBrief, getAiPaymentStatus, getAiStatus } from '../services/edgAi';
+import { useEdgAuth } from '../auth/EdgAuth';
 import './EngineeringWorkspace.css';
 
 const readJson = (key, fallback = null) => {
@@ -21,6 +22,7 @@ const persistJson = (key, value) => {
 };
 
 const EngineeringWorkspace = () => {
+  const { accountId, getToken, isSignedIn, signIn } = useEdgAuth();
   const location = useLocation();
   const initial = location.state?.project || readSavedProject() || {
     id: 'edg-new', prompt: 'Start a new engineering project', fileName: '', createdAt: new Date().toISOString(),
@@ -40,6 +42,9 @@ const EngineeringWorkspace = () => {
   const fallbackModel = useMemo(() => createFallbackProjectModel(plan, project.prompt), [plan, project.prompt]);
   const model = useMemo(() => normalizeProjectModel(savedModel, fallbackModel), [savedModel, fallbackModel]);
   const [basisDraft, setBasisDraft] = useState(() => model.designBasis.join('\n'));
+  const getIdentity = useCallback(async () => isSignedIn && accountId
+    ? { accountId, authToken: await getToken() }
+    : {}, [accountId, getToken, isSignedIn]);
 
   const storeVersion = useCallback((label, projectModel) => {
     const nextVersion = { id: `version-${Date.now()}`, label, createdAt: new Date().toISOString(), model: projectModel };
@@ -62,7 +67,7 @@ const EngineeringWorkspace = () => {
     setAiState('loading');
     setAiError('');
     try {
-      const result = await generateEngineeringBrief(prompt);
+      const result = await generateEngineeringBrief(prompt, await getIdentity());
       setAiBrief(result.response);
       setEntitlement(result.entitlement);
       applyModel(result.project, 'AI project model');
@@ -73,15 +78,15 @@ const EngineeringWorkspace = () => {
       if (error.entitlement) setEntitlement(error.entitlement);
       setAiState(error.code === 'CREDITS_REQUIRED' ? 'credits' : 'error');
     }
-  }, [applyModel]);
+  }, [applyModel, getIdentity]);
 
   useEffect(() => {
-    getAiStatus().then((status) => setEntitlement(status.entitlement)).catch(() => {});
+    getIdentity().then((identity) => getAiStatus(identity)).then((status) => setEntitlement(status.entitlement)).catch(() => {});
     if (!initialRequest.current && !savedModel && project.prompt && project.id !== 'edg-new') {
       initialRequest.current = true;
       runAi(project.prompt);
     }
-  }, [project.id, project.prompt, runAi, savedModel]);
+  }, [getIdentity, project.id, project.prompt, runAi, savedModel]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -92,9 +97,10 @@ const EngineeringWorkspace = () => {
     const check = async () => {
       attempts += 1;
       try {
-        const payment = await getAiPaymentStatus(orderId);
+        const identity = await getIdentity();
+        const payment = await getAiPaymentStatus(orderId, identity);
         if (['confirmed', 'finished'].includes(payment.status)) {
-          const status = await getAiStatus();
+          const status = await getAiStatus(identity);
           if (!stopped) {
             setEntitlement(status.entitlement);
             setCheckoutState('paid');
@@ -119,7 +125,7 @@ const EngineeringWorkspace = () => {
     };
     check();
     return () => { stopped = true; };
-  }, []);
+  }, [getIdentity]);
 
   const applyRevision = async (event) => {
     event.preventDefault();
@@ -153,8 +159,13 @@ const EngineeringWorkspace = () => {
   };
 
   const openCheckout = async () => {
+    if (!isSignedIn || !accountId) {
+      setAiError('Sign in before buying credits so the balance is protected and available on every device.');
+      signIn();
+      return;
+    }
     setCheckoutState('loading');
-    try { await buyAiCredits(); }
+    try { await buyAiCredits(await getIdentity()); }
     catch (error) { setCheckoutState('error'); setAiError(error.message); }
   };
 

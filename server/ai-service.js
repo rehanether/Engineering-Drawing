@@ -445,7 +445,7 @@ function createAiService(sql) {
     return rows[0] || null;
   }
 
-  return { applyPayment, createGeneration, getPaymentOrder, hashIp, savePaymentOrder, usage, validAccountId };
+  return { addCredits, applyPayment, createGeneration, getPaymentOrder, hashIp, savePaymentOrder, usage, validAccountId };
 }
 
 module.exports = { buildProjectModel, calculateRequest, createAiService, createFallbackBrief, inferMassBalanceRequest, renderBrief, renderCalculation, FREE_DAILY_GENERATIONS, AI_MODEL };
