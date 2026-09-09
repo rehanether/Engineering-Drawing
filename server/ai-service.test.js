@@ -10,6 +10,15 @@ test('validates version 4 account identifiers', () => {
   assert.equal(service.validAccountId('not-an-account'), false);
 });
 
+test('derives a server-controlled guest identity instead of trusting a profile id', () => {
+  const service = createAiService(null);
+  const first = service.guestAccountId(accountId, '192.0.2.1');
+  const second = service.guestAccountId(accountId, '192.0.2.1');
+  assert.equal(service.validAccountId(first), true);
+  assert.equal(first, second);
+  assert.notEqual(first, accountId);
+});
+
 test('reports free allowance and grants purchased credits idempotently', async () => {
   const service = createAiService(null);
   const ipHash = service.hashIp('127.0.0.1');

@@ -135,7 +135,7 @@ async function authenticatedProfile(req, res) {
 
 async function accountIdFor(req) {
   const userId = authenticatedUserId(req);
-  if (!userId) return accountIdFrom(req);
+  if (!userId) return aiService.guestAccountId(accountIdFrom(req), req.ip);
   const profile = await profileService.bootstrap(userId, '');
   return String(profile.account_id);
 }
