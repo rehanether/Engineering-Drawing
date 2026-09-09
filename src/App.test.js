@@ -7,7 +7,6 @@ jest.mock('@clerk/react', () => ({
   ClerkProvider: ({ children }) => children,
   useAuth: () => ({ getToken: jest.fn(), isLoaded: true, isSignedIn: false }),
   useClerk: () => ({ openSignIn: jest.fn(), openUserProfile: jest.fn(), signOut: jest.fn() }),
-  useSignIn: () => ({ isLoaded: false, signIn: null }),
   useUser: () => ({ isLoaded: true, isSignedIn: false, user: null }),
 }));
 

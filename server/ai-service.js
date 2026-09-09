@@ -3,7 +3,7 @@ const { generateText, tool } = require('ai');
 const { z } = require('zod');
 
 const FREE_DAILY_GENERATIONS = Number(process.env.AI_FREE_DAILY_GENERATIONS || 3);
-const AI_MODEL = process.env.AI_MODEL || 'minimax/minimax-m3-free';
+const AI_MODEL = process.env.AI_MODEL || 'minimax/minimax-m3';
 const AI_MAX_OUTPUT_TOKENS = Number(process.env.AI_MAX_OUTPUT_TOKENS || 2400);
 
 const SYSTEM_INSTRUCTIONS = `You are EDG AI, a cautious multidisciplinary engineering copilot.
@@ -345,6 +345,7 @@ function createAiService(sql) {
     try {
       const result = await generateText({
         model: AI_MODEL,
+        providerOptions: { gateway: { has: ['free'] } },
         system: SYSTEM_INSTRUCTIONS,
         prompt,
         tools: { submitBrief },

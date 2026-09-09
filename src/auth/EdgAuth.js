@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { ClerkProvider, useAuth, useClerk, useSignIn, useUser } from '@clerk/react';
+import { ClerkProvider, useAuth, useClerk, useUser } from '@clerk/react';
 import { useNavigate } from 'react-router-dom';
 import { bootstrapProfile } from '../services/profile';
 
@@ -19,7 +19,6 @@ function ClerkAuthBridge({ children }) {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const { user } = useUser();
   const clerk = useClerk();
-  const { isLoaded: isSignInLoaded, signIn } = useSignIn();
   const [accountId, setAccountId] = useState('');
   useEffect(() => {
     if (!isLoaded || !isSignedIn) { setAccountId(''); return undefined; }
@@ -45,7 +44,8 @@ function ClerkAuthBridge({ children }) {
     getToken: async () => (await getToken()) || '',
     signIn: () => clerk.openSignIn({}),
     signInWithGoogle: async () => {
-      if (!isSignInLoaded || !signIn) throw new Error('Secure sign-in is still loading. Please try again.');
+      const signIn = clerk.client?.signIn;
+      if (!signIn) throw new Error('Secure sign-in is still loading. Please try again.');
       await signIn.authenticateWithRedirect({
         strategy: 'oauth_google',
         redirectUrl: '/sso-callback',
@@ -54,7 +54,7 @@ function ClerkAuthBridge({ children }) {
     },
     manageAccount: () => clerk.openUserProfile({}),
     signOut: () => clerk.signOut({ redirectUrl: '/' }),
-  }), [accountId, clerk, getToken, isLoaded, isSignInLoaded, isSignedIn, signIn, user]);
+  }), [accountId, clerk, getToken, isLoaded, isSignedIn, user]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
