@@ -108,7 +108,7 @@ function authenticatedUserId(req) {
   if (!clerkConfigured) return '';
   try {
     const auth = getAuth(req);
-    return auth?.isAuthenticated && auth?.userId ? String(auth.userId) : '';
+    return auth?.userId ? String(auth.userId) : '';
   } catch {
     return '';
   }
