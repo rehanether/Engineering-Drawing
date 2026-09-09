@@ -35,7 +35,7 @@ const paymentOrders = new Map();
 const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
 const sql = databaseUrl ? neon(databaseUrl) : null;
 const aiService = createAiService(sql);
-const clerkPublishableKey = process.env.CLERK_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || '';
+const clerkPublishableKey = process.env.CLERK_PUBLISHABLE_KEY || process.env.REACT_APP_CLERK_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || '';
 const clerkProductionReady = process.env.VERCEL_ENV !== 'production' || clerkPublishableKey.startsWith('pk_live_');
 const clerkConfigured = Boolean(clerkPublishableKey && process.env.CLERK_SECRET_KEY && clerkProductionReady);
 const profileService = createProfileService(sql, {
