@@ -3,9 +3,11 @@ import { MemoryRouter } from 'react-router-dom';
 import App from './App';
 
 jest.mock('@clerk/react', () => ({
+  AuthenticateWithRedirectCallback: () => null,
   ClerkProvider: ({ children }) => children,
   useAuth: () => ({ getToken: jest.fn(), isLoaded: true, isSignedIn: false }),
   useClerk: () => ({ openSignIn: jest.fn(), openUserProfile: jest.fn(), signOut: jest.fn() }),
+  useSignIn: () => ({ isLoaded: false, signIn: null }),
   useUser: () => ({ isLoaded: true, isSignedIn: false, user: null }),
 }));
 

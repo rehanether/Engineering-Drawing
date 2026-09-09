@@ -149,7 +149,6 @@ export default function Presale() {
   const [account, setAccount]   = useState(null);
   const [usingWC, setUsingWC]   = useState(false); // UI hint
   const wcRef = useRef(null); // keep WalletConnect provider to cleanly disconnect
-  const metaMaskConnectRef = useRef(null);
   const walletProviderRef = useRef(null);
   const walletListenersRef = useRef(null);
 
@@ -363,71 +362,10 @@ export default function Presale() {
     }
   }, [allowWalletReconnect, bindWalletEvents, setActiveWalletAccount]);
 
-  // MetaMask Connect keeps the dapp open in the phone's browser while the
-  // user approves the request in MetaMask. It is separate from WalletConnect,
-  // which remains available for Trust Wallet and other wallet apps.
-  const connectMetaMaskMobile = useCallback(async () => {
-    setErr("");
-    setBusy("Open MetaMask and approve the connection...");
-    let sdk;
-    try {
-      sdk = metaMaskConnectRef.current;
-      if (!sdk) {
-        const { createMetamaskConnectEVM } = await import("@metamask/connect/evm");
-        sdk = await createMetamaskConnectEVM({
-          dapp: {
-            name: "Engineering Drawing — EDG Presale",
-            url: window.location.origin,
-          },
-          api: { supportedNetworks: { "eip155:56": READ_RPC } },
-        });
-        metaMaskConnectRef.current = sdk;
-      }
-
-      // MetaMask Connect opens the mobile wallet from a normal phone browser
-      // and returns an EIP-1193 provider to this page after approval.
-      const connection = await Promise.race([
-        sdk.connect({ chainId: CHAIN_ID_DEC, forceRequest: true }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("MetaMask did not respond. Close the wallet prompt and try again.")), 60_000)),
-      ]);
-      // Awaiting keeps this compatible with both installed and newer
-      // MetaMask Connect releases, including releases that return a Promise.
-      const provider = await sdk.getProvider();
-      await ensureChain(provider);
-
-      await setActiveWalletAccount(provider, connection?.accounts?.[0]);
-      bindWalletEvents(provider);
-      allowWalletReconnect();
-      setUsingWC(false);
-    } catch (e) {
-      if (metaMaskConnectRef.current === sdk) {
-        try { await sdk?.disconnect?.(); } catch {}
-        metaMaskConnectRef.current = null;
-      }
-      // The direct MetaMask browser link remains a reliable fallback when the
-      // mobile bridge cannot be opened from a particular Android/iOS browser.
-      if (
-        isMobileDevice() &&
-        !getInjectedProvider() &&
-        /not respond|timed out|not installed|unavailable|not supported/i.test(String(e?.message || e))
-      ) {
-        setBusy("");
-        openMetaMaskDeepLink();
-        return;
-      }
-      setErr(walletErrorMessage(e, "MetaMask connection was cancelled or could not be completed."));
-    } finally {
-      setBusy("");
-    }
-  }, [allowWalletReconnect, bindWalletEvents, setActiveWalletAccount]);
-
   const disconnect = useCallback(async () => {
     try {
       if (wcRef.current?.disconnect) {
         await wcRef.current.disconnect();
-      }
-      if (metaMaskConnectRef.current?.disconnect) {
-        await metaMaskConnectRef.current.disconnect();
       }
     } catch {}
     setSigner(null);
@@ -435,7 +373,6 @@ export default function Presale() {
     setUsingWC(false);
     setNativeBalance(0n);
     wcRef.current = null;
-    metaMaskConnectRef.current = null;
     walletProviderRef.current = null;
     clearWalletListeners();
     blockWalletReconnect();
@@ -486,27 +423,18 @@ export default function Presale() {
     setErr("");
     setBusy("Choose the account you want to use in your wallet...");
     try {
-      const metaMaskSdk = metaMaskConnectRef.current;
       let accounts;
-      if (metaMaskSdk && provider === walletProviderRef.current) {
-        // MetaMask Connect has its own account picker on mobile.
-        const connection = await metaMaskSdk.connect({ chainId: CHAIN_ID_DEC, forceRequest: true });
-        accounts = connection?.accounts;
-      } else {
-        // MetaMask browser extension and compatible wallets show their account
-        // selector through this standard permissions request.
-        try {
-          await provider.request({
-            method: "wallet_requestPermissions",
-            params: [{ eth_accounts: {} }],
-          });
-        } catch (permissionError) {
-          if (!/unsupported|not supported|does not exist|-32601/i.test(String(permissionError?.message || permissionError))) {
-            throw permissionError;
-          }
+      try {
+        await provider.request({
+          method: "wallet_requestPermissions",
+          params: [{ eth_accounts: {} }],
+        });
+      } catch (permissionError) {
+        if (!/unsupported|not supported|does not exist|-32601/i.test(String(permissionError?.message || permissionError))) {
+          throw permissionError;
         }
-        accounts = await provider.request({ method: "eth_requestAccounts" });
       }
+      accounts = await provider.request({ method: "eth_requestAccounts" });
       if (!accounts?.[0]) throw new Error("No wallet account was selected.");
       await ensureChain(provider);
       await setActiveWalletAccount(provider, accounts[0]);
@@ -911,8 +839,8 @@ export default function Presale() {
             </>
           ) : (
             <>
-              <button className="btn primary" onClick={mobile && !injectedWallet ? connectMetaMaskMobile : () => connect()} disabled={Boolean(busy)}>
-                {busy ? "Connecting…" : mobile && !injectedWallet ? "Connect MetaMask" : "Connect Wallet"}
+              <button className="btn primary" onClick={() => connect()} disabled={Boolean(busy)}>
+                {busy ? "Connecting…" : "Connect Wallet"}
               </button>
               {mobile && !injectedWallet && (
                 <button className="btn secondary" onClick={openMetaMaskDeepLink} disabled={Boolean(busy)}>
@@ -932,7 +860,7 @@ export default function Presale() {
       {mobile && !account && (
         <div className="mobile-wallet-guide">
           <strong>Buying from your phone</strong>
-          <span>Tap Connect MetaMask and approve in the wallet app. If it does not open, use Open MetaMask browser. Trust Wallet and other supported apps can use WalletConnect.</span>
+          <span>Use WalletConnect for MetaMask, Trust Wallet and other supported apps, or open the secure MetaMask in-app browser.</span>
         </div>
       )}
 

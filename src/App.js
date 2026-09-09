@@ -1,5 +1,6 @@
 import React, { lazy, Suspense } from 'react';
 import { Navigate, Routes, Route } from 'react-router-dom';
+import { AuthenticateWithRedirectCallback } from '@clerk/react';
 
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -39,6 +40,7 @@ const App = () => {
         <Route path="/contact" element={<Contact />} />
         <Route path="/workspace" element={<EngineeringWorkspace />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/sso-callback" element={<main className="route-loading" role="status" aria-live="polite"><AuthenticateWithRedirectCallback /><span />Completing secure sign-in…</main>} />
 
         {/* Product */}
         <Route path="/evaporators" element={<Evaporators />} />

@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { ClerkProvider, useAuth, useClerk, useUser } from '@clerk/react';
+import { ClerkProvider, useAuth, useClerk, useSignIn, useUser } from '@clerk/react';
 import { useNavigate } from 'react-router-dom';
 import { bootstrapProfile } from '../services/profile';
 
-const guestValue = { configured: false, isLoaded: true, isSignedIn: false, accountId: '', user: null, getToken: async () => '', signIn: () => {}, manageAccount: () => {}, signOut: () => {} };
+const guestValue = { configured: false, isLoaded: true, isSignedIn: false, accountId: '', user: null, getToken: async () => '', signIn: () => {}, signInWithGoogle: async () => {}, manageAccount: () => {}, signOut: () => {} };
 const AuthContext = createContext(guestValue);
 const configuredPublishableKey = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY || '';
 const publishableKey = process.env.NODE_ENV === 'production' && !configuredPublishableKey.startsWith('pk_live_') ? '' : configuredPublishableKey;
@@ -19,6 +19,7 @@ function ClerkAuthBridge({ children }) {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const { user } = useUser();
   const clerk = useClerk();
+  const { isLoaded: isSignInLoaded, signIn } = useSignIn();
   const [accountId, setAccountId] = useState('');
   useEffect(() => {
     if (!isLoaded || !isSignedIn) { setAccountId(''); return undefined; }
@@ -43,9 +44,17 @@ function ClerkAuthBridge({ children }) {
     user,
     getToken: async () => (await getToken()) || '',
     signIn: () => clerk.openSignIn({}),
+    signInWithGoogle: async () => {
+      if (!isSignInLoaded || !signIn) throw new Error('Secure sign-in is still loading. Please try again.');
+      await signIn.authenticateWithRedirect({
+        strategy: 'oauth_google',
+        redirectUrl: '/sso-callback',
+        redirectUrlComplete: '/profile',
+      });
+    },
     manageAccount: () => clerk.openUserProfile({}),
     signOut: () => clerk.signOut({ redirectUrl: '/' }),
-  }), [accountId, clerk, getToken, isLoaded, isSignedIn, user]);
+  }), [accountId, clerk, getToken, isLoaded, isSignInLoaded, isSignedIn, signIn, user]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
