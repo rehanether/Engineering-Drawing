@@ -114,6 +114,23 @@ function authenticatedUserId(req) {
   }
 }
 
+function logAuthenticationFailure(req, route) {
+  try {
+    const auth = getAuth(req);
+    console.warn(JSON.stringify({
+      level: 'warn',
+      message: 'Authentication rejected',
+      route,
+      hasAuthorization: Boolean(req.get('authorization')),
+      hasCookie: Boolean(req.get('cookie')),
+      tokenType: auth?.tokenType || null,
+      reason: auth?.reason || null,
+    }));
+  } catch (error) {
+    console.warn(JSON.stringify({ level: 'warn', message: 'Authentication inspection failed', route, error: error?.message || 'Unknown error' }));
+  }
+}
+
 async function authenticatedProfile(req, res) {
   if (!clerkConfigured) {
     res.status(503).json({ error: 'User accounts are waiting for Clerk production keys.' });
@@ -156,7 +173,10 @@ app.get('/api/account/config', (_req, res) => {
 app.post('/api/profile/bootstrap', async (req, res) => {
   if (!clerkConfigured) return res.status(503).json({ error: 'User accounts are waiting for Clerk production keys.' });
   const userId = authenticatedUserId(req);
-  if (!userId) return res.status(401).json({ error: 'Sign in to create your Engineering Drawing profile.' });
+  if (!userId) {
+    logAuthenticationFailure(req, '/api/profile/bootstrap');
+    return res.status(401).json({ error: 'Sign in to create your Engineering Drawing profile.' });
+  }
   try {
     const profile = await profileService.bootstrap(userId, req.body?.referralCode);
     if (profile.referred_by && profileService.welcomeCredits > 0) {
