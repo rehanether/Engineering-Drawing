@@ -100,6 +100,11 @@ const Home = () => {
             <input ref={cameraRef} className="sr-only" type="file" onChange={handleFile} accept="image/*" capture="environment" />
           </form>
         </div>
+        <Link className="plantops-launch" to="/plantops" aria-label="Open EDG PlantOps AI plant operations">
+          <span className="plantops-launch-icon" aria-hidden="true">EDG</span>
+          <span><strong>AI Plant Operations</strong><small>Connect. Observe. Optimize. Operate.</small></span>
+          <span className="plantops-launch-status"><i /> Live demo <b>→</b></span>
+        </Link>
         <div className="hero-equipment" aria-label="Industrial design simulators">
           <Link to="/evaporators"><img src="/assets/mvr-evaporator.gif" alt="" /><span>MVR Evaporator</span><small>Live HMBD · PFD · 3D plant</small></Link>
           <Link to="/reactors"><img src="/assets/reactor.gif" alt="" /><span>Industrial Reactor</span><small>Feed basis · kinetics · 3D plant</small></Link>

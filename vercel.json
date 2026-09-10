@@ -48,6 +48,7 @@
     { "source": "/workspace", "destination": "/index.html" },
     { "source": "/profile", "destination": "/index.html" },
     { "source": "/sso-callback", "destination": "/index.html" },
+    { "source": "/plantops", "destination": "/index.html" },
     { "source": "/evaporators", "destination": "/index.html" },
     { "source": "/reactors", "destination": "/index.html" },
     { "source": "/distillation", "destination": "/index.html" },

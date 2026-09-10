@@ -25,6 +25,7 @@ const Privacy=lazy(()=>import('./components/Privacy'));
 const FAQ=lazy(()=>import('./components/FAQ'));
 const EngineeringWorkspace=lazy(()=>import('./components/EngineeringWorkspace'));
 const Profile=lazy(()=>import('./components/Profile'));
+const PlantOps=lazy(()=>import('./components/plantops/PlantOpsDashboard'));
 
 const App = () => {
   return (
@@ -41,6 +42,7 @@ const App = () => {
         <Route path="/workspace" element={<EngineeringWorkspace />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/sso-callback" element={<SsoCallback />} />
+        <Route path="/plantops" element={<PlantOps />} />
 
         {/* Product */}
         <Route path="/evaporators" element={<Evaporators />} />
