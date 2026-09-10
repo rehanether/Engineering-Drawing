@@ -124,6 +124,7 @@ function logAuthenticationFailure(req, route) {
       hasAuthorization: Boolean(req.get('authorization')),
       hasCookie: Boolean(req.get('cookie')),
       tokenType: auth?.tokenType || null,
+      sessionStatus: auth?.sessionStatus || null,
       reason: auth?.reason || null,
     }));
   } catch (error) {
