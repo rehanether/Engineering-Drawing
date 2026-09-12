@@ -1,4 +1,5 @@
 import React from 'react';
+import GatewaySetup from './GatewaySetup';
 import { CONTROL_STEPS } from '../../services/plantops/controlWorkflow';
 import { connectorCapabilities } from '../../services/plantops/MockScadaAdapter';
 import { usePlantOps } from '../../hooks/usePlantOps';
@@ -16,6 +17,7 @@ export default function PlantOpsDashboard() {
   const { connection, snapshot, twin, recommendations, mode, setMode, activeStep, audit, busy, approve } = usePlantOps();
   const k = twin?.kpis || {};
   return <main className="plantops-shell">
+    <GatewaySetup />
     <div className="po-topbar"><div><span className="po-mark">EDG</span><div><p>EngineeringDrawing.io</p><h1>PlantOps <sup>AI</sup></h1></div></div><div className="po-site"><span><i className={connection.connected ? '' : 'offline'}/> {connection.connected ? 'Plant connected' : 'Connecting…'}</span><b>MVR Demo Plant · Line 01</b></div></div>
     <div className="po-safety"><span>SIMULATION ENVIRONMENT</span><p>Read-only plant data · PLC/DCS/SIS protections remain authoritative · Real actuator writes disabled</p><b>Manual fallback ready</b></div>
     <nav className="po-modes" aria-label="Operating mode">{modes.map(item => <button key={item} className={mode === item ? 'active' : ''} disabled={item === 'Constrained Control' || item === 'Supervised'} onClick={() => setMode(item)}><i />{item}{item === 'Supervised' && <small>Simulation only</small>}{item === 'Constrained Control' && <small>Locked</small>}</button>)}</nav>

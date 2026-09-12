@@ -15,23 +15,37 @@ const BASE_TAGS = {
 
 /** Simulated implementation of the connector contract used by PlantOps. */
 export class MockScadaAdapter {
-  constructor() { this.connected = false; this.startedAt = Date.now(); }
+  constructor() { this.connected = false; this.startedAt = Date.now(); this.circulationTarget = 184; this.circulation = 184; }
   async connect() { this.connected = true; return this.getConnection(); }
   disconnect() { this.connected = false; }
   getConnection() {
     return { connected: this.connected, source: 'MVR-SIM-01', protocol: 'Simulated OPC UA', latency: 38, readOnly: true };
   }
   async readSnapshot() {
+    if (!this.connected) throw new Error('Simulator disconnected');
+    this.circulation += (this.circulationTarget - this.circulation) * .65;
     const phase = (Date.now() - this.startedAt) / 1000;
     const tags = Object.fromEntries(Object.entries(BASE_TAGS).map(([key, tag], index) => [key, {
       ...tag,
       value: Number((tag.value + Math.sin(phase / (4 + index % 3)) * Math.max(Math.abs(tag.value) * .006, .02)).toFixed(2)),
       quality: 'Good', timestamp: new Date().toISOString()
     }]));
+    tags.circulationFlow.value = this.circulation;
+    // Illustrative dynamic response only; this is not a calibrated plant model.
+    const gain = 1 + (this.circulation - 184) * .003;
+    tags.vaporRate.value *= gain;
+    tags.condensateRate.value *= gain;
     return { tags, timestamp: new Date().toISOString() };
   }
   async writeSetpoint() { throw new Error('Real actuator writes are disabled. Use the simulation workflow.'); }
-  async simulateSetpointWrite(tag, value) { return { tag, value, simulated: true, accepted: true, timestamp: new Date().toISOString() }; }
+  async simulateSetpointWrite(tag, value) {
+    if (!this.connected) throw new Error('Simulator disconnected');
+    if (tag !== 'SP-FT-301' || !Number.isFinite(value) || value < 175 || value > 205 || Math.abs(value - this.circulationTarget) > 6) {
+      throw new Error('Rejected: unknown tag or setpoint outside demo limits');
+    }
+    this.circulationTarget = value;
+    return { tag, value, simulated: true, accepted: true, timestamp: new Date().toISOString() };
+  }
 }
 
 export const connectorCapabilities = ['OPC UA', 'MQTT', 'Modbus TCP', 'REST', 'Historian API'];

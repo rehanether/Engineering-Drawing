@@ -22,10 +22,15 @@ export function usePlantOps() {
   const twin = snapshot ? calculateMvrTwin(snapshot) : null;
   const recommendations = twin ? getRecommendations(twin) : [];
   const approve = async recommendation => {
+    if (busy || mode === 'Read Only') return;
     setBusy(true);
-    const result = await runSimulatedApproval(adapter, recommendation, setActiveStep);
-    setAudit(items => [{ time: result.completedAt, event: 'Circulation target simulated at 190 m³/h; response verified', actor: 'Operator + EDG AI' }, ...items]);
-    setBusy(false);
+    try {
+      const result = await runSimulatedApproval(adapter, recommendation, setActiveStep);
+      setAudit(items => [{ time: result.completedAt, event: `Simulated response measured: ${result.measuredFlow.toFixed(1)} m³/h (target 190)`, actor: 'Demo operator' }, ...items]);
+    } catch (error) {
+      setAudit(items => [{ time: new Date().toISOString(), event: `Trial failed: ${error.message}`, actor: 'Simulator' }, ...items]);
+      setActiveStep('Observe');
+    } finally { setBusy(false); }
   };
   return { connection, snapshot, twin, recommendations, mode, setMode, activeStep, audit, busy, approve };
 }
