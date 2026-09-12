@@ -101,9 +101,9 @@ const Home = () => {
           </form>
         </div>
         <Link className="plantops-launch" to="/plantops" aria-label="Open EDG PlantOps AI plant operations">
-          <span className="plantops-launch-icon" aria-hidden="true">EDG</span>
-          <span><strong>AI Plant Operations</strong><small>Connect. Observe. Optimize. Operate.</small></span>
-          <span className="plantops-launch-status"><i /> Live demo <b>→</b></span>
+          <span className="plantops-launch-icon" aria-hidden="true">OPS</span>
+          <span><strong>EDG PlantOps</strong><small>Connect your SCADA. Observe. Optimize.</small></span>
+          <span className="plantops-launch-status"><i /> Read-only demo <b>→</b></span>
         </Link>
         <div className="hero-equipment" aria-label="Industrial design simulators">
           <Link to="/evaporators"><img src="/assets/mvr-evaporator.gif" alt="" /><span>MVR Evaporator</span><small>Live HMBD · PFD · 3D plant</small></Link>
