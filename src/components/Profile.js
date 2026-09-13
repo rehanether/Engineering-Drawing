@@ -186,6 +186,13 @@ export default function Profile() {
         <div className="profile-hero-actions"><button className="profile-security" onClick={auth.manageAccount}>Security & sign-in</button><button className="profile-signout" onClick={auth.signOut}>Sign out</button></div>
       </section>
       {status && <div className="profile-status" role="status">{status}</div>}
+      <article className="profile-mfa" aria-labelledby="profile-mfa-title">
+        <div><span>ACCOUNT SECURITY</span><h2 id="profile-mfa-title">Two-factor authentication (2FA)</h2>
+          <p>{auth.user?.twoFactorEnabled ? 'Enabled — your account has an additional sign-in verification factor.' : 'Not enabled — add an authenticator app to protect your account.'}</p>
+          <small>Open Security in account settings to enroll and save recovery codes privately. If two-step verification is unavailable, the site administrator must enable authenticator apps and backup codes in Clerk first. Email verification alone is not authenticator 2FA.</small>
+        </div>
+        <button className="profile-security" onClick={auth.manageAccount}>{auth.user?.twoFactorEnabled ? 'Manage 2FA & recovery' : 'Set up 2FA'}</button>
+      </article>
       <section className="balance-grid" aria-label="Account balances">
         <article><span>AI credits</span><strong>{data?.entitlement?.paidCredits ?? '—'}</strong><small>{data?.entitlement ? `${data.entitlement.freeRemaining} free uses remaining today` : 'Loading ledger'}</small><button onClick={addAiFunds} disabled={checkoutLoading || !auth.accountId}>{checkoutLoading ? 'Opening…' : 'Add 100 credits · $19'}</button></article>
         <article><span>BNB balance</span><strong>{balances.bnb}</strong><small>BNB Smart Chain</small></article>
@@ -212,7 +219,7 @@ export default function Profile() {
           <div className="referral-stats"><div><strong>{data?.campaign?.referrals?.total || 0}</strong><small>Invited</small></div><div><strong>{data?.campaign?.referrals?.qualified || 0}</strong><small>Qualified</small></div><div><strong>{rewards.creditEarned || 0}</strong><small>Credits earned</small></div></div>
           <p className="campaign-note">EDG and BNB campaign rewards are tracked as pending only when the treasury campaign is enabled. No private keys are stored by this website.</p>
         </article>
-        <article className="activity-card"><span>ACCOUNT & SECURITY</span><h2>Protected engineering account</h2><dl><div><dt>EDG rewards pending</dt><dd>{rewards.edgPending || 0}</dd></div><div><dt>BNB rewards pending</dt><dd>{rewards.bnbPending || 0}</dd></div><div><dt>Member since</dt><dd>{data?.profile?.createdAt ? new Date(data.profile.createdAt).toLocaleDateString() : '—'}</dd></div></dl><button className="security-action" onClick={auth.manageAccount}>Manage sign-in methods</button><p className="security-note">Email verification protects sign-in today. Authenticator 2FA and backup codes can be enabled after the identity security plan upgrade. Your linked wallet remains non-custodial.</p><Link to="/workspace">Open engineering workspace →</Link></article>
+        <article className="activity-card"><span>ACCOUNT & SECURITY</span><h2>Protected engineering account</h2><dl><div><dt>EDG rewards pending</dt><dd>{rewards.edgPending || 0}</dd></div><div><dt>BNB rewards pending</dt><dd>{rewards.bnbPending || 0}</dd></div><div><dt>Member since</dt><dd>{data?.profile?.createdAt ? new Date(data.profile.createdAt).toLocaleDateString() : '—'}</dd></div></dl><button className="security-action" onClick={auth.manageAccount}>Manage sign-in methods</button><p className="security-note">Review active devices and sign-in methods regularly. Never share verification codes, recovery codes or wallet private keys. Your linked wallet remains non-custodial.</p><Link to="/workspace">Open engineering workspace →</Link></article>
       </section>
     </main>
   );

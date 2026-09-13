@@ -69,7 +69,7 @@ const Home = () => {
     <main className="homepage">
       <section className="hero-section" aria-labelledby="home-title">
         <video autoPlay loop muted playsInline preload="metadata" className="background-video" aria-hidden="true">
-          <source src="/assets/industry4.mp4" type="video/mp4" />
+          <source src="/assets/industry4-light-v1.mp4" type="video/mp4" />
         </video>
         <div className="hero-left-stack">
           <div className="introduction-text">

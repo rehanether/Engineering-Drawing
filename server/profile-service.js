@@ -246,8 +246,19 @@ function createProfileService(sql, options = {}) {
       const profile = [...memoryProfiles.values()].find((item) => String(item.account_id) === String(accountId));
       if (profile) profile.wallet_address = address;
     } else {
-      await sql`DELETE FROM edg_wallet_challenges WHERE account_id = ${accountId}`;
-      await sql`UPDATE edg_user_profiles SET wallet_address = ${String(address).toLowerCase()}, updated_at = NOW() WHERE account_id = ${accountId}`;
+      // Consume this exact, still-valid challenge and link the wallet atomically.
+      // Concurrent requests and replacement challenges must not reuse a signature.
+      const updated = await sql`
+        WITH consumed AS (
+          DELETE FROM edg_wallet_challenges
+          WHERE account_id = ${accountId} AND message = ${challenge.message} AND expires_at > NOW()
+          RETURNING account_id
+        )
+        UPDATE edg_user_profiles SET wallet_address = ${String(address).toLowerCase()}, updated_at = NOW()
+        WHERE account_id IN (SELECT account_id FROM consumed)
+        RETURNING account_id
+      `;
+      if (!updated.length) return { ok: false, reason: 'Wallet challenge expired or already used.' };
     }
     return { ok: true };
   }

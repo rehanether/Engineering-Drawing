@@ -44,4 +44,20 @@ test('links a wallet only after a valid challenge signature', async () => {
   assert.deepEqual(result, { ok: true });
   const refreshed = await service.bootstrap('user_wallet', '');
   assert.equal(refreshed.wallet_address, wallet.address);
+  assert.equal((await service.consumeWalletChallenge(profile.account_id, wallet.address, signature, verifyMessage)).ok, false);
+});
+
+test('rejects cross-account, replaced and mismatched wallet signatures', async () => {
+  const service = createProfileService(null);
+  const first = await service.bootstrap('first', '');
+  const second = await service.bootstrap('second', '');
+  const wallet = Wallet.createRandom();
+  const otherWallet = Wallet.createRandom();
+  const challenge = await service.issueWalletChallenge(first.account_id, 'https://www.engineeringdrawing.io');
+  await service.issueWalletChallenge(second.account_id, 'https://www.engineeringdrawing.io');
+  const signature = await wallet.signMessage(challenge.message);
+  assert.equal((await service.consumeWalletChallenge(second.account_id, wallet.address, signature, verifyMessage)).ok, false);
+  assert.equal((await service.consumeWalletChallenge(first.account_id, otherWallet.address, signature, verifyMessage)).ok, false);
+  await service.issueWalletChallenge(first.account_id, 'https://www.engineeringdrawing.io');
+  assert.equal((await service.consumeWalletChallenge(first.account_id, wallet.address, signature, verifyMessage)).ok, false);
 });
