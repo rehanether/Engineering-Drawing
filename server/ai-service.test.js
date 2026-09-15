@@ -4,6 +4,14 @@ const { buildProjectModel, createAiService, createFallbackBrief, inferMassBalanc
 
 const accountId = '0f4bbd9f-1c52-4efb-9d51-c55ad62d5a17';
 
+test('classifies production provider failures without leaking upstream details', () => {
+  const { classifyProviderError } = require('./provider-error');
+  assert.equal(classifyProviderError({ message: 'No providers for model have the required capabilities: free' }).code, 'AI_MODEL_RESTRICTED');
+  assert.equal(classifyProviderError({ lastError: { statusCode: 429 } }).code, 'AI_CAPACITY');
+  assert.equal(classifyProviderError({ statusCode: 402 }).status, 503);
+  assert.equal(classifyProviderError({ message: 'secret upstream detail' }).message.includes('secret'), false);
+});
+
 test('validates version 4 account identifiers', () => {
   const service = createAiService(null);
   assert.equal(service.validAccountId(accountId), true);

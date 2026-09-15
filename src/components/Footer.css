@@ -2,6 +2,7 @@
 
 .site-footer {
   width: 100%;
+  box-sizing: border-box;
   margin-top: auto;
   background: #ffffff;
   border-top: 1px solid #dbeafe;
@@ -21,16 +22,24 @@
 
 .site-footer .footer-brand p { margin: 0; }
 
-.site-footer .social-links { margin-top: 10px; }
+.site-footer .social-links { margin-top: 10px; display:flex; flex-wrap:wrap; justify-content:center; gap:8px 16px; }
+.site-footer .social-links svg { width:18px; height:18px; flex-shrink:0; }
 
 .site-footer .social-links a {
   color: #2563eb;
-  margin: 0 10px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  min-height:44px;
+  overflow-wrap:anywhere;
+  margin:0;
   text-decoration: none;
 }
 
 .site-footer .social-links a:hover,
 .site-footer .social-links a:focus-visible { text-decoration: underline; }
+.site-footer .social-links a:focus-visible { outline:2px solid #258474; outline-offset:3px; border-radius:4px; }
 
 @media (max-width: 520px){
   .site-footer { padding: 18px 14px; }

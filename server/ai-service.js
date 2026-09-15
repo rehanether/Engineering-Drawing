@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const { generateText, tool } = require('ai');
 const { z } = require('zod');
+const { classifyProviderError } = require('./provider-error');
 
 const FREE_DAILY_GENERATIONS = Number(process.env.AI_FREE_DAILY_GENERATIONS || 3);
 const AI_MODEL = process.env.AI_MODEL || 'minimax/minimax-m3';
@@ -383,15 +384,8 @@ function createAiService(sql) {
       if (!sql) memoryGenerations.set(id, { ...generation, status: 'failed', errorCode });
       else await sql`UPDATE edg_ai_generations SET status = 'failed', error_code = ${errorCode}, completed_at = NOW() WHERE id = ${id}`;
       if (chargeType === 'credit') await addCredits(accountId, 1, 'generation_refund', `refund:${id}`);
-      const capacityLimited = /rate-limited|rate limit/i.test(providerError?.message || '');
-      const modelRestricted = /do not have access|restricted model/i.test(providerError?.message || '');
-      const error = new Error(capacityLimited
-        ? 'EDG AI free capacity is temporarily busy. Please retry shortly. No paid credit was consumed.'
-        : modelRestricted
-          ? 'This AI model requires provider credits. Configure a free model or add AI Gateway balance. No paid credit was consumed.'
-          : 'The engineering model could not complete this request. No paid credit was consumed.');
-      error.status = 502;
-      error.code = capacityLimited ? 'AI_CAPACITY' : modelRestricted ? 'AI_MODEL_RESTRICTED' : 'AI_PROVIDER_ERROR';
+      const failure = classifyProviderError(providerError);
+      const error = Object.assign(new Error(failure.message), { status: failure.status, code: failure.code });
       throw error;
     }
   }
