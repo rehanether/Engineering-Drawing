@@ -11,6 +11,7 @@ const { neon } = require('@neondatabase/serverless');
 const { clerkMiddleware, getAuth } = require('@clerk/express');
 const { createAiService, AI_MODEL } = require('./ai-service');
 const { createProfileService } = require('./profile-service');
+const { allowedOriginsFor, privateApiResponse, apiErrorHandler } = require('./security-policy');
 
 dotenv.config();
 dotenv.config({ path: path.resolve(__dirname, '../.env'), override: false });
@@ -45,16 +46,11 @@ const profileService = createProfileService(sql, {
   referralBnb: process.env.REFERRAL_REWARD_BNB || 0,
 });
 let paymentsTableReady = false;
-const allowedOrigins = new Set(
-  (process.env.CORS_ORIGINS ||
-    'https://www.engineeringdrawing.io,https://engineeringdrawing.io,http://localhost:3000,http://localhost:4176')
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean)
-);
+const allowedOrigins = allowedOriginsFor();
 
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
+app.use('/api', privateApiResponse);
 if (clerkConfigured) {
   app.use(clerkMiddleware({
     publishableKey: clerkPublishableKey,
@@ -714,14 +710,7 @@ app.post('/api/payments/nowpayments/ipn', async (req, res) => {
   }
 });
 
-app.use((error, _req, res, next) => {
-  if (error.message === 'Origin is not allowed by CORS.') {
-    return res.status(403).json({ error: 'Origin is not allowed.' });
-  }
-  console.error(JSON.stringify({ level:'error', message:'Unhandled API error', error:error?.message||'Unknown error' }));
-  if(res.headersSent)return next(error);
-  return res.status(500).json({error:'The service could not complete this request.'});
-});
+app.use(apiErrorHandler);
 
 if (require.main === module) {
   app.listen(PORT, () => {
