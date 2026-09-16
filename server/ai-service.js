@@ -352,13 +352,16 @@ function createAiService(sql) {
     try {
       const result = await generateText({
         model: AI_MODEL,
-        providerOptions: { gateway: { has: ['free'] } },
+        // Normal routing uses the team's existing gateway balance. Free-only
+        // providers are optional, not a requirement for every production call.
+        providerOptions: { gateway: process.env.AI_GATEWAY_FREE_ONLY === 'true' ? { has: ['free'] } : {} },
         system: SYSTEM_INSTRUCTIONS,
         prompt,
         tools: { submitBrief },
         toolChoice: { type: 'tool', toolName: 'submitBrief' },
         maxOutputTokens: AI_MAX_OUTPUT_TOKENS,
-        maxRetries: 2,
+        maxRetries: 1,
+        abortSignal: AbortSignal.timeout(45000),
       });
       const submittedBrief = result.toolResults.find((item) => item.toolName === 'submitBrief')?.output
         || result.toolCalls.find((item) => item.toolName === 'submitBrief')?.input;
