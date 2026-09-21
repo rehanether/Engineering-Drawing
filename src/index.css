@@ -7,6 +7,33 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+:root {
+  --edg-font: Arial, Helvetica, sans-serif;
+  --edg-background: #eaf3ff;
+  --edg-surface: #ffffff;
+  --edg-text: #17364c;
+  --edg-primary: #2563eb;
+  --edg-radius: 16px;
+}
+
+button, input, select, textarea { font-family: inherit; }
+.app-container .contact-page,
+.app-container .profile-page { font-family: var(--edg-font); background: var(--edg-background); }
+.app-container .profile-page { padding-top: 92px; }
+.app-container .profile-page :is(h1, h2) { font-family: var(--edg-font); }
+.app-container .profile-page :is(.profile-hero, .profile-auth-card, .referral-card, .activity-card, .balance-grid article) { border-radius: var(--edg-radius); }
+:focus-visible { outline: 3px solid var(--edg-primary); outline-offset: 3px; }
+html { scroll-padding-top: 80px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;

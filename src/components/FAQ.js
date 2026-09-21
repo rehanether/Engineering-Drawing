@@ -117,9 +117,9 @@ const FAQ = () => {
 const styles = {
   page: {
     minHeight: "100vh",
-    background: "#f8fafc",
-    padding: "60px 20px",
-    fontFamily: "Arial, Helvetica, sans-serif",
+    background: "var(--edg-background)",
+    padding: "100px 20px 40px",
+    fontFamily: "var(--edg-font)",
     color: "#172033",
   },
 
@@ -134,7 +134,7 @@ const styles = {
   },
 
   title: {
-    fontSize: "42px",
+    fontSize: "clamp(28px, 5vw, 42px)",
     marginBottom: "12px",
   },
 

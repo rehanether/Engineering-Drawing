@@ -20,7 +20,7 @@
   padding: 0;
 }
 
-.project-overview .hero-section,
+.project-overview .overview-hero,
 .project-overview .focus-card,
 .project-overview .industry-card,
 .project-overview .cta-section{
@@ -29,7 +29,7 @@
   box-shadow: 0 10px 24px rgba(15, 23, 42, .06);
 }
 
-.project-overview .hero-section{
+.project-overview .overview-hero{
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(280px, .95fr);
   align-items: center;
@@ -47,14 +47,14 @@
   letter-spacing: .1em;
   text-transform: uppercase;
 }
-.project-overview .hero-section h1{
+.project-overview .overview-hero h1{
   margin: 0 0 16px;
   color: #0f172a;
   font-size: clamp(2rem, 3.8vw, 3.5rem);
   line-height: 1.1;
   letter-spacing: -.035em;
 }
-.project-overview .hero-section p:not(.eyebrow){
+.project-overview .overview-hero p:not(.eyebrow){
   margin: 0;
   max-width: 58ch;
   color: #475569;
@@ -182,7 +182,7 @@
     padding: 76px 18px 36px;
     gap: 22px;
   }
-  .project-overview .hero-section{
+  .project-overview .overview-hero{
     grid-template-columns: 1fr;
     padding: 26px 22px;
     gap: 24px;
@@ -197,10 +197,10 @@
     padding: 76px 14px 32px;
     gap: 20px;
   }
-  .project-overview .hero-section,
+  .project-overview .overview-hero,
   .project-overview .cta-section{ border-radius: 18px; }
-  .project-overview .hero-section{ padding: 24px 20px; }
-  .project-overview .hero-section h1{ font-size: clamp(2rem, 9vw, 2.65rem); }
+  .project-overview .overview-hero{ padding: 24px 20px; }
+  .project-overview .overview-hero h1{ font-size: clamp(2rem, 9vw, 2.65rem); }
   .project-overview .focus-grid,
   .project-overview .industry-grid{ grid-template-columns: 1fr; gap: 14px; }
   .project-overview .focus-card,

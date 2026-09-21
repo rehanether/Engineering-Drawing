@@ -50,12 +50,13 @@
 @media (min-width:1024px){
   .contact-page.contact-onecol{
     /* fits between header and footer with top breathing space */
-    height: calc(100vh - var(--c-nav-h) - var(--c-top-pad) - var(--c-footer-h));
-    padding-top: var(--c-top-pad);
+    min-height: calc(100vh - var(--c-footer-h));
+    padding-top: calc(var(--c-nav-h) + var(--c-top-pad));
+    padding-bottom: 32px;
     display: grid;
-    grid-template-rows: 208px 1fr;             /* hero | main */
+    grid-template-rows: auto auto;
     row-gap: var(--c-gap);
-    overflow: hidden;                           /* no page scrollbar */
+    overflow: visible;
   }
 
   .contact-page .contact-hero,
@@ -166,7 +167,7 @@
   .contact-page.contact-onecol{
     min-height: calc(100vh - var(--c-nav-h));
     display: block; overflow: auto;
-    padding: 20px 18px 40px;
+    padding: calc(var(--c-nav-h) + 20px) 18px 40px;
   }
   .contact-page .contact-hero,
   .contact-page .contact-main{

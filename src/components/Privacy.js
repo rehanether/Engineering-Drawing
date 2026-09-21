@@ -157,10 +157,10 @@ const Privacy = () => {
 
 const styles = {
   page: {
-    background: "#f8fafc",
+    background: "var(--edg-background)",
     minHeight: "100vh",
-    padding: "60px 20px",
-    fontFamily: "Arial, Helvetica, sans-serif",
+    padding: "100px 20px 40px",
+    fontFamily: "var(--edg-font)",
     color: "#172033",
   },
 
@@ -168,13 +168,13 @@ const styles = {
     maxWidth: "900px",
     margin: "0 auto",
     background: "#ffffff",
-    padding: "50px",
+    padding: "clamp(20px, 5vw, 50px)",
     borderRadius: "16px",
     boxShadow: "0 8px 30px rgba(0,0,0,0.06)",
   },
 
   title: {
-    fontSize: "42px",
+    fontSize: "clamp(28px, 5vw, 42px)",
     marginBottom: "8px",
   },
 

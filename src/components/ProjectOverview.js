@@ -5,7 +5,7 @@ import './ProjectOverview.css';
 const ProjectOverview = () => {
   return (
     <main className="project-overview">
-      <section className="hero-section" aria-labelledby="project-overview-title">
+      <section className="overview-hero" aria-labelledby="project-overview-title">
         <div className="hero-copy">
           <p className="eyebrow">Industrial engineering, evolved</p>
           <h1 id="project-overview-title">Engineering Excellence through Industry 4.0</h1>
