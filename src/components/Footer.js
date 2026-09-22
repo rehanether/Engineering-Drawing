@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './Footer.css';
+import logo from '../assets/logo.png';
 
 function FooterIcon({ name }) {
   const paths = {
@@ -18,7 +19,7 @@ function Footer() {
   return (
     <footer className="site-footer">
       <div className="footer-brand">
-        <img src="/assets/edg_logo.svg" width="32" height="32" alt="Engineering Drawing" />
+        <img src={logo} width="32" height="32" alt="Engineering Drawing" />
         <p>&copy; {new Date().getFullYear()} Engineering Drawing. All rights reserved.</p>
       </div>
       <div className="social-links">
