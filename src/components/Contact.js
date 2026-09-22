@@ -9,7 +9,7 @@ const topics = [
   "General Inquiry",
 ];
 const WHATSAPP_URL = "https://wa.me/919472187321";
-const TELEGRAM_URL = "https://t.me/+919472187321";
+const TELEGRAM_URL = "https://t.me/engineeringdrawingio";
 const X_URL = "https://x.com/EnggDrawIO";
 
 const Contact = () => {
@@ -109,7 +109,7 @@ const Contact = () => {
       <section className="contact-channels" aria-label="Official contact channels">
         <a href="mailto:contact@engineeringdrawing.io"><strong>Email</strong><span>contact@engineeringdrawing.io</span></a>
         <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"><strong>WhatsApp</strong><span>+91 94721 87321</span></a>
-        <a href={TELEGRAM_URL} target="_blank" rel="noopener noreferrer"><strong>Telegram</strong><span>+91 94721 87321</span></a>
+        <a href={TELEGRAM_URL} target="_blank" rel="noopener noreferrer"><strong>Telegram</strong><span>@engineeringdrawingio</span></a>
         <a href={X_URL} target="_blank" rel="noopener noreferrer"><strong>X</strong><span>@EnggDrawIO</span></a>
       </section>
 

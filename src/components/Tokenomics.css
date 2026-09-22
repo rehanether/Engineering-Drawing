@@ -167,6 +167,7 @@
 .tokenomics-page .tok-lock-grid{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .tokenomics-page .tok-lock-grid > div{ min-width: 0; padding: 15px; border: 1px solid #dbeafe; border-radius: 14px; background: #f8fbff; }
 .tokenomics-page .tok-lock-item{ display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.tokenomics-page .tok-lock-item > div:first-child{ min-width: 0; }
 .tokenomics-page .tok-lock-grid strong{ display: block; margin-bottom: 5px; color: #0f172a; font-size: .88rem; }
 .tokenomics-page .tok-lock-grid span{ display: block; color: #475569; font-size: .84rem; line-height: 1.45; }
 .tokenomics-page .tok-countdown{ --countdown-progress: 0%; width: 72px; height: 72px; flex: 0 0 72px; display: grid; align-content: center; justify-items: center; border-radius: 50%; background: radial-gradient(circle at center, #f8fbff 0 60%, transparent 61%), conic-gradient(#2563eb var(--countdown-progress), #dbeafe 0); color: #0f172a; text-align: center; }
@@ -187,6 +188,11 @@
   .tokenomics-page .tok-alloc-grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .tokenomics-page .tok-official-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tokenomics-page .tok-lock-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 900px){
+  .tokenomics-page .tok-lock-grid{ grid-template-columns: 1fr; }
+  .tokenomics-page .tok-lock-grid > div{ padding: 18px; }
+  .tokenomics-page .tok-countdown{ width: 78px; height: 78px; flex-basis: 78px; }
 }
 @media (max-width: 760px){
   .tokenomics-page{ padding: 76px 18px 36px; }

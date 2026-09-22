@@ -30,7 +30,7 @@ function Footer() {
         <Link to="/privacy" aria-label="Privacy" title="Privacy"><FooterIcon name="Privacy"/></Link>
         <a href="mailto:contact@engineeringdrawing.io" aria-label="Email Engineering Drawing" title="contact@engineeringdrawing.io"><FooterIcon name="Email"/></a>
         <a href="https://wa.me/919472187321" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp Engineering Drawing" title="WhatsApp: +91 94721 87321"><FooterIcon name="WhatsApp"/></a>
-        <a href="https://t.me/+919472187321" target="_blank" rel="noopener noreferrer" aria-label="Telegram Engineering Drawing" title="Telegram: +91 94721 87321"><FooterIcon name="Telegram"/></a>
+        <a href="https://t.me/engineeringdrawingio" target="_blank" rel="noopener noreferrer" aria-label="Telegram Engineering Drawing" title="Telegram: @engineeringdrawingio"><FooterIcon name="Telegram"/></a>
         <a href="https://x.com/EnggDrawIO" target="_blank" rel="noopener noreferrer" aria-label="Engineering Drawing on X" title="X: @EnggDrawIO"><FooterIcon name="X"/></a>
         <a href="https://github.com/rehanether/Engineering-Drawing" target="_blank" rel="noopener noreferrer" aria-label="Engineering Drawing on GitHub" title="GitHub"><FooterIcon name="GitHub"/></a>
         <a href="https://www.linkedin.com/company/engineeringdrawing/" target="_blank" rel="noopener noreferrer" aria-label="Engineering Drawing on LinkedIn" title="LinkedIn"><FooterIcon name="LinkedIn"/></a>

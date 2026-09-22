@@ -11,6 +11,6 @@ test('footer exposes accessible links and securely opens the official Facebook p
   expect(facebook.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
   expect(screen.getByRole('link', { name: 'Engineering Drawing on LinkedIn' })).toHaveAttribute('href', 'https://www.linkedin.com/company/engineeringdrawing/');
   expect(screen.getByRole('link', { name: 'WhatsApp Engineering Drawing' })).toHaveAttribute('href', 'https://wa.me/919472187321');
-  expect(screen.getByRole('link', { name: 'Telegram Engineering Drawing' })).toHaveAttribute('href', 'https://t.me/+919472187321');
+  expect(screen.getByRole('link', { name: 'Telegram Engineering Drawing' })).toHaveAttribute('href', 'https://t.me/engineeringdrawingio');
   expect(screen.getByRole('link', { name: 'Engineering Drawing on X' })).toHaveAttribute('href', 'https://x.com/EnggDrawIO');
 });
