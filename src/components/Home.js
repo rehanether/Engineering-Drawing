@@ -3,9 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import './Home.ed.css';
 
 const STARTER_PROMPTS = [
-  'Design an MVR evaporator plant for wastewater concentration',
-  'Create a continuous stirred-tank reactor system',
-  'Plan a binary distillation column and utility system',
+  'Design a process plant with feed, product, capacity, and utility requirements',
+  'Design industrial equipment for a product, duty, material, and operating conditions',
 ];
 
 const Home = () => {
@@ -103,7 +102,7 @@ const Home = () => {
               <small role="status">{file ? file.name : notice}</small>
             </div>
             <div className="prompt-starters" aria-label="Example engineering briefs">
-              {STARTER_PROMPTS.map((starter) => <button type="button" key={starter} onClick={() => { setPrompt(starter); setNotice('Visual concept updated. Refine the brief or build it in EDG AI.'); }}>{starter.replace(/^Design an |^Create a |^Plan a /, '')}</button>)}
+              {STARTER_PROMPTS.map((starter) => <button type="button" key={starter} onClick={() => { setPrompt(starter); setNotice('Brief selected. Refine it or open EDG AI workspace.'); }}>{starter.replace(/^Design a /, '')}</button>)}
             </div>
             <input ref={uploadRef} className="sr-only" type="file" onChange={handleFile} accept="image/*,.pdf,.dwg,.dxf,.csv,.xlsx,.doc,.docx" />
             <input ref={cameraRef} className="sr-only" type="file" onChange={handleFile} accept="image/*" capture="environment" />

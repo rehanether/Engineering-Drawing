@@ -16,6 +16,18 @@ const readJson = (key, fallback = null) => {
 const readSavedProject = () => readJson('edg-active-project');
 const modelKey = (projectId) => `edg-project-model:${projectId}`;
 const versionKey = (projectId) => `edg-project-versions:${projectId}`;
+const CREATOR_OPTIONS = [
+  {
+    title: 'Process / plant',
+    description: 'Map a full process route, streams, utilities, equipment, safeguards, and a 3D concept.',
+    prompt: 'Design a process plant. Include the feed, desired product, capacity, operating conditions, utilities, site constraints, and required deliverables.',
+  },
+  {
+    title: 'Equipment / product',
+    description: 'Develop equipment around a product duty, material, capacity, operating conditions, and safety needs.',
+    prompt: 'Design industrial equipment. Include the product or duty, capacity, material, operating conditions, utilities, safety requirements, and required drawings.',
+  },
+];
 
 const persistJson = (key, value) => {
   try { localStorage.setItem(key, JSON.stringify(value)); }
@@ -40,6 +52,7 @@ const EngineeringWorkspace = () => {
   const [versions, setVersions] = useState(() => readJson(versionKey(initial.id), []));
   const initialRequest = useRef(false);
   const exhaustedPromptShown = useRef(false);
+  const revisionRef = useRef(null);
   const plan = useMemo(() => planProject(project.prompt, Boolean(project.fileName)), [project]);
   const fallbackModel = useMemo(() => createFallbackProjectModel(plan, project.prompt), [plan, project.prompt]);
   const model = useMemo(() => normalizeProjectModel(savedModel, fallbackModel), [savedModel, fallbackModel]);
@@ -148,6 +161,12 @@ const EngineeringWorkspace = () => {
     await runAi(contextPrompt);
   };
 
+  const chooseCreatorOption = (option) => {
+    setRevision(option.prompt);
+    setAiError('');
+    revisionRef.current?.focus();
+  };
+
   const saveBasis = () => {
     const designBasis = basisDraft.split('\n').map((item) => item.trim()).filter(Boolean).slice(0, 30);
     const nextModel = { ...model, designBasis };
@@ -210,6 +229,13 @@ const EngineeringWorkspace = () => {
           </div>
           <p className="plan-summary">Every section is connected to one versioned Project Model. Revise the prompt or design basis and EDG will rebuild the engineering route.</p>
 
+          <section className="workspace-creator" aria-labelledby="creator-heading">
+            <div><p className="workspace-kicker">START WITH EDG AI</p><h3 id="creator-heading">What do you want to make?</h3><p>Choose one path, add the details you know, then create a structured project with a 3D process or equipment concept.</p></div>
+            <div className="creator-options">
+              {CREATOR_OPTIONS.map((option) => <button type="button" key={option.title} onClick={() => chooseCreatorOption(option)}><span>{option.title === 'Process / plant' ? '01' : '02'}</span><b>{option.title}</b><small>{option.description}</small><i aria-hidden="true">Use this brief →</i></button>)}
+            </div>
+          </section>
+
           <AiVisionPreview embedded prompt={project.prompt} model={model} />
 
           <article className={`ai-engineering-brief ${aiState}`} aria-live="polite">
@@ -240,9 +266,9 @@ const EngineeringWorkspace = () => {
       </div>
 
       <form className="workspace-revision" onSubmit={applyRevision}>
-        <label htmlFor="project-revision" className="sr-only">Revise this engineering project</label>
-        <input id="project-revision" value={revision} onChange={(event) => setRevision(event.target.value)} placeholder="Revise: change feed, product, capacity, material, standard, or required output…" />
-        <button type="submit" disabled={aiState === 'loading'}>{aiState === 'loading' ? 'Working…' : 'Rebuild project →'}</button>
+        <label htmlFor="project-revision" className="sr-only">Describe what you want EDG AI to make</label>
+        <input ref={revisionRef} id="project-revision" value={revision} onChange={(event) => setRevision(event.target.value)} placeholder="Describe your process or equipment: product, feed/duty, capacity, material, conditions, and required output…" />
+        <button type="submit" disabled={aiState === 'loading'}>{aiState === 'loading' ? 'Working…' : project.id === 'edg-new' ? 'Create project →' : 'Rebuild project →'}</button>
       </form>
     </main>
   );
