@@ -1,6 +1,13 @@
 import React, { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import AiVisionPreview from './AiVisionPreview';
 import './Home.ed.css';
+
+const STARTER_PROMPTS = [
+  'Design an MVR evaporator plant for wastewater concentration',
+  'Create a continuous stirred-tank reactor system',
+  'Plan a binary distillation column and utility system',
+];
 
 const Home = () => {
   const navigate = useNavigate();
@@ -96,10 +103,14 @@ const Home = () => {
               </div>
               <small role="status">{file ? file.name : notice}</small>
             </div>
+            <div className="prompt-starters" aria-label="Example engineering briefs">
+              {STARTER_PROMPTS.map((starter) => <button type="button" key={starter} onClick={() => { setPrompt(starter); setNotice('Visual concept updated. Refine the brief or build it in EDG AI.'); }}>{starter.replace(/^Design an |^Create a |^Plan a /, '')}</button>)}
+            </div>
             <input ref={uploadRef} className="sr-only" type="file" onChange={handleFile} accept="image/*,.pdf,.dwg,.dxf,.csv,.xlsx,.doc,.docx" />
             <input ref={cameraRef} className="sr-only" type="file" onChange={handleFile} accept="image/*" capture="environment" />
           </form>
         </div>
+        <AiVisionPreview prompt={prompt} onUseProject={() => startProject()} />
         <Link className="plantops-launch" to="/plantops" aria-label="Open EDG PlantOps AI plant operations">
           <span className="plantops-launch-icon" aria-hidden="true">OPS</span>
           <span><strong>EDG PlantOps</strong><small>Connect your SCADA. Observe. Optimize.</small></span>
