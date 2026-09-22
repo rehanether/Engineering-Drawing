@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import AiVisionPreview from './AiVisionPreview';
 import './Home.ed.css';
 
 const STARTER_PROMPTS = [
@@ -110,7 +109,6 @@ const Home = () => {
             <input ref={cameraRef} className="sr-only" type="file" onChange={handleFile} accept="image/*" capture="environment" />
           </form>
         </div>
-        <AiVisionPreview prompt={prompt} onUseProject={() => startProject()} />
         <Link className="plantops-launch" to="/plantops" aria-label="Open EDG PlantOps AI plant operations">
           <span className="plantops-launch-icon" aria-hidden="true">OPS</span>
           <span><strong>EDG PlantOps</strong><small>Connect your SCADA. Observe. Optimize.</small></span>
