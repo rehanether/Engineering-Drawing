@@ -22,6 +22,16 @@ button, input, select, textarea { font-family: inherit; }
 .app-container .profile-page { padding-top: 92px; }
 .app-container .profile-page :is(h1, h2) { font-family: var(--edg-font); }
 .app-container .profile-page :is(.profile-hero, .profile-auth-card, .referral-card, .activity-card, .balance-grid article) { border-radius: var(--edg-radius); }
+.app-container .profile-page .profile-hero { border-top-color: var(--edg-primary); }
+.app-container .profile-page :is(.profile-security, .profile-signout, .security-action, .wallet-connect-action) {
+  min-height: 44px;
+  border-radius: 10px;
+  background: var(--edg-primary);
+  color: white;
+}
+.app-container .profile-page .profile-hero-actions { flex-wrap: wrap; }
+.app-container .profile-page :is(.profile-mfa-card, .wallet-connect-card) { border-radius: var(--edg-radius); }
+.app-container .profile-page button:disabled { cursor: not-allowed; }
 :focus-visible { outline: 3px solid var(--edg-primary); outline-offset: 3px; }
 html { scroll-padding-top: 80px; }
 

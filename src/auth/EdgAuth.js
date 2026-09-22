@@ -63,7 +63,16 @@ export function EdgAuthProvider({ children }) {
   useEffect(() => { captureReferralCode(); }, []);
   if (!publishableKey) return <AuthContext.Provider value={guestValue}>{children}</AuthContext.Provider>;
   return (
-    <ClerkProvider publishableKey={publishableKey} routerPush={(to) => navigate(to)} routerReplace={(to) => navigate(to, { replace: true })}>
+    <ClerkProvider publishableKey={publishableKey} appearance={{
+      variables: {
+        colorPrimary: '#2563eb',
+        colorBackground: '#ffffff',
+        colorText: '#17364c',
+        colorTextSecondary: '#607887',
+        fontFamily: 'Arial, Helvetica, sans-serif',
+        borderRadius: '12px',
+      },
+    }} routerPush={(to) => navigate(to)} routerReplace={(to) => navigate(to, { replace: true })}>
       <ClerkAuthBridge>{children}</ClerkAuthBridge>
     </ClerkProvider>
   );
