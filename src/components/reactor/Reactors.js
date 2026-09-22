@@ -364,7 +364,7 @@ export default function Reactors(){
       <div class="wm">engineeringdrawing.io</div>
       <h1>Bill of Materials (Reactor)</h1>
       <div class="brand">Engineering Drawing (EDG) — Industry 4.0 • AI • On-Chain Transparency</div>
-      <div class="muted">contact@engineeringdrawing.io • admin@engineeringdrawing.io • engineeringdrawing.io</div>
+      <div class="muted">contact@engineeringdrawing.io • engineeringdrawing.io</div>
       ${meta}
       <table><thead>
         <tr><th>#</th><th>Tag / Category</th><th>Description</th><th>MOC</th><th>Qty</th><th>Unit</th><th>Est. Weight (kg)</th><th>Notes</th></tr>
@@ -393,7 +393,7 @@ export default function Reactors(){
       <h1>Reactor Basic Engineering Package</h1>
       <div class="card" style="border-color:#e5e7eb">
         <div style="font-weight:800">Engineering Drawing (EDG) — Industry 4.0 • AI • On-Chain</div>
-        <div style="color:#64748b">contact@engineeringdrawing.io • admin@engineeringdrawing.io • engineeringdrawing.io</div>
+        <div style="color:#64748b">contact@engineeringdrawing.io • engineeringdrawing.io</div>
       </div>
       <div class="card grid">
         <div>

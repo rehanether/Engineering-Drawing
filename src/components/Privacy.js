@@ -137,8 +137,8 @@ const Privacy = () => {
           <strong>EngineeringDrawing.io</strong>
           <br />
           Email:{" "}
-          <a href="mailto:admin@engineeringdrawing.io">
-            admin@engineeringdrawing.io
+          <a href="mailto:contact@engineeringdrawing.io">
+            contact@engineeringdrawing.io
           </a>
           <br />
           Website:{" "}

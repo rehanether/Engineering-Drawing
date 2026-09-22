@@ -39,7 +39,7 @@ const faqData = [
   {
     question: "Can I request deletion of my data?",
     answer:
-      "Yes. Eligible users or merchants can request data deletion by contacting admin@engineeringdrawing.io. Requests will be handled according to applicable legal and platform requirements.",
+      "Yes. Eligible users or merchants can request data deletion by contacting contact@engineeringdrawing.io. Requests will be handled according to applicable legal and platform requirements.",
   },
   {
     question: "Is EngineeringDrawing.io free?",
@@ -49,12 +49,12 @@ const faqData = [
   {
     question: "How do I report a technical problem?",
     answer:
-      "Please email admin@engineeringdrawing.io with a description of the issue, relevant screenshots, and the steps that caused the problem.",
+      "Please email contact@engineeringdrawing.io with a description of the issue, relevant screenshots, and the steps that caused the problem.",
   },
   {
     question: "How can I contact EngineeringDrawing.io?",
     answer:
-      "You can contact us at admin@engineeringdrawing.io or visit https://engineeringdrawing.io.",
+      "You can contact us at contact@engineeringdrawing.io or visit https://engineeringdrawing.io.",
   },
 ];
 
@@ -104,8 +104,8 @@ const FAQ = () => {
 
           <p>
             Contact our support team at{" "}
-            <a href="mailto:admin@engineeringdrawing.io">
-              admin@engineeringdrawing.io
+            <a href="mailto:contact@engineeringdrawing.io">
+              contact@engineeringdrawing.io
             </a>
           </p>
         </div>

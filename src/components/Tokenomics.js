@@ -55,6 +55,15 @@ const FOUNDERS = [
   { name: "Rehan ud-Din", role: "Founder", href: "https://www.linkedin.com/in/rehan-ud-din" },
   { name: "Alisha Mahmood", role: "Co-founder", href: "https://www.linkedin.com/in/alisha-mahmood-8b01bb20b" },
 ];
+const LOCKED_AT = Date.UTC(2026, 8, 22, 20, 56);
+const LOCKS = [
+  { group: "Environment", amount: "9,999,999.90 EDG", unlockAt: Date.UTC(2027, 7, 21), label: "21 Aug 2027" },
+  { group: "Environment", amount: "9,999,999.90 EDG", unlockAt: Date.UTC(2028, 7, 21), label: "21 Aug 2028" },
+  { group: "Environment", amount: "4,999,999.95 EDG", unlockAt: Date.UTC(2029, 7, 21), label: "21 Aug 2029" },
+  { group: "Team", amount: "4,999,999.95 EDG", unlockAt: Date.UTC(2027, 7, 21), label: "21 Aug 2027" },
+  { group: "Team", amount: "4,999,999.95 EDG", unlockAt: Date.UTC(2028, 7, 21), label: "21 Aug 2028" },
+  { group: "Team", amount: "4,999,999.95 EDG", unlockAt: Date.UTC(2029, 7, 21), label: "21 Aug 2029" },
+];
 
 const ALLOCATION = [
   { icon: "/assets/community.png", alt: "Community development", title: "Community Development", percentage: "30%", body: "Supporting community growth through token presale and empowering our supporters." },
@@ -66,6 +75,29 @@ const ALLOCATION = [
 
 const fmt = (value) => Number(value || 0).toLocaleString("en-IN");
 const pct = (sold, total) => Math.max(0, Math.min(100, (sold / Math.max(1, total)) * 100));
+
+function LockCountdown({ unlockAt, label }) {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const remaining = Math.max(0, unlockAt - now);
+  const days = Math.floor(remaining / 86_400_000);
+  const hours = Math.floor((remaining % 86_400_000) / 3_600_000);
+  const minutes = Math.floor((remaining % 3_600_000) / 60_000);
+  const elapsed = Math.max(0, Math.min(100, ((now - LOCKED_AT) / (unlockAt - LOCKED_AT)) * 100));
+
+  return (
+    <div className="tok-countdown" style={{ "--countdown-progress": `${elapsed}%` }} aria-label={`${days} days, ${hours} hours and ${minutes} minutes until unlock on ${label}`}>
+      <strong>{days}</strong>
+      <span>days</span>
+      <small>{hours}h {minutes}m</small>
+    </div>
+  );
+}
 
 export default function Tokenomics() {
   const live = usePresaleStats();
@@ -176,12 +208,12 @@ export default function Tokenomics() {
           <div className="tok-card tok-lock-summary">
             <p><strong>39,999,999.60 EDG</strong> is locked across six records. These are discrete unlocks at 00:00 UTC, not a daily or continuous vesting schedule.</p>
             <div className="tok-lock-grid" role="list" aria-label="EDG lock schedule">
-              <div role="listitem"><strong>Environment</strong><span>9,999,999.90 EDG - 21 Aug 2027</span></div>
-              <div role="listitem"><strong>Environment</strong><span>9,999,999.90 EDG - 21 Aug 2028</span></div>
-              <div role="listitem"><strong>Environment</strong><span>4,999,999.95 EDG - 21 Aug 2029</span></div>
-              <div role="listitem"><strong>Team</strong><span>4,999,999.95 EDG - 21 Aug 2027</span></div>
-              <div role="listitem"><strong>Team</strong><span>4,999,999.95 EDG - 21 Aug 2028</span></div>
-              <div role="listitem"><strong>Team</strong><span>4,999,999.95 EDG - 21 Aug 2029</span></div>
+              {LOCKS.map((lock) => (
+                <div key={`${lock.group}-${lock.label}`} role="listitem" className="tok-lock-item">
+                  <div><strong>{lock.group}</strong><span>{lock.amount} - {lock.label}</span></div>
+                  <LockCountdown unlockAt={lock.unlockAt} label={lock.label} />
+                </div>
+              ))}
             </div>
           </div>
         </section>

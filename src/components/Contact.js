@@ -8,6 +8,9 @@ const topics = [
   "Support / Bug Report",
   "General Inquiry",
 ];
+const WHATSAPP_URL = "https://wa.me/919472187321";
+const TELEGRAM_URL = "https://t.me/+919472187321";
+const X_URL = "https://x.com/EnggDrawIO";
 
 const Contact = () => {
   const [form, setForm] = useState({
@@ -44,7 +47,8 @@ const Contact = () => {
       return;
     }
     setSent(true);
-    showToast("Message sent. We’ll reply shortly.");
+    window.location.href = mailToContact;
+    showToast("Opening your email draft.");
     setTimeout(() => {
       setForm({
         name: "",
@@ -63,7 +67,6 @@ const Contact = () => {
   const body = encodeURIComponent(
     `Name: ${form.name}\nEmail: ${form.email}\nPhone: ${form.phone}\n\n${form.message}`
   );
-  const mailToAdmin = `mailto:admin@engineeringdrawing.io?subject=${subject}&body=${body}`;
   const mailToContact = `mailto:contact@engineeringdrawing.io?subject=${subject}&body=${body}`;
 
   const linkedinUrl = "https://www.linkedin.com/company/engineeringdrawing/";
@@ -86,9 +89,8 @@ const Contact = () => {
             <a className="btn-primary" href={mailToContact}>
               contact@engineeringdrawing.io
             </a>
-            <a className="btn-ghost" href={mailToAdmin}>
-              admin@engineeringdrawing.io
-            </a>
+            <a className="btn-ghost" href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">WhatsApp us</a>
+            <a className="btn-ghost" href={TELEGRAM_URL} target="_blank" rel="noopener noreferrer">Telegram</a>
             <a className="btn-linkedin" href={linkedinUrl} target="_blank" rel="noreferrer">
               LinkedIn
             </a>
@@ -102,6 +104,13 @@ const Contact = () => {
             <li><span>Typically replies within a day</span></li>
           </ul>
         </div>
+      </section>
+
+      <section className="contact-channels" aria-label="Official contact channels">
+        <a href="mailto:contact@engineeringdrawing.io"><strong>Email</strong><span>contact@engineeringdrawing.io</span></a>
+        <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"><strong>WhatsApp</strong><span>+91 94721 87321</span></a>
+        <a href={TELEGRAM_URL} target="_blank" rel="noopener noreferrer"><strong>Telegram</strong><span>+91 94721 87321</span></a>
+        <a href={X_URL} target="_blank" rel="noopener noreferrer"><strong>X</strong><span>@EnggDrawIO</span></a>
       </section>
 
       {/* MAIN */}
@@ -181,10 +190,9 @@ const Contact = () => {
 
           <div className="actions">
             <button type="submit" className="btn-primary" disabled={sent}>
-              {sent ? "Sending..." : "Send message"}
+              {sent ? "Opening email..." : "Open email draft"}
             </button>
-            {/* open email client (defaults to contact@) */}
-            <a className="btn-ghost" href={mailToContact}>Use Email Client</a>
+            <a className="btn-ghost" href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">Use WhatsApp</a>
           </div>
         </form>
       </section>
