@@ -48,6 +48,22 @@ const PAGE_META = {
     title: "Contact Engineering Drawing | Industrial Engineering Platform",
     description: "Contact Engineering Drawing for information about AI-assisted industrial process design, engineering tools and the EDG ecosystem.",
   },
+  "/faq": {
+    title: "Engineering Drawing FAQ | Industrial Engineering Platform",
+    description: "Answers about Engineering Drawing's AI-assisted industrial process design tools, simulators, EDG token ecosystem and account security.",
+  },
+  "/privacy": {
+    title: "Privacy Policy | Engineering Drawing",
+    description: "Read the Engineering Drawing privacy policy for its industrial engineering platform, account services and website tools.",
+  },
+  "/workspace": {
+    title: "EDG AI Engineering Workspace | Engineering Drawing",
+    description: "Create an engineering project model for industrial processes, equipment, utilities and plants with EDG AI.",
+  },
+  "/plantops": {
+    title: "EDG PlantOps | AI Plant Operations Workspace",
+    description: "Explore Engineering Drawing's safety-constrained digital-twin workspace for industrial plant operations and operator-reviewed recommendations.",
+  },
   "/construction-design": {
     title: "Construction Design | Engineering Drawing",
     description: "Construction Design resources from Engineering Drawing.",
@@ -91,7 +107,15 @@ export default function Seo() {
     setMeta('meta[property="og:title"]', { property: "og:title" }, page.title);
     setMeta('meta[property="og:description"]', { property: "og:description" }, page.description);
     setMeta('meta[property="og:url"]', { property: "og:url" }, canonicalUrl);
+    setMeta('meta[property="og:type"]', { property: "og:type" }, "website");
+    setMeta('meta[property="og:site_name"]', { property: "og:site_name" }, "Engineering Drawing");
     setMeta('meta[property="og:image"]', { property: "og:image" }, DEFAULT_IMAGE);
+    setMeta('meta[property="og:image:url"]', { property: "og:image:url" }, DEFAULT_IMAGE);
+    setMeta('meta[property="og:image:secure_url"]', { property: "og:image:secure_url" }, DEFAULT_IMAGE);
+    setMeta('meta[property="og:image:alt"]', { property: "og:image:alt" }, "Engineering Drawing — AI-powered industrial engineering platform");
+    setMeta('meta[name="twitter:card"]', { name: "twitter:card" }, "summary_large_image");
+    setMeta('meta[name="twitter:site"]', { name: "twitter:site" }, "@EnggDrawIO");
+    setMeta('meta[name="twitter:creator"]', { name: "twitter:creator" }, "@EnggDrawIO");
     setMeta('meta[name="twitter:title"]', { name: "twitter:title" }, page.title);
     setMeta('meta[name="twitter:description"]', { name: "twitter:description" }, page.description);
     setMeta('meta[name="twitter:image"]', { name: "twitter:image" }, DEFAULT_IMAGE);
