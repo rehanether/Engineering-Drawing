@@ -38,7 +38,7 @@ const PAGE_META = {
   },
   "/tokenomics": {
     title: "EDG Tokenomics & Token Allocation | Engineering Drawing",
-    description: "Explore EDG tokenomics, presale stages and token allocation supporting community development, sustainable industry programs and liquidity management.",
+    description: "Explore EDG tokenomics, presale stages and the verified fixed-date lock schedule for 40% of EDG supply on BNB Smart Chain.",
   },
   "/presale": {
     title: "EDG Token Presale on BNB Smart Chain | Engineering Drawing",

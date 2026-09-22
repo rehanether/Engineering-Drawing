@@ -49,11 +49,17 @@ const STAGES = [
 const TOKEN_ADDRESS = "0xa90Cc0137FDA4285Eaa6da0f7a5118A1432b2a76";
 const PRESALE_ADDRESS = "0x944483c8083827A8BF09c12cFC57DB6a5b22697A";
 const BSCSCAN_ADDRESS_URL = "https://bscscan.com/address/";
+const PINKLOCK_ADDRESS = "0x407993575c91ce7643a4d4cCACc9A98c36eE1BBE";
+const PINKLOCK_RECORD_URL = "https://www.pinksale.finance/pinklock/bsc/record/2052108";
+const FOUNDERS = [
+  { name: "Rehan ud-Din", role: "Founder", href: "https://www.linkedin.com/in/rehan-ud-din" },
+  { name: "Alisha Mahmood", role: "Co-founder", href: "https://www.linkedin.com/in/alisha-mahmood-8b01bb20b" },
+];
 
 const ALLOCATION = [
   { icon: "/assets/community.png", alt: "Community development", title: "Community Development", percentage: "30%", body: "Supporting community growth through token presale and empowering our supporters." },
-  { icon: "/assets/sustainable_icon.png", alt: "Environment program", title: "Environment Program", percentage: "25%", body: "Locked for three years to promote industry skill development, with 10% unlocking each year." },
-  { icon: "/assets/team.png", alt: "Team and management", title: "Team & Management", percentage: "15%", body: "Locked for three years, with 5% unlocking each year to support long-term commitment." },
+  { icon: "/assets/sustainable_icon.png", alt: "Environment program", title: "Environment Program", percentage: "25%", body: "24,999,999.75 EDG locked in three fixed-date releases: 2027, 2028 and 2029." },
+  { icon: "/assets/team.png", alt: "Team and management", title: "Team & Management", percentage: "15%", body: "14,999,999.85 EDG locked in three fixed-date releases: 2027, 2028 and 2029." },
   { icon: "/assets/marketing.png", alt: "Marketing and promotion", title: "Marketing & Promotional", percentage: "10%", body: "For brand awareness and community engagement that support steady growth." },
   { icon: "/assets/liquidity.png", alt: "Liquidity and risk management", title: "Liquidity & Risk Management", percentage: "20%", body: "Provides liquidity stability for smooth operation and risk management." },
 ];
@@ -102,6 +108,11 @@ export default function Tokenomics() {
               <a href="mailto:contact@engineeringdrawing.io">contact@engineeringdrawing.io</a>
               <span>For token, product and partnership enquiries.</span>
             </article>
+            <article className="tok-card tok-resource-card">
+              <h3>On-chain lock records</h3>
+              <a href={PINKLOCK_RECORD_URL} target="_blank" rel="noopener noreferrer">View a confirmed EDG lock record</a>
+              <span>40% of supply is locked in six fixed-date PinkLock records.</span>
+            </article>
           </div>
         </section>
 
@@ -149,6 +160,49 @@ export default function Tokenomics() {
                 <p className="tok-percentage">{item.percentage}</p>
                 <h3>{item.title}</h3>
                 <p>{item.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="tok-section tok-locks" aria-labelledby="lock-schedule-title">
+          <div className="tok-section-head">
+            <div>
+              <p className="tok-eyebrow">On-chain commitment</p>
+              <h2 id="lock-schedule-title">40% locked with fixed release dates</h2>
+            </div>
+            <a className="tok-btn tok-btn-secondary" href={`${BSCSCAN_ADDRESS_URL}${PINKLOCK_ADDRESS}`} target="_blank" rel="noopener noreferrer">Verify PinkLock</a>
+          </div>
+          <div className="tok-card tok-lock-summary">
+            <p><strong>39,999,999.60 EDG</strong> is locked across six records. These are discrete unlocks at 00:00 UTC, not a daily or continuous vesting schedule.</p>
+            <div className="tok-lock-grid" role="list" aria-label="EDG lock schedule">
+              <div role="listitem"><strong>Environment</strong><span>9,999,999.90 EDG - 21 Aug 2027</span></div>
+              <div role="listitem"><strong>Environment</strong><span>9,999,999.90 EDG - 21 Aug 2028</span></div>
+              <div role="listitem"><strong>Environment</strong><span>4,999,999.95 EDG - 21 Aug 2029</span></div>
+              <div role="listitem"><strong>Team</strong><span>4,999,999.95 EDG - 21 Aug 2027</span></div>
+              <div role="listitem"><strong>Team</strong><span>4,999,999.95 EDG - 21 Aug 2028</span></div>
+              <div role="listitem"><strong>Team</strong><span>4,999,999.95 EDG - 21 Aug 2029</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section className="tok-section tok-founders" aria-labelledby="founders-title">
+          <div className="tok-section-head">
+            <div>
+              <p className="tok-eyebrow">Leadership</p>
+              <h2 id="founders-title">Meet the founders</h2>
+            </div>
+            <a className="tok-company-link" href="https://www.linkedin.com/company/engineeringdrawing/" target="_blank" rel="noopener noreferrer">Engineering Drawing on LinkedIn</a>
+          </div>
+          <div className="tok-founder-grid">
+            {FOUNDERS.map((founder) => (
+              <article key={founder.name} className="tok-card tok-founder-card">
+                <span className="tok-founder-mark" aria-hidden="true">in</span>
+                <div>
+                  <p>{founder.role}</p>
+                  <h3>{founder.name}</h3>
+                  <a href={founder.href} target="_blank" rel="noopener noreferrer">Visit LinkedIn profile <span aria-hidden="true">↗</span></a>
+                </div>
               </article>
             ))}
           </div>

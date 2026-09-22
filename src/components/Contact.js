@@ -66,7 +66,7 @@ const Contact = () => {
   const mailToAdmin = `mailto:admin@engineeringdrawing.io?subject=${subject}&body=${body}`;
   const mailToContact = `mailto:contact@engineeringdrawing.io?subject=${subject}&body=${body}`;
 
-  const linkedinUrl = "https://www.linkedin.com/company/engineeringdrawing";
+  const linkedinUrl = "https://www.linkedin.com/company/engineeringdrawing/";
 
   return (
     <div className="contact-page contact-onecol">

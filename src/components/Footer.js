@@ -27,7 +27,7 @@ function Footer() {
         <Link to="/privacy"><FooterIcon name="Privacy"/>Privacy</Link>
         <a href="mailto:contact@engineeringdrawing.io" title="Official contact email"><FooterIcon name="Email"/>contact@engineeringdrawing.io</a>
         <a href="https://github.com/rehanether/Engineering-Drawing" target="_blank" rel="noopener noreferrer"><FooterIcon name="GitHub"/>GitHub</a>
-        <a href="https://www.linkedin.com/company/engineeringdrawing" target="_blank" rel="noopener noreferrer"><FooterIcon name="LinkedIn"/>LinkedIn</a>
+        <a href="https://www.linkedin.com/company/engineeringdrawing/" target="_blank" rel="noopener noreferrer"><FooterIcon name="LinkedIn"/>LinkedIn</a>
         <a href="https://www.facebook.com/profile.php?id=61579977430470" target="_blank" rel="noopener noreferrer"><FooterIcon name="Facebook"/>Facebook</a>
       </div>
     </footer>
