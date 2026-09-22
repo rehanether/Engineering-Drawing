@@ -5,6 +5,7 @@ import ProjectSectionPanel from './ProjectSectionPanel';
 import { createFallbackProjectModel, normalizeProjectModel, PROJECT_SECTIONS, sectionForOutput } from './projectModel';
 import { buyAiCredits, generateEngineeringBrief, getAiPaymentStatus, getAiStatus } from '../services/edgAi';
 import { useEdgAuth } from '../auth/EdgAuth';
+import AiVisionPreview from './AiVisionPreview';
 import './EngineeringWorkspace.css';
 
 const readJson = (key, fallback = null) => {
@@ -223,6 +224,8 @@ const EngineeringWorkspace = () => {
             {aiError && <div className="ai-error"><b>AI service notice</b><span>{aiError}</span>{aiState === 'error' && <small>The deterministic project workspace below remains available.</small>}</div>}
             {checkoutState === 'paid' && <div className="ai-paid">Payment confirmed. Your AI credits are ready.</div>}
           </article>
+
+          <AiVisionPreview embedded prompt={project.prompt} model={model} />
 
           <ProjectSectionPanel activeSection={activeSection} model={model} basisDraft={basisDraft} onBasisChange={setBasisDraft} onSaveBasis={saveBasis} versions={versions} onExport={exportProject} onPrint={() => window.print()} />
 

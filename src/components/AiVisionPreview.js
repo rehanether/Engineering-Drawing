@@ -58,20 +58,22 @@ function IsometricPlant({ kind, view, label }) {
   );
 }
 
-export default function AiVisionPreview({ prompt, onUseProject }) {
+export default function AiVisionPreview({ prompt, onUseProject, model, embedded = false }) {
   const [view, setView] = useState('all');
   const kind = useMemo(() => visionForPrompt(prompt), [prompt]);
   const vision = PRESETS[kind];
+  const projectEquipment = (model?.equipment || []).slice(0, 3);
 
   return (
-    <aside className="ai-vision-card" aria-label="EDG AI visual design concept">
-      <div className="ai-vision-heading"><span>EDG AI VISION</span><b>Reimagine in 3D</b><i>Concept stage</i></div>
+    <aside className={`ai-vision-card${embedded ? ' ai-vision-card--workspace' : ''}`} aria-label="EDG AI visual design concept">
+      <div className="ai-vision-heading"><span>EDG AI VISION</span><b>{embedded ? '3D process concept' : 'Reimagine in 3D'}</b><i>Concept stage</i></div>
       <IsometricPlant kind={kind} view={view} label={`${vision.name} visual concept`} />
       <div className="ai-vision-copy"><strong>{vision.name}</strong><p>{vision.description}</p></div>
+      {projectEquipment.length > 0 && <div className="ai-vision-equipment" aria-label="Project equipment shown in this concept">{projectEquipment.map((item) => <span key={`${item.tag}-${item.name}`}><b>{item.tag}</b>{item.name}</span>)}</div>}
       <div className="ai-vision-views" role="group" aria-label="Preview focus">
         {['all', 'equipment', 'flow'].map((option) => <button type="button" className={view === option ? 'is-selected' : ''} key={option} onClick={() => setView(option)}>{option === 'all' ? 'Plant' : option}</button>)}
       </div>
-      <div className="ai-vision-actions"><button type="button" onClick={onUseProject}>Build this brief <span aria-hidden="true">→</span></button><Link to={vision.route}>{vision.routeLabel}</Link></div>
+      <div className="ai-vision-actions">{onUseProject && <button type="button" onClick={onUseProject}>Build this brief <span aria-hidden="true">→</span></button>}<Link to={vision.route}>{embedded ? 'Open detailed 3D view' : vision.routeLabel}</Link></div>
       <small>Visual concept only — validate process design, safety, and construction details with qualified engineers.</small>
     </aside>
   );

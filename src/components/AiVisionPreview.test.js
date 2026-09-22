@@ -17,9 +17,10 @@ describe('visionForPrompt', () => {
 describe('AiVisionPreview', () => {
   it('offers a focused preview and hands the brief to EDG AI', () => {
     const onUseProject = jest.fn();
-    render(<MemoryRouter><AiVisionPreview prompt="Plan a distillation column" onUseProject={onUseProject} /></MemoryRouter>);
+    render(<MemoryRouter><AiVisionPreview prompt="Plan a distillation column" onUseProject={onUseProject} model={{ equipment: [{ tag: 'E-001', name: 'Feed pump' }] }} /></MemoryRouter>);
 
     expect(screen.getByText('Distillation concept')).toBeInTheDocument();
+    expect(screen.getByText('Feed pump')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'equipment' }));
     expect(screen.getByRole('button', { name: 'equipment' })).toHaveClass('is-selected');
     fireEvent.click(screen.getByRole('button', { name: /Build this brief/i }));
