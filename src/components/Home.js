@@ -3,8 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import './Home.ed.css';
 
 const STARTER_PROMPTS = [
-  'Design a process plant with feed, product, capacity, and utility requirements',
-  'Design industrial equipment for a product, duty, material, and operating conditions',
+  'Design an MVR evaporator for wastewater concentration with feed rate, solids target, steam and electrical utility requirements',
+  'Design a continuous stirred-tank reactor with feed composition, reaction duty, residence time, material and safety requirements',
 ];
 
 const Home = () => {
@@ -102,7 +102,7 @@ const Home = () => {
               <small role="status">{file ? file.name : notice}</small>
             </div>
             <div className="prompt-starters" aria-label="Example engineering briefs">
-              {STARTER_PROMPTS.map((starter) => <button type="button" key={starter} onClick={() => { setPrompt(starter); setNotice('Brief selected. Refine it or open EDG AI workspace.'); }}>{starter.replace(/^Design a /, '')}</button>)}
+              {STARTER_PROMPTS.map((starter) => <button type="button" key={starter} onClick={() => { setPrompt(starter); setNotice('Engineering example selected. Add your values or open EDG AI workspace.'); }}>{starter.replace(/^Design an? /, '').replace(/ with .+$/, '')}</button>)}
             </div>
             <input ref={uploadRef} className="sr-only" type="file" onChange={handleFile} accept="image/*,.pdf,.dwg,.dxf,.csv,.xlsx,.doc,.docx" />
             <input ref={cameraRef} className="sr-only" type="file" onChange={handleFile} accept="image/*" capture="environment" />

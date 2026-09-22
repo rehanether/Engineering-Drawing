@@ -18,14 +18,14 @@ const modelKey = (projectId) => `edg-project-model:${projectId}`;
 const versionKey = (projectId) => `edg-project-versions:${projectId}`;
 const CREATOR_OPTIONS = [
   {
-    title: 'Process / plant',
-    description: 'Map a full process route, streams, utilities, equipment, safeguards, and a 3D concept.',
-    prompt: 'Design a process plant. Include the feed, desired product, capacity, operating conditions, utilities, site constraints, and required deliverables.',
+    title: 'MVR evaporator',
+    description: 'Build an evaporation train with feed, solids target, vapor compression, utilities, safeguards, and a 3D concept.',
+    prompt: 'Design an MVR evaporator for wastewater concentration. Include feed rate and composition, solids target, operating temperature, electrical and steam utility constraints, material, discharge requirements, and required drawings.',
   },
   {
-    title: 'Equipment / product',
-    description: 'Develop equipment around a product duty, material, capacity, operating conditions, and safety needs.',
-    prompt: 'Design industrial equipment. Include the product or duty, capacity, material, operating conditions, utilities, safety requirements, and required drawings.',
+    title: 'Industrial reactor',
+    description: 'Build a reactor system with feed, chemistry, residence time, heat duty, material, safeguards, and a 3D concept.',
+    prompt: 'Design a continuous stirred-tank reactor. Include feed composition and flow, reaction or process duty, residence time, temperature and pressure, heat removal or addition, material, safeguards, and required drawings.',
   },
 ];
 
@@ -230,9 +230,9 @@ const EngineeringWorkspace = () => {
           <p className="plan-summary">Every section is connected to one versioned Project Model. Revise the prompt or design basis and EDG will rebuild the engineering route.</p>
 
           <section className="workspace-creator" aria-labelledby="creator-heading">
-            <div><p className="workspace-kicker">START WITH EDG AI</p><h3 id="creator-heading">What do you want to make?</h3><p>Choose one path, add the details you know, then create a structured project with a 3D process or equipment concept.</p></div>
+            <div><p className="workspace-kicker">START WITH EDG AI</p><h3 id="creator-heading">What do you want to make?</h3><p>Start with a real MVR or reactor brief—or write any process, equipment, utility, or plant request in the project field below. EDG turns it into a structured model and 3D concept.</p></div>
             <div className="creator-options">
-              {CREATOR_OPTIONS.map((option) => <button type="button" key={option.title} onClick={() => chooseCreatorOption(option)}><span>{option.title === 'Process / plant' ? '01' : '02'}</span><b>{option.title}</b><small>{option.description}</small><i aria-hidden="true">Use this brief →</i></button>)}
+              {CREATOR_OPTIONS.map((option, index) => <button type="button" key={option.title} onClick={() => chooseCreatorOption(option)}><span>{String(index + 1).padStart(2, '0')}</span><b>{option.title}</b><small>{option.description}</small><i aria-hidden="true">Use this brief →</i></button>)}
             </div>
           </section>
 
