@@ -210,6 +210,8 @@ const EngineeringWorkspace = () => {
           </div>
           <p className="plan-summary">Every section is connected to one versioned Project Model. Revise the prompt or design basis and EDG will rebuild the engineering route.</p>
 
+          <AiVisionPreview embedded prompt={project.prompt} model={model} />
+
           <article className={`ai-engineering-brief ${aiState}`} aria-live="polite">
             <div className="ai-brief-heading">
               <div><p className="workspace-kicker">EDG AI · PERSISTED GENERATION</p><h3>Project intelligence</h3></div>
@@ -224,8 +226,6 @@ const EngineeringWorkspace = () => {
             {aiError && <div className="ai-error"><b>AI service notice</b><span>{aiError}</span>{aiState === 'error' && <small>The deterministic project workspace below remains available.</small>}</div>}
             {checkoutState === 'paid' && <div className="ai-paid">Payment confirmed. Your AI credits are ready.</div>}
           </article>
-
-          <AiVisionPreview embedded prompt={project.prompt} model={model} />
 
           <ProjectSectionPanel activeSection={activeSection} model={model} basisDraft={basisDraft} onBasisChange={setBasisDraft} onSaveBasis={saveBasis} versions={versions} onExport={exportProject} onPrint={() => window.print()} />
 
