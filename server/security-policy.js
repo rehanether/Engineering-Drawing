@@ -26,7 +26,7 @@ function apiMethodGuard(req, res, next) {
 }
 
 function jsonRequestGuard(req, res, next) {
-  if (req.method !== 'POST' || req.path === '/payments/nowpayments/ipn') return next();
+  if (req.method !== 'POST' || ['/payments/nowpayments/ipn', '/payments/binance-pay/webhook'].includes(req.path)) return next();
   if (req.is(['application/json', 'application/*+json'])) return next();
   return res.status(415).json({ error: 'POST requests must use application/json.' });
 }

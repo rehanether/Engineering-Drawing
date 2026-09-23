@@ -5,6 +5,7 @@ import tokenMeta from '../EnggDrawTokenABI.json';
 import { clearPendingReferralCode, pendingReferralCode, useEdgAuth } from '../auth/EdgAuth';
 import { bootstrapProfile, createWalletChallenge, verifyWallet } from '../services/profile';
 import { buyAiCredits } from '../services/edgAi';
+import { createBinancePayOrder, getBinancePayConfig } from '../services/binancePay';
 import './Profile.css';
 
 const BSC_RPC = process.env.REACT_APP_BSC_RPC || 'https://bsc-dataseed.bnbchain.org';
@@ -46,6 +47,10 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [walletMethod, setWalletMethod] = useState('metamask');
+  const [binanceAmount, setBinanceAmount] = useState('100');
+  const [binanceCurrency, setBinanceCurrency] = useState('INR');
+  const [binanceConfig, setBinanceConfig] = useState(null);
+  const [binanceLoading, setBinanceLoading] = useState(false);
   const walletConnectRef = useRef(null);
 
   const loadProfile = useCallback(async () => {
@@ -183,6 +188,19 @@ export default function Profile() {
   const isEdgAdmin = auth.user?.publicMetadata?.role === 'admin' || EDG_ADMIN_EMAILS.has(accountEmail);
   const rewards = data?.campaign?.rewards || {};
   const policy = data?.campaign?.policy || {};
+  const loadBinanceConfig = async () => {
+    try { setBinanceConfig(await getBinancePayConfig(await auth.getToken())); }
+    catch (error) { setStatus(error.message); }
+  };
+  const openBinancePay = async () => {
+    setBinanceLoading(true);
+    setStatus('Creating a signed Binance Pay order…');
+    try {
+      const order = await createBinancePayOrder(await auth.getToken(), Number(binanceAmount), binanceCurrency);
+      localStorage.setItem('edg-binance-payment-order', order.merchantTradeNo);
+      window.location.assign(order.checkoutUrl || order.universalUrl);
+    } catch (error) { setStatus(error.message); setBinanceLoading(false); }
+  };
   return (
     <main className="profile-page">
       <section className="profile-hero">
@@ -223,6 +241,10 @@ export default function Profile() {
           <article><span>EDG PAY</span><h3>Wallet & payments</h3><p>Private transaction lab for scan, fiat conversion and EDG settlement testing.</p><a href={EDG_PAY_URL} target="_blank" rel="noopener noreferrer">Open or install EDG Pay →</a></article>
         </div>
         <div className="edg-test-flow"><b>Private transaction loop</b><span>Connect wallet</span><i>→</i><span>Review EDG</span><i>→</i><span>Sign in wallet</span><i>→</i><span>Confirm on BSC</span></div>
+        <div className="binance-pay-console">
+          <div><span>BINANCE PAY</span><h3>Production gateway readiness</h3><p>Signed orders, verified webhooks, persistent reconciliation and Binance-hosted checkout. Restricted to authorized administrators until launch approval.</p></div>
+          {!binanceConfig ? <button onClick={loadBinanceConfig}>Check gateway</button> : <div className="binance-pay-controls"><label>Amount<input type="number" min="1" step="0.01" value={binanceAmount} onChange={(event) => setBinanceAmount(event.target.value)}/></label><label>Currency<select value={binanceCurrency} onChange={(event) => setBinanceCurrency(event.target.value)}>{binanceConfig.currencies.map((currency) => <option key={currency}>{currency}</option>)}</select></label><button disabled={!binanceConfig.enabled || binanceLoading} onClick={openBinancePay}>{binanceLoading ? 'Opening…' : binanceConfig.enabled ? 'Pay with Binance Pay' : 'Merchant keys not configured'}</button></div>}
+        </div>
       </section>}
       <section className="profile-columns">
         <article className="referral-card">

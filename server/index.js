@@ -8,9 +8,10 @@ const path = require('path');
 const crypto = require('crypto');
 const { verifyMessage, isAddress, getAddress } = require('ethers');
 const { neon } = require('@neondatabase/serverless');
-const { clerkMiddleware, getAuth } = require('@clerk/express');
+const { clerkClient, clerkMiddleware, getAuth } = require('@clerk/express');
 const { createAiService, AI_MODEL } = require('./ai-service');
 const { createProfileService } = require('./profile-service');
+const binancePay = require('./binance-pay');
 const { allowedOriginsFor, privateApiResponse, apiMethodGuard, jsonRequestGuard, apiErrorHandler } = require('./security-policy');
 
 dotenv.config();
@@ -32,6 +33,9 @@ const PROCESS_PACKAGE_USD = Number(process.env.PROCESS_PACKAGE_USD || 10);
 const NOWPAYMENTS_PAY_CURRENCY = process.env.NOWPAYMENTS_PAY_CURRENCY || 'bnbbsc';
 const AI_CREDITS_PRICE_USD = Number(process.env.AI_CREDITS_PRICE_USD || 19);
 const AI_CREDITS_PER_PACK = Number(process.env.AI_CREDITS_PER_PACK || 100);
+const BINANCE_PAY_ALLOWED_FIAT = new Set((process.env.BINANCE_PAY_ALLOWED_FIAT || 'INR,USD').split(',').map((value) => value.trim().toUpperCase()).filter(Boolean));
+const BINANCE_PAY_CURRENCIES = process.env.BINANCE_PAY_CURRENCIES || 'BNB,USDT,USDC';
+const ADMIN_EMAILS = new Set((process.env.EDG_ADMIN_EMAILS || 'admin@engineeringdrawing.io,rehan.uddin2121@gmail.com').split(',').map((value) => value.trim().toLowerCase()).filter(Boolean));
 const paymentOrders = new Map();
 const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
 const sql = databaseUrl ? neon(databaseUrl) : null;
@@ -46,6 +50,7 @@ const profileService = createProfileService(sql, {
   referralBnb: process.env.REFERRAL_REWARD_BNB || 0,
 });
 let paymentsTableReady = false;
+let binancePaymentsTableReady = false;
 const allowedOrigins = allowedOriginsFor();
 
 app.set('trust proxy', 1);
@@ -79,7 +84,7 @@ app.use(
     optionsSuccessStatus: 204,
   })
 );
-app.use(express.json({ limit: '16kb' }));
+app.use(express.json({ limit: '16kb', verify(req, _res, buffer) { req.rawBody = buffer.toString('utf8'); } }));
 app.use('/api', apiMethodGuard);
 app.use('/api', jsonRequestGuard);
 app.use(
@@ -93,7 +98,7 @@ app.use(
   })
 );
 app.use(
-  ['/api/generate-image', '/api/payments/nowpayments'],
+  ['/api/generate-image', '/api/payments/nowpayments', '/api/payments/binance-pay/orders'],
   rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 8,
@@ -155,6 +160,32 @@ async function authenticatedProfile(req, res) {
   } catch (error) {
     console.error('Profile authentication error:', error.message);
     res.status(503).json({ error: 'Profile storage is temporarily unavailable.' });
+    return null;
+  }
+}
+
+async function authenticatedAdmin(req, res) {
+  if (!clerkConfigured) {
+    res.status(503).json({ error: 'Administrator authentication is not configured.' });
+    return null;
+  }
+  const userId = authenticatedUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: 'Sign in with an authorized administrator account.' });
+    return null;
+  }
+  try {
+    const user = await clerkClient.users.getUser(userId);
+    const role = String(user.publicMetadata?.role || '').toLowerCase();
+    const emails = (user.emailAddresses || []).map((entry) => String(entry.emailAddress || '').toLowerCase());
+    if (role !== 'admin' && !emails.some((email) => ADMIN_EMAILS.has(email))) {
+      res.status(403).json({ error: 'This payment console is restricted to authorized administrators.' });
+      return null;
+    }
+    return { userId, email: emails[0] || '' };
+  } catch (error) {
+    console.error('Administrator authorization error:', error.message);
+    res.status(503).json({ error: 'Administrator authorization is temporarily unavailable.' });
     return null;
   }
 }
@@ -719,6 +750,156 @@ app.post('/api/payments/nowpayments/ipn', async (req, res) => {
   } catch (error) {
     console.error('Payment notification storage error:', error.message);
     return res.status(503).json({ error: 'Payment notification could not be stored.' });
+  }
+});
+
+async function ensureBinancePaymentsTable() {
+  if (!sql || binancePaymentsTableReady) return;
+  await sql`
+    CREATE TABLE IF NOT EXISTS binance_payment_orders (
+      merchant_trade_no TEXT PRIMARY KEY,
+      prepay_id TEXT,
+      clerk_user_id TEXT NOT NULL,
+      fiat_amount NUMERIC(20, 8) NOT NULL,
+      fiat_currency TEXT NOT NULL,
+      crypto_currency TEXT,
+      crypto_amount NUMERIC(20, 8),
+      status TEXT NOT NULL DEFAULT 'INITIAL',
+      transaction_id TEXT,
+      checkout_url TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  binancePaymentsTableReady = true;
+}
+
+async function saveBinanceOrder(order) {
+  if (!sql) throw new Error('Binance Pay requires persistent payment storage.');
+  await ensureBinancePaymentsTable();
+  const rows = await sql`
+    INSERT INTO binance_payment_orders (
+      merchant_trade_no, prepay_id, clerk_user_id, fiat_amount, fiat_currency,
+      crypto_currency, crypto_amount, status, transaction_id, checkout_url
+    ) VALUES (
+      ${order.merchantTradeNo}, ${order.prepayId || null}, ${order.userId}, ${order.fiatAmount},
+      ${order.fiatCurrency}, ${order.currency || null}, ${order.totalFee || null}, ${order.status || 'INITIAL'},
+      ${order.transactionId || null}, ${order.checkoutUrl || null}
+    )
+    ON CONFLICT (merchant_trade_no) DO UPDATE SET
+      prepay_id = COALESCE(EXCLUDED.prepay_id, binance_payment_orders.prepay_id),
+      crypto_currency = COALESCE(EXCLUDED.crypto_currency, binance_payment_orders.crypto_currency),
+      crypto_amount = COALESCE(EXCLUDED.crypto_amount, binance_payment_orders.crypto_amount),
+      status = EXCLUDED.status,
+      transaction_id = COALESCE(EXCLUDED.transaction_id, binance_payment_orders.transaction_id),
+      checkout_url = COALESCE(EXCLUDED.checkout_url, binance_payment_orders.checkout_url),
+      updated_at = NOW()
+    RETURNING *
+  `;
+  return rows[0];
+}
+
+async function getBinanceOrder(merchantTradeNo) {
+  if (!sql) return null;
+  await ensureBinancePaymentsTable();
+  const rows = await sql`SELECT * FROM binance_payment_orders WHERE merchant_trade_no = ${merchantTradeNo} LIMIT 1`;
+  return rows[0] || null;
+}
+
+app.get('/api/payments/binance-pay/config', async (req, res) => {
+  const admin = await authenticatedAdmin(req, res);
+  if (!admin) return undefined;
+  return res.json({
+    enabled: binancePay.isConfigured(),
+    currencies: Array.from(BINANCE_PAY_ALLOWED_FIAT),
+    payCurrencies: BINANCE_PAY_CURRENCIES.split(',').map((value) => value.trim()).filter(Boolean),
+  });
+});
+
+app.post('/api/payments/binance-pay/orders', async (req, res) => {
+  const admin = await authenticatedAdmin(req, res);
+  if (!admin) return undefined;
+  if (!binancePay.isConfigured()) return res.status(503).json({ error: 'Binance Pay is disabled until merchant credentials are configured.' });
+  if (!sql) return res.status(503).json({ error: 'Persistent payment storage is required before Binance Pay can be enabled.' });
+  const fiatCurrency = String(req.body?.fiatCurrency || '').trim().toUpperCase();
+  const fiatAmount = Number(req.body?.fiatAmount);
+  if (!BINANCE_PAY_ALLOWED_FIAT.has(fiatCurrency)) return res.status(400).json({ error: 'Unsupported fiat currency.' });
+  if (!Number.isFinite(fiatAmount) || fiatAmount <= 0 || fiatAmount > 1_000_000) return res.status(400).json({ error: 'Enter a valid payment amount.' });
+
+  const merchantTradeNo = `EDG${crypto.randomBytes(15).toString('hex').slice(0, 29)}`;
+  const amount = Number(fiatAmount.toFixed(2));
+  const description = 'EDG ecosystem payment';
+  try {
+    const data = await binancePay.createOrder({
+      env: { terminalType: 'WEB', orderClientIp: req.ip },
+      merchantTradeNo,
+      fiatAmount: amount,
+      fiatCurrency,
+      description,
+      goodsDetails: [{ goodsType: '02', goodsCategory: 'F000', referenceGoodsId: 'EDGPAY', goodsName: 'EDG ecosystem payment', goodsDetail: description }],
+      returnUrl: `${SITE_URL}/profile?payment=binance`,
+      cancelUrl: `${SITE_URL}/profile?payment=cancelled`,
+      webhookUrl: `${PUBLIC_API_URL}/api/payments/binance-pay/webhook`,
+      supportPayCurrency: BINANCE_PAY_CURRENCIES,
+      passThroughInfo: JSON.stringify({ userId: admin.userId }),
+    });
+    await saveBinanceOrder({ merchantTradeNo, userId: admin.userId, fiatAmount: amount, fiatCurrency, ...data, status: 'INITIAL' });
+    return res.status(201).json({
+      merchantTradeNo, prepayId: data.prepayId, checkoutUrl: data.checkoutUrl,
+      universalUrl: data.universalUrl, qrcodeLink: data.qrcodeLink, qrContent: data.qrContent,
+      currency: data.currency, totalFee: data.totalFee, fiatCurrency: data.fiatCurrency, fiatAmount: data.fiatAmount,
+    });
+  } catch (error) {
+    console.error('Binance Pay create order error:', error.providerCode || error.message);
+    return res.status(502).json({ error: 'Could not create the Binance Pay checkout.', providerCode: error.providerCode || undefined });
+  }
+});
+
+app.get('/api/payments/binance-pay/orders/:merchantTradeNo', async (req, res) => {
+  const admin = await authenticatedAdmin(req, res);
+  if (!admin) return undefined;
+  const merchantTradeNo = String(req.params.merchantTradeNo || '');
+  if (!/^EDG[A-Za-z0-9]{29}$/.test(merchantTradeNo)) return res.status(400).json({ error: 'Invalid Binance Pay order.' });
+  try {
+    const stored = await getBinanceOrder(merchantTradeNo);
+    if (!stored || stored.clerk_user_id !== admin.userId) return res.status(404).json({ error: 'Payment order was not found.' });
+    if (binancePay.isConfigured() && !['PAID', 'CANCELED', 'EXPIRED', 'REFUNDED'].includes(stored.status)) {
+      const current = await binancePay.queryOrder(merchantTradeNo);
+      await saveBinanceOrder({
+        merchantTradeNo, userId: admin.userId, fiatAmount: stored.fiat_amount, fiatCurrency: stored.fiat_currency,
+        ...current, checkoutUrl: stored.checkout_url,
+      });
+      return res.json({ merchantTradeNo, status: current.status, currency: current.currency, totalFee: current.totalFee, transactionId: current.transactionId || null });
+    }
+    return res.json({ merchantTradeNo, status: stored.status, currency: stored.crypto_currency, totalFee: stored.crypto_amount, transactionId: stored.transaction_id });
+  } catch (error) {
+    console.error('Binance Pay query order error:', error.providerCode || error.message);
+    return res.status(503).json({ error: 'Could not verify the Binance Pay order.' });
+  }
+});
+
+app.post('/api/payments/binance-pay/webhook', async (req, res) => {
+  const timestamp = req.get('BinancePay-Timestamp');
+  const requestNonce = req.get('BinancePay-Nonce');
+  const signature = req.get('BinancePay-Signature');
+  if (!binancePay.verifyWebhook({ timestamp, requestNonce, signature, body: req.rawBody })) {
+    return res.status(401).json({ returnCode: 'FAIL', returnMessage: 'Invalid signature' });
+  }
+  try {
+    const data = typeof req.body?.data === 'string' ? JSON.parse(req.body.data) : (req.body?.data || {});
+    const merchantTradeNo = String(data.merchantTradeNo || '');
+    const stored = await getBinanceOrder(merchantTradeNo);
+    if (!stored) return res.status(404).json({ returnCode: 'FAIL', returnMessage: 'Order not found' });
+    await saveBinanceOrder({
+      merchantTradeNo, userId: stored.clerk_user_id, fiatAmount: stored.fiat_amount, fiatCurrency: stored.fiat_currency,
+      prepayId: data.prepayId || stored.prepay_id, currency: data.currency || stored.crypto_currency,
+      totalFee: data.totalFee || stored.crypto_amount, status: String(req.body?.bizStatus || data.status || stored.status).toUpperCase(),
+      transactionId: data.transactionId || stored.transaction_id, checkoutUrl: stored.checkout_url,
+    });
+    return res.status(200).json({ returnCode: 'SUCCESS', returnMessage: null });
+  } catch (error) {
+    console.error('Binance Pay webhook storage error:', error.message);
+    return res.status(503).json({ returnCode: 'FAIL', returnMessage: 'Storage unavailable' });
   }
 });
 
