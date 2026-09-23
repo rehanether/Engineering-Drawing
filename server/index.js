@@ -11,7 +11,7 @@ const { neon } = require('@neondatabase/serverless');
 const { clerkMiddleware, getAuth } = require('@clerk/express');
 const { createAiService, AI_MODEL } = require('./ai-service');
 const { createProfileService } = require('./profile-service');
-const { allowedOriginsFor, privateApiResponse, apiErrorHandler } = require('./security-policy');
+const { allowedOriginsFor, privateApiResponse, apiMethodGuard, jsonRequestGuard, apiErrorHandler } = require('./security-policy');
 
 dotenv.config();
 dotenv.config({ path: path.resolve(__dirname, '../.env'), override: false });
@@ -80,6 +80,8 @@ app.use(
   })
 );
 app.use(express.json({ limit: '16kb' }));
+app.use('/api', apiMethodGuard);
+app.use('/api', jsonRequestGuard);
 app.use(
   '/api',
   rateLimit({
@@ -88,6 +90,16 @@ app.use(
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: 'Too many requests. Please try again later.' },
+  })
+);
+app.use(
+  ['/api/generate-image', '/api/payments/nowpayments'],
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 8,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many sensitive requests. Please try again later.' },
   })
 );
 

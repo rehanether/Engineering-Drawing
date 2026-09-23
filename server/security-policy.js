@@ -19,6 +19,18 @@ function privateApiResponse(_req, res, next) {
   next();
 }
 
+function apiMethodGuard(req, res, next) {
+  if (['GET', 'POST', 'OPTIONS'].includes(req.method)) return next();
+  res.set('Allow', 'GET, POST, OPTIONS');
+  return res.status(405).json({ error: 'This API only accepts GET and POST requests.' });
+}
+
+function jsonRequestGuard(req, res, next) {
+  if (req.method !== 'POST' || req.path === '/payments/nowpayments/ipn') return next();
+  if (req.is(['application/json', 'application/*+json'])) return next();
+  return res.status(415).json({ error: 'POST requests must use application/json.' });
+}
+
 function apiErrorHandler(error, _req, res, next) {
   if (res.headersSent) return next(error);
   if (error.type === 'entity.parse.failed') return res.status(400).json({ error: 'Request body must be valid JSON.' });
@@ -30,4 +42,4 @@ function apiErrorHandler(error, _req, res, next) {
   return res.status(500).json({ error: 'The service could not complete this request.' });
 }
 
-module.exports = { allowedOriginsFor, privateApiResponse, apiErrorHandler };
+module.exports = { allowedOriginsFor, privateApiResponse, apiMethodGuard, jsonRequestGuard, apiErrorHandler };
