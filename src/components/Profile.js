@@ -9,6 +9,8 @@ import './Profile.css';
 
 const BSC_RPC = process.env.REACT_APP_BSC_RPC || 'https://bsc-dataseed.bnbchain.org';
 const WC_PROJECT_ID = process.env.REACT_APP_WC_PROJECT_ID || '';
+const EDG_PAY_URL = process.env.REACT_APP_EDG_PAY_URL || 'https://edgpay.engineeringdrawing.io';
+const EDG_ADMIN_EMAILS = new Set((process.env.REACT_APP_EDG_ADMIN_EMAILS || 'admin@engineeringdrawing.io,rehan.uddin2121@gmail.com').split(',').map((email) => email.trim().toLowerCase()).filter(Boolean));
 const TOKEN_ABI = ['function balanceOf(address) view returns (uint256)', 'function decimals() view returns (uint8)'];
 const emptyBalances = { bnb: '—', edg: '—' };
 
@@ -177,6 +179,8 @@ export default function Profile() {
   );
 
   const name = auth.user?.fullName || auth.user?.firstName || 'Engineer';
+  const accountEmail = auth.user?.primaryEmailAddress?.emailAddress?.toLowerCase() || '';
+  const isEdgAdmin = auth.user?.publicMetadata?.role === 'admin' || EDG_ADMIN_EMAILS.has(accountEmail);
   const rewards = data?.campaign?.rewards || {};
   const policy = data?.campaign?.policy || {};
   return (
@@ -211,6 +215,15 @@ export default function Profile() {
           <div className="wallet-safety"><span>✓ No private keys</span><span>✓ No token approval</span><span>✓ BNB Smart Chain balances</span></div>
         </div>
       </section>
+      {isEdgAdmin && <section className="edg-ecosystem-card" aria-labelledby="edg-ecosystem-title">
+        <div className="edg-ecosystem-head"><span>PRIVATE ADMIN LAB</span><b>Authorized account</b></div>
+        <div className="edg-ecosystem-copy"><img src="/assets/edg-192.png" alt=""/><div><h2 id="edg-ecosystem-title">EDG ecosystem</h2><p>EDG and EDG Pay are separate installable apps connected through your verified Engineering Drawing account and BNB Chain wallet.</p></div></div>
+        <div className="edg-app-grid">
+          <article><span>EDG APP</span><h3>Engineering Drawing</h3><p>Design tools, account, presale, balances and wallet verification.</p><small>Install from this website using the “Install app” prompt.</small></article>
+          <article><span>EDG PAY</span><h3>Wallet & payments</h3><p>Private transaction lab for scan, fiat conversion and EDG settlement testing.</p><a href={EDG_PAY_URL} target="_blank" rel="noopener noreferrer">Open or install EDG Pay →</a></article>
+        </div>
+        <div className="edg-test-flow"><b>Private transaction loop</b><span>Connect wallet</span><i>→</i><span>Review EDG</span><i>→</i><span>Sign in wallet</span><i>→</i><span>Confirm on BSC</span></div>
+      </section>}
       <section className="profile-columns">
         <article className="referral-card">
           <span>REFER & EARN</span><h2>Share Engineering Drawing</h2>
