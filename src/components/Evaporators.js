@@ -7,9 +7,9 @@ import { createBepPackage } from "./evaporator/downloadPackage";
 import presaleMeta from "../EDGPresaleABI.json";
 import tokenMeta from "../EnggDrawTokenABI.json";
 import { getBinancePayOrder, startBinanceCheckout } from "../services/binancePay";
+import { connectEdgWallet } from "../services/edgWallet";
 
 const EVAPORATOR_PRICE_USD = "100";
-const EDG_CHAIN_ID = "0x38";
 const EDG_AMOUNT = "5000";
 const EDG_ADMIN_WALLET = "0xD9738cc53E9746a01cAC8EF01aF17fF4e88DD25F";
 const EDG_TOKEN_ADDRESS = tokenMeta.ADDRESS;
@@ -159,31 +159,10 @@ export default function Evaporators() {
 
   async function payWithEdg() {
     setMessage("");
-    if (!window.ethereum) {
-      setMessage("Install MetaMask or open this page in your wallet browser to pay with EDG.");
-      return;
-    }
     setPaymentStatus("pending");
     try {
-      try {
-        await window.ethereum.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: EDG_CHAIN_ID }],
-        });
-      } catch (error) {
-        if (error.code !== 4902) throw error;
-        await window.ethereum.request({
-          method: "wallet_addEthereumChain",
-          params: [{
-            chainId: EDG_CHAIN_ID,
-            chainName: "BNB Smart Chain",
-            nativeCurrency: { name: "BNB", symbol: "BNB", decimals: 18 },
-            rpcUrls: [BSC_RPC],
-            blockExplorerUrls: ["https://bscscan.com"],
-          }],
-        });
-      }
-      const provider = new BrowserProvider(window.ethereum);
+      const { provider: eip1193 } = await connectEdgWallet();
+      const provider = new BrowserProvider(eip1193);
       const signer = await provider.getSigner();
       const buyer = await signer.getAddress();
       const token = new Contract(EDG_TOKEN_ADDRESS, EDG_TRANSFER_ABI, signer);

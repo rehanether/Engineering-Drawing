@@ -10,6 +10,7 @@ import {
 } from "ethers";
 import presaleMeta from "../EDGPresaleABI.json";
 import tokenMeta   from "../EnggDrawTokenABI.json";
+import { connectEdgWallet, restoreEdgWallet } from "../services/edgWallet";
 import "./Presale.css";
 
 /* ========= NETWORK ========= */
@@ -32,20 +33,6 @@ const PRESALE_ADDRESS = presaleMeta.ADDRESS || presaleMeta.address || FALLBACK_P
 const PRESALE_ABI     = presaleMeta.ABI      || presaleMeta.abi;
 const TOKEN_ADDRESS   = tokenMeta.ADDRESS    || tokenMeta.address || FALLBACK_TOKEN;
 const TOKEN_ABI       = tokenMeta.ABI        || tokenMeta.abi;
-
-/* ========= MOBILE / WC ========= */
-const isMobileDevice = () =>
-  typeof navigator !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-const getInjectedProvider = () => {
-  if (typeof window === "undefined" || !window.ethereum) return null;
-  const providers = window.ethereum.providers;
-  return providers?.find((provider) => provider.isMetaMask) || window.ethereum;
-};
-
-// Kept as values for any hot-reloaded code that still uses the original names.
-const isMobileUA = isMobileDevice();
-const hasInjectedWallet = Boolean(getInjectedProvider());
 
 const fmtInt = (n) =>
   Number(n ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -101,11 +88,6 @@ async function ensureChain(eip1193) {
   if (String(chainId).toLowerCase() !== CHAIN_ID_HEX) {
     throw new Error("Please switch your wallet to BNB Smart Chain before continuing.");
   }
-}
-
-function openMetaMaskDeepLink() {
-  const dappUrl = `${window.location.origin}/presale`;
-  window.location.assign(`https://metamask.app.link/dapp/${dappUrl}`);
 }
 
 function walletErrorMessage(error, fallback = "The wallet request could not be completed.") {
@@ -284,12 +266,7 @@ export default function Presale() {
     setErr("");
     setBusy("Connecting MetaMask...");
     try {
-      const provider = getInjectedProvider();
-      if (!provider?.isMetaMask) {
-        if (isMobileDevice()) { openMetaMaskDeepLink(); return; }
-        throw new Error("MetaMask was not detected. Install MetaMask to continue.");
-      }
-      const accounts = await provider.request({ method: "eth_requestAccounts" });
+      const { provider, accounts } = await connectEdgWallet();
       await ensureChain(provider);
       await setActiveWalletAccount(provider, accounts?.[0]);
       bindWalletEvents(provider);
@@ -314,10 +291,11 @@ export default function Presale() {
     let active = true;
     const restoreApprovedWallet = async () => {
       if (wasManuallyDisconnected()) return;
-      const provider = getInjectedProvider();
-      if (!provider?.isMetaMask) return;
+      const restored = await restoreEdgWallet();
+      const provider = restored?.provider;
+      if (!provider) return;
       try {
-        const [accounts, chainId] = await Promise.all([provider.request({ method: "eth_accounts" }), provider.request({ method: "eth_chainId" })]);
+        const [accounts, chainId] = await Promise.all([Promise.resolve(restored.accounts), provider.request({ method: "eth_chainId" })]);
         if (!active || !accounts?.[0] || String(chainId).toLowerCase() !== CHAIN_ID_HEX) return;
         await setActiveWalletAccount(provider, accounts[0]);
         if (active) bindWalletEvents(provider);
@@ -328,8 +306,7 @@ export default function Presale() {
   }, [bindWalletEvents, setActiveWalletAccount]);
 
   const switchAccount = useCallback(async () => {
-    const provider = walletProviderRef.current || getInjectedProvider();
-    if (!provider?.isMetaMask) return setErr("Open MetaMask to choose an account.");
+    const provider = walletProviderRef.current || (await connectEdgWallet()).provider;
     setBusy("Choose an account in MetaMask...");
     try {
       await provider.request({ method: "wallet_requestPermissions", params: [{ eth_accounts: {} }] });
@@ -696,9 +673,6 @@ export default function Presale() {
     } catch { return 0n; }
   })();
 
-  const mobile = isMobileUA || isMobileDevice();
-  const injectedWallet = hasInjectedWallet || Boolean(getInjectedProvider());
-
   if (!PRESALE_ADDRESS || !PRESALE_ABI || !TOKEN_ADDRESS || !TOKEN_ABI) {
     return (
       <div className="presale-wrap">
@@ -733,24 +707,17 @@ export default function Presale() {
               </button>
             </>
           ) : (
-            <>
-              <button className="btn primary" onClick={() => connect()} disabled={Boolean(busy)}>
-                {busy ? "Connecting…" : "Connect Wallet"}
-              </button>
-              {mobile && !injectedWallet && (
-                <button className="btn secondary" onClick={openMetaMaskDeepLink} disabled={Boolean(busy)}>
-                  Open MetaMask browser
-                </button>
-              )}
-            </>
+            <button className="btn primary" onClick={() => connect()} disabled={Boolean(busy)}>
+              {busy ? "Connecting…" : "Connect MetaMask"}
+            </button>
           )}
         </div>
       </div>
 
-      {mobile && !account && (
+      {!account && (
         <div className="mobile-wallet-guide">
-          <strong>Buying from your phone</strong>
-          <span>Open this page in the secure MetaMask mobile browser to connect and confirm the purchase.</span>
+          <strong>One wallet across the EDG ecosystem</strong>
+          <span>Connect the same MetaMask account used in EDG Pay. Mobile approval opens in the MetaMask app and returns here.</span>
         </div>
       )}
 

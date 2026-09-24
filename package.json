@@ -5,6 +5,7 @@
   "dependencies": {
     "@clerk/express": "^2.1.67",
     "@clerk/react": "^6.15.1",
+    "@metamask/connect-evm": "2.1.1",
     "@neondatabase/serverless": "^0.10.4",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",

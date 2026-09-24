@@ -17,12 +17,11 @@ import { useEdgLivePrice } from "../payments/useEdgLivePrice";
 import tokenMeta from "../../EnggDrawTokenABI.json";
 import { COMPONENT_DB } from "./simCore/thermo";
 import {getBinancePayOrder,startBinanceCheckout} from "../../services/binancePay";
+import {connectEdgWallet} from "../../services/edgWallet";
 
-const EDG_CHAIN_ID="0x38";
 const EDG_AMOUNT="500";
 const EDG_ADMIN_WALLET="0xD9738cc53E9746a01cAC8EF01aF17fF4e88DD25F";
 const EDG_ABI=["function balanceOf(address) view returns (uint256)","function transfer(address,uint256) returns (bool)"];
-const BSC_RPC=process.env.REACT_APP_BSC_RPC||"https://bsc-dataseed.bnbchain.org";
 
 function EngineeringWorkspace({tab,state,dispatch}){
   const streams=Object.values(state.results.streams||{}),meta=Object.values(state.results.meta||{});
@@ -76,9 +75,8 @@ function InnerSim() {
   }
 
   async function payEdg(){
-    if(!window.ethereum){setPaymentMessage("Install MetaMask or open this page in its wallet browser.");return;}setPaymentStatus("pending");setPaymentMessage("");
-    try{try{await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:EDG_CHAIN_ID}]});}catch(error){if(error.code!==4902)throw error;await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:EDG_CHAIN_ID,chainName:"BNB Smart Chain",nativeCurrency:{name:"BNB",symbol:"BNB",decimals:18},rpcUrls:[BSC_RPC],blockExplorerUrls:["https://bscscan.com"]}]});}
-      const provider=new BrowserProvider(window.ethereum),signer=await provider.getSigner(),buyer=await signer.getAddress(),token=new Contract(tokenMeta.ADDRESS,EDG_ABI,signer),amount=parseUnits(EDG_AMOUNT,18);const [balance,gas]=await Promise.all([token.balanceOf(buyer),provider.getBalance(buyer)]);if(balance<amount){const available=Number(formatUnits(balance,18)).toLocaleString(undefined,{maximumFractionDigits:2});throw new Error(`Insufficient EDG balance. This wallet has ${available} EDG.`);}if(gas===0n)throw new Error("Add a small amount of BNB for the network fee.");setPaymentMessage(`Confirm ${Number(EDG_AMOUNT).toLocaleString()} EDG in your wallet...`);const transaction=await token.transfer(EDG_ADMIN_WALLET,amount),receipt=await transaction.wait();if(!receipt||receipt.status!==1)throw new Error("The EDG transfer was not confirmed.");localStorage.setItem("processSimulationPaid",`EDG-${transaction.hash}`);setPaymentStatus("paid");setPaymentMessage("EDG payment confirmed. Case and stream exports are unlocked.");
+    setPaymentStatus("pending");setPaymentMessage("");
+    try{const {provider:eip1193}=await connectEdgWallet(),provider=new BrowserProvider(eip1193),signer=await provider.getSigner(),buyer=await signer.getAddress(),token=new Contract(tokenMeta.ADDRESS,EDG_ABI,signer),amount=parseUnits(EDG_AMOUNT,18);const [balance,gas]=await Promise.all([token.balanceOf(buyer),provider.getBalance(buyer)]);if(balance<amount){const available=Number(formatUnits(balance,18)).toLocaleString(undefined,{maximumFractionDigits:2});throw new Error(`Insufficient EDG balance. This wallet has ${available} EDG.`);}if(gas===0n)throw new Error("Add a small amount of BNB for the network fee.");setPaymentMessage(`Confirm ${Number(EDG_AMOUNT).toLocaleString()} EDG in your wallet...`);const transaction=await token.transfer(EDG_ADMIN_WALLET,amount),receipt=await transaction.wait();if(!receipt||receipt.status!==1)throw new Error("The EDG transfer was not confirmed.");localStorage.setItem("processSimulationPaid",`EDG-${transaction.hash}`);setPaymentStatus("paid");setPaymentMessage("EDG payment confirmed. Case and stream exports are unlocked.");
     }catch(error){setPaymentStatus("idle");setPaymentMessage(error.shortMessage||error.reason||error.message||"Payment cancelled.");}
   }
 

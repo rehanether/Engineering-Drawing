@@ -5,6 +5,7 @@ import tokenMeta from '../EnggDrawTokenABI.json';
 import { clearPendingReferralCode, pendingReferralCode, useEdgAuth } from '../auth/EdgAuth';
 import { bootstrapProfile, createWalletChallenge, verifyWallet } from '../services/profile';
 import { buyAiCredits } from '../services/edgAi';
+import { connectEdgWallet } from '../services/edgWallet';
 import './Profile.css';
 
 const BSC_RPC = process.env.REACT_APP_BSC_RPC || 'https://bsc-dataseed.bnbchain.org';
@@ -12,13 +13,6 @@ const EDG_PAY_URL = process.env.REACT_APP_EDG_PAY_URL || 'https://edgpay.enginee
 const EDG_ADMIN_EMAILS = new Set((process.env.REACT_APP_EDG_ADMIN_EMAILS || 'admin@engineeringdrawing.io,rehan.uddin2121@gmail.com').split(',').map((email) => email.trim().toLowerCase()).filter(Boolean));
 const TOKEN_ABI = ['function balanceOf(address) view returns (uint256)', 'function decimals() view returns (uint8)'];
 const emptyBalances = { bnb: '—', edg: '—' };
-
-function injectedWallet() {
-  const ethereum = window.ethereum;
-  if (!ethereum) return null;
-  const providers = ethereum.providers || [ethereum];
-  return providers.find((provider) => provider.isMetaMask) || (ethereum.isMetaMask ? ethereum : null);
-}
 
 function shortAddress(address) {
   return address ? `${address.slice(0, 6)}…${address.slice(-4)}` : 'Not linked';
@@ -95,9 +89,7 @@ export default function Profile() {
     setLoading(true);
     setStatus('Choose your wallet account, then sign the verification message. No payment will be made.');
     try {
-      const eip1193 = injectedWallet();
-      if (!eip1193) throw new Error('MetaMask was not detected. Install MetaMask or open this page in its mobile browser.');
-      await eip1193.request({ method: 'eth_requestAccounts' });
+      const { provider: eip1193 } = await connectEdgWallet();
       const provider = new BrowserProvider(eip1193);
       const signer = await provider.getSigner();
       const address = await signer.getAddress();

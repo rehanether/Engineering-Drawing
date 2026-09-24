@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import { BrowserProvider, Contract, isAddress, parseUnits } from "ethers";
 import ConstructionModel3D from "./ConstructionModel3D";
 import { getBinancePayOrder, startBinanceCheckout } from "../services/binancePay";
+import { connectEdgWallet } from "../services/edgWallet";
 import "./ConstructionDesign.css";
 
-const EDG_CHAIN = process.env.REACT_APP_EDG_CHAIN_ID_HEX || "0x38";
 const RECEIVER = process.env.REACT_APP_BNB_TESTNET_RECEIVER;
 const EDG_TOKEN = process.env.REACT_APP_EDG_TESTNET_TOKEN;
 const EDG_PRICE = process.env.REACT_APP_EDG_DOWNLOAD_PRICE || "100";
@@ -402,31 +402,11 @@ export default function ConstructionDesign() {
 
   async function connect() {
     setMessage("");
-    if (!window.ethereum) return setMessage("Install MetaMask to use wallet payments.");
     try {
-      await ensureEdgNetwork();
-      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-      setAccount(accounts[0]);
+      const { account: selectedAccount } = await connectEdgWallet();
+      setAccount(selectedAccount);
     } catch (error) {
       setMessage(error.message || "Wallet connection was cancelled.");
-    }
-  }
-
-  async function ensureEdgNetwork() {
-    try {
-      await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: EDG_CHAIN }] });
-    } catch (error) {
-      if (error.code !== 4902) throw error;
-      await window.ethereum.request({
-        method: "wallet_addEthereumChain",
-        params: [{
-          chainId: EDG_CHAIN,
-          chainName: "BNB Smart Chain",
-          nativeCurrency: { name: "BNB", symbol: "BNB", decimals: 18 },
-          rpcUrls: ["https://bsc-dataseed.binance.org"],
-          blockExplorerUrls: ["https://bscscan.com"],
-        }],
-      });
     }
   }
 
@@ -437,8 +417,8 @@ export default function ConstructionDesign() {
       return;
     }
     try {
-      await ensureEdgNetwork();
-      const provider = new BrowserProvider(window.ethereum);
+      const { provider: eip1193 } = await connectEdgWallet();
+      const provider = new BrowserProvider(eip1193);
       const signer = await provider.getSigner();
       const from = await signer.getAddress();
       setAccount(from);
