@@ -7,9 +7,8 @@ import PSVSizing from "./PSVSizing";
 import DistillationDatasheet from "./DistillationDatasheet";
 import { createDistillationPackage } from "./downloadPackage";
 import tokenMeta from "../../EnggDrawTokenABI.json";
+import {getBinancePayOrder,startBinanceCheckout} from "../../services/binancePay";
 
-const configuredApiBase=process.env.REACT_APP_API_BASE_URL||"";
-const API_BASE=/^https?:\/\//.test(configuredApiBase)&&!configuredApiBase.includes("localhost")?configuredApiBase.replace(/\/$/,""):"";
 const EDG_ADMIN_WALLET="0xD9738cc53E9746a01cAC8EF01aF17fF4e88DD25F";
 const EDG_ABI=["function balanceOf(address) view returns (uint256)","function transfer(address,uint256) returns (bool)"];
 
@@ -250,13 +249,13 @@ export default function Distillation(){
   useEffect(()=>{
     const query=new URLSearchParams(window.location.search),result=query.get("payment"),order=query.get("order")||localStorage.getItem("distillationPaymentOrder");
     if(result==="cancelled"){setMessage("Payment cancelled; the simulation is preserved.");window.history.replaceState({},"",window.location.pathname);return undefined;}
-    if(result!=="return"||!order)return undefined;
+    if(result!=="binance"||!order)return undefined;
     setPaymentStatus("pending");setMessage("Checking secure payment status...");let stopped=false,attempts=0;
-    const check=async()=>{attempts+=1;try{const response=await fetch(`${API_BASE}/api/payments/nowpayments/status/${encodeURIComponent(order)}`),body=await response.json();if(!response.ok)throw new Error(body.error);if(body.status==="finished"){localStorage.setItem("distillationPackagePaid",`NOWPAYMENTS-${order}`);setPaymentStatus("paid");setMessage("Payment confirmed. Industrial distillation BEP unlocked.");window.history.replaceState({},"",window.location.pathname);return;}if(["failed","expired","refunded"].includes(body.status)){setPaymentStatus("idle");setMessage(`Payment ${body.status}.`);return;}if(!stopped&&attempts<30)window.setTimeout(check,4000);}catch(error){setPaymentStatus("idle");setMessage(error.message||"Could not verify payment.");}};check();return()=>{stopped=true;};
+    const check=async()=>{attempts+=1;try{const body=await getBinancePayOrder("",order),status=String(body.status||"").toUpperCase();if(status==="PAID"){localStorage.setItem("distillationPackagePaid",`BINANCE-${order}`);setPaymentStatus("paid");setMessage("Payment confirmed. Industrial distillation BEP unlocked.");window.history.replaceState({},"",window.location.pathname);return;}if(["EXPIRED","CANCELED","CANCELLED","ERROR"].includes(status)){setPaymentStatus("idle");setMessage(`Payment ${status.toLowerCase()}.`);return;}if(!stopped&&attempts<30)window.setTimeout(check,4000);}catch(error){setPaymentStatus("idle");setMessage(error.message||"Could not verify payment.");}};check();return()=>{stopped=true;};
   },[]);
   async function startBnb(){
     setPaymentStatus("pending");setMessage("");
-    try{const response=await fetch(`${API_BASE}/api/payments/nowpayments/distillation/invoice`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({design:{feedFlow:calc.F,system:inps.system}})}),body=await response.json();if(!response.ok||!body.invoiceUrl)throw new Error(body.error||"Could not create checkout.");localStorage.setItem("distillationPaymentOrder",body.orderId);window.location.assign(body.invoiceUrl);}catch(error){setPaymentStatus("idle");setMessage(error.message||"Could not open checkout.");}
+    try{await startBinanceCheckout("distillation");}catch(error){setPaymentStatus("idle");setMessage(error.message||"Could not open Binance Pay checkout.");}
   }
   async function payEdg(){
     if(!window.ethereum){setMessage("Install MetaMask or open the page in its wallet browser.");return;}setPaymentStatus("pending");setMessage("");

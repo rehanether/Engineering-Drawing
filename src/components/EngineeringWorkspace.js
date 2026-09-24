@@ -113,7 +113,7 @@ const EngineeringWorkspace = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const orderId = params.get('order') || localStorage.getItem('edg-ai-payment-order');
-    if (params.get('payment') !== 'return' || !orderId?.startsWith('AI-')) return undefined;
+    if (params.get('payment') !== 'binance' || !orderId?.startsWith('EDG')) return undefined;
     let stopped = false;
     let attempts = 0;
     const check = async () => {
@@ -121,7 +121,8 @@ const EngineeringWorkspace = () => {
       try {
         const identity = await getIdentity();
         const payment = await getAiPaymentStatus(orderId, identity);
-        if (['confirmed', 'finished'].includes(payment.status)) {
+        const paymentStatus = String(payment.status || '').toUpperCase();
+        if (paymentStatus === 'PAID') {
           const status = await getAiStatus(identity);
           if (!stopped) {
             setEntitlement(status.entitlement);
@@ -131,9 +132,9 @@ const EngineeringWorkspace = () => {
           }
           return;
         }
-        if (!stopped && ['failed', 'expired', 'refunded'].includes(payment.status)) {
+        if (!stopped && ['ERROR', 'CANCELED', 'EXPIRED', 'REFUNDED'].includes(paymentStatus)) {
           setCheckoutState('error');
-          setAiError(`Payment ${payment.status}. No credits were added.`);
+          setAiError(`Payment ${paymentStatus.toLowerCase()}. No credits were added.`);
           return;
         }
         if (!stopped && attempts < 30) window.setTimeout(check, 4000);

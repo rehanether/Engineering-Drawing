@@ -8,7 +8,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { verifyMessage, isAddress, getAddress } = require('ethers');
 const { neon } = require('@neondatabase/serverless');
-const { clerkClient, clerkMiddleware, getAuth } = require('@clerk/express');
+const { clerkMiddleware, getAuth } = require('@clerk/express');
 const { createAiService, AI_MODEL } = require('./ai-service');
 const { createProfileService } = require('./profile-service');
 const binancePay = require('./binance-pay');
@@ -21,8 +21,6 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const HF_MODEL = process.env.HF_MODEL || 'stabilityai/stable-diffusion-2-1';
 const HF_TOKEN = process.env.HUGGINGFACE_API_KEY || '';
-const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY || '';
-const NOWPAYMENTS_IPN_SECRET = process.env.NOWPAYMENTS_IPN_SECRET || '';
 const PUBLIC_API_URL = (process.env.PUBLIC_API_URL || 'http://localhost:5000').replace(/\/$/, '');
 const SITE_URL = (process.env.SITE_URL || 'http://localhost:3000').replace(/\/$/, '');
 const CONSTRUCTION_PACKAGE_USD = Number(process.env.CONSTRUCTION_PACKAGE_USD || 10);
@@ -30,13 +28,17 @@ const EVAPORATOR_PACKAGE_USD = Number(process.env.EVAPORATOR_PACKAGE_USD || 100)
 const REACTOR_PACKAGE_USD = Number(process.env.REACTOR_PACKAGE_USD || 100);
 const DISTILLATION_PACKAGE_USD = Number(process.env.DISTILLATION_PACKAGE_USD || 100);
 const PROCESS_PACKAGE_USD = Number(process.env.PROCESS_PACKAGE_USD || 10);
-const NOWPAYMENTS_PAY_CURRENCY = process.env.NOWPAYMENTS_PAY_CURRENCY || 'bnbbsc';
 const AI_CREDITS_PRICE_USD = Number(process.env.AI_CREDITS_PRICE_USD || 19);
 const AI_CREDITS_PER_PACK = Number(process.env.AI_CREDITS_PER_PACK || 100);
-const BINANCE_PAY_ALLOWED_FIAT = new Set((process.env.BINANCE_PAY_ALLOWED_FIAT || 'INR,USD').split(',').map((value) => value.trim().toUpperCase()).filter(Boolean));
 const BINANCE_PAY_CURRENCIES = process.env.BINANCE_PAY_CURRENCIES || 'BNB,USDT,USDC';
-const ADMIN_EMAILS = new Set((process.env.EDG_ADMIN_EMAILS || 'admin@engineeringdrawing.io,rehan.uddin2121@gmail.com').split(',').map((value) => value.trim().toLowerCase()).filter(Boolean));
-const paymentOrders = new Map();
+const BINANCE_PRODUCTS = Object.freeze({
+  construction: { amount: CONSTRUCTION_PACKAGE_USD, description: 'Construction design professional package', returnPath: '/construction-design' },
+  evaporator: { amount: EVAPORATOR_PACKAGE_USD, description: 'MVR evaporator basic engineering package', returnPath: '/evaporators' },
+  reactor: { amount: REACTOR_PACKAGE_USD, description: 'Reactor basic engineering package', returnPath: '/reactors' },
+  distillation: { amount: DISTILLATION_PACKAGE_USD, description: 'Distillation basic engineering package', returnPath: '/distillation' },
+  process: { amount: PROCESS_PACKAGE_USD, description: 'Process simulation export package', returnPath: '/process-design' },
+  'ai-credits': { amount: AI_CREDITS_PRICE_USD, description: `${AI_CREDITS_PER_PACK} EDG AI engineering credits`, returnPath: '/workspace', credits: AI_CREDITS_PER_PACK },
+});
 const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
 const sql = databaseUrl ? neon(databaseUrl) : null;
 const aiService = createAiService(sql);
@@ -49,7 +51,6 @@ const profileService = createProfileService(sql, {
   referralEdg: process.env.REFERRAL_REWARD_EDG || 0,
   referralBnb: process.env.REFERRAL_REWARD_BNB || 0,
 });
-let paymentsTableReady = false;
 let binancePaymentsTableReady = false;
 const allowedOrigins = allowedOriginsFor();
 
@@ -68,7 +69,7 @@ app.use(helmet({
     directives: {
       scriptSrc: ["'self'", "'unsafe-inline'", 'https://clerk.engineeringdrawing.io', 'https://*.clerk.accounts.dev', 'https://*.clerk.com'],
       connectSrc: ["'self'", 'https:'],
-      frameSrc: ["'self'", 'https://clerk.engineeringdrawing.io', 'https://accounts.engineeringdrawing.io', 'https://*.clerk.accounts.dev', 'https://*.clerk.com', 'https://nowpayments.io'],
+      frameSrc: ["'self'", 'https://clerk.engineeringdrawing.io', 'https://accounts.engineeringdrawing.io', 'https://*.clerk.accounts.dev', 'https://*.clerk.com', 'https://pay.binance.com', 'https://app.binance.com'],
       imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
     },
   },
@@ -98,7 +99,7 @@ app.use(
   })
 );
 app.use(
-  ['/api/generate-image', '/api/payments/nowpayments', '/api/payments/binance-pay/orders'],
+  ['/api/generate-image', '/api/payments/binance-pay/orders'],
   rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 8,
@@ -160,32 +161,6 @@ async function authenticatedProfile(req, res) {
   } catch (error) {
     console.error('Profile authentication error:', error.message);
     res.status(503).json({ error: 'Profile storage is temporarily unavailable.' });
-    return null;
-  }
-}
-
-async function authenticatedAdmin(req, res) {
-  if (!clerkConfigured) {
-    res.status(503).json({ error: 'Administrator authentication is not configured.' });
-    return null;
-  }
-  const userId = authenticatedUserId(req);
-  if (!userId) {
-    res.status(401).json({ error: 'Sign in with an authorized administrator account.' });
-    return null;
-  }
-  try {
-    const user = await clerkClient.users.getUser(userId);
-    const role = String(user.publicMetadata?.role || '').toLowerCase();
-    const emails = (user.emailAddresses || []).map((entry) => String(entry.emailAddress || '').toLowerCase());
-    if (role !== 'admin' && !emails.some((email) => ADMIN_EMAILS.has(email))) {
-      res.status(403).json({ error: 'This payment console is restricted to authorized administrators.' });
-      return null;
-    }
-    return { userId, email: emails[0] || '' };
-  } catch (error) {
-    console.error('Administrator authorization error:', error.message);
-    res.status(503).json({ error: 'Administrator authorization is temporarily unavailable.' });
     return null;
   }
 }
@@ -344,415 +319,6 @@ app.post('/api/generate-image', async (req, res) => {
   }
 });
 
-function recursivelySort(value) {
-  if (Array.isArray(value)) return value.map(recursivelySort);
-  if (!value || typeof value !== 'object') return value;
-  return Object.keys(value)
-    .sort()
-    .reduce((result, key) => {
-      result[key] = recursivelySort(value[key]);
-      return result;
-    }, {});
-}
-
-function validNowPaymentsSignature(body, signature) {
-  if (!NOWPAYMENTS_IPN_SECRET || typeof signature !== 'string') return false;
-  const digest = crypto
-    .createHmac('sha512', NOWPAYMENTS_IPN_SECRET)
-    .update(JSON.stringify(recursivelySort(body)))
-    .digest('hex');
-  if (digest.length !== signature.length) return false;
-  return crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(signature));
-}
-
-async function ensurePaymentsTable() {
-  if (!sql || paymentsTableReady) return;
-  await sql`
-    CREATE TABLE IF NOT EXISTS construction_payment_orders (
-      order_id TEXT PRIMARY KEY,
-      invoice_id TEXT,
-      payment_id TEXT,
-      status TEXT NOT NULL,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `;
-  paymentsTableReady = true;
-}
-
-async function savePaymentOrder(orderId, values) {
-  if (!sql) {
-    paymentOrders.set(orderId, { ...(paymentOrders.get(orderId) || {}), ...values });
-    return;
-  }
-  await ensurePaymentsTable();
-  await sql`
-    INSERT INTO construction_payment_orders
-      (order_id, invoice_id, payment_id, status, created_at, updated_at)
-    VALUES
-      (${orderId}, ${values.invoiceId || null}, ${values.paymentId || null}, ${values.status || 'waiting'}, NOW(), NOW())
-    ON CONFLICT (order_id) DO UPDATE SET
-      invoice_id = COALESCE(EXCLUDED.invoice_id, construction_payment_orders.invoice_id),
-      payment_id = COALESCE(EXCLUDED.payment_id, construction_payment_orders.payment_id),
-      status = EXCLUDED.status,
-      updated_at = NOW()
-  `;
-}
-
-async function getPaymentOrder(orderId) {
-  if (!sql) return paymentOrders.get(orderId) || null;
-  await ensurePaymentsTable();
-  const rows = await sql`
-    SELECT order_id, invoice_id, payment_id, status, created_at, updated_at
-    FROM construction_payment_orders
-    WHERE order_id = ${orderId}
-    LIMIT 1
-  `;
-  return rows[0] || null;
-}
-
-app.post('/api/payments/nowpayments/invoice', async (req, res) => {
-  if (!NOWPAYMENTS_API_KEY || !NOWPAYMENTS_IPN_SECRET) {
-    return res.status(503).json({ error: 'The BNB payment gateway is not configured yet.' });
-  }
-  if (!Number.isFinite(CONSTRUCTION_PACKAGE_USD) || CONSTRUCTION_PACKAGE_USD <= 0) {
-    return res.status(503).json({ error: 'The construction package price is not configured.' });
-  }
-
-  const design = req.body?.design || {};
-  const width = Number(design.width);
-  const length = Number(design.length);
-  const floors = Number(design.floors);
-  if (
-    !Number.isFinite(width) || width < 18 || width > 100 ||
-    !Number.isFinite(length) || length < 24 || length > 150 ||
-    !Number.isInteger(floors) || floors < 1 || floors > 3
-  ) {
-    return res.status(400).json({ error: 'Invalid construction design details.' });
-  }
-
-  const orderId = `CD-${crypto.randomUUID()}`;
-  try {
-    const response = await axios.post(
-      'https://api.nowpayments.io/v1/invoice',
-      {
-        price_amount: CONSTRUCTION_PACKAGE_USD,
-        price_currency: 'usd',
-        pay_currency: NOWPAYMENTS_PAY_CURRENCY,
-        order_id: orderId,
-        order_description: `Construction design package ${width}x${length}, ${floors} floor${floors === 1 ? '' : 's'}`,
-        ipn_callback_url: `${PUBLIC_API_URL}/api/payments/nowpayments/ipn`,
-        success_url: `${SITE_URL}/construction-design?payment=return&order=${encodeURIComponent(orderId)}`,
-        cancel_url: `${SITE_URL}/construction-design?payment=cancelled&order=${encodeURIComponent(orderId)}`,
-        is_fixed_rate: true,
-        is_fee_paid_by_user: true,
-      },
-      {
-        headers: { 'x-api-key': NOWPAYMENTS_API_KEY, 'Content-Type': 'application/json' },
-        timeout: 15_000,
-      }
-    );
-
-    if (!response.data?.invoice_url || !response.data?.id) {
-      throw new Error('NOWPayments returned an incomplete invoice.');
-    }
-    await savePaymentOrder(orderId, {
-      invoiceId: String(response.data.id),
-      status: 'waiting',
-    });
-    return res.status(201).json({
-      orderId,
-      invoiceId: String(response.data.id),
-      invoiceUrl: response.data.invoice_url,
-    });
-  } catch (error) {
-    console.error('NOWPayments invoice error:', error?.response?.status || error.message);
-    return res.status(502).json({ error: 'Could not create the secure BNB checkout. Please try again.' });
-  }
-});
-
-app.post('/api/payments/nowpayments/evaporator/invoice', async (req, res) => {
-  if (!NOWPAYMENTS_API_KEY || !NOWPAYMENTS_IPN_SECRET) {
-    return res.status(503).json({ error: 'The BNB payment gateway is not configured yet.' });
-  }
-  if (!Number.isFinite(EVAPORATOR_PACKAGE_USD) || EVAPORATOR_PACKAGE_USD <= 0) {
-    return res.status(503).json({ error: 'The evaporator package price is not configured.' });
-  }
-
-  const design = req.body?.design || {};
-  const capacityTph = Number(design.capacityTph);
-  const feedConc = Number(design.feedConc);
-  const finalConc = Number(design.finalConc);
-  if (
-    !Number.isInteger(capacityTph) || capacityTph < 1 || capacityTph > 5 ||
-    !Number.isFinite(feedConc) || feedConc < 0.2 || feedConc > 35 ||
-    !Number.isFinite(finalConc) || finalConc <= feedConc || finalConc > 60
-  ) {
-    return res.status(400).json({ error: 'Invalid evaporator design details.' });
-  }
-
-  const orderId = `EV-${crypto.randomUUID()}`;
-  try {
-    const response = await axios.post(
-      'https://api.nowpayments.io/v1/invoice',
-      {
-        price_amount: EVAPORATOR_PACKAGE_USD,
-        price_currency: 'usd',
-        pay_currency: NOWPAYMENTS_PAY_CURRENCY,
-        order_id: orderId,
-        order_description: `${capacityTph} TPH MVR evaporator Basic Engineering Package`,
-        ipn_callback_url: `${PUBLIC_API_URL}/api/payments/nowpayments/ipn`,
-        success_url: `${SITE_URL}/evaporators?payment=return&order=${encodeURIComponent(orderId)}`,
-        cancel_url: `${SITE_URL}/evaporators?payment=cancelled&order=${encodeURIComponent(orderId)}`,
-        is_fixed_rate: true,
-        is_fee_paid_by_user: true,
-      },
-      {
-        headers: { 'x-api-key': NOWPAYMENTS_API_KEY, 'Content-Type': 'application/json' },
-        timeout: 15_000,
-      }
-    );
-
-    if (!response.data?.invoice_url || !response.data?.id) {
-      throw new Error('NOWPayments returned an incomplete invoice.');
-    }
-    await savePaymentOrder(orderId, {
-      invoiceId: String(response.data.id),
-      status: 'waiting',
-    });
-    return res.status(201).json({
-      orderId,
-      invoiceId: String(response.data.id),
-      invoiceUrl: response.data.invoice_url,
-    });
-  } catch (error) {
-    console.error('NOWPayments evaporator invoice error:', error?.response?.status || error.message);
-    return res.status(502).json({ error: 'Could not create the secure BNB checkout. Please try again.' });
-  }
-});
-
-app.post('/api/payments/nowpayments/reactor/invoice', async (req, res) => {
-  if (!NOWPAYMENTS_API_KEY || !NOWPAYMENTS_IPN_SECRET) {
-    return res.status(503).json({ error: 'The BNB payment gateway is not configured yet.' });
-  }
-  if (!Number.isFinite(REACTOR_PACKAGE_USD) || REACTOR_PACKAGE_USD <= 0) {
-    return res.status(503).json({ error: 'The reactor package price is not configured.' });
-  }
-  const design = req.body?.design || {};
-  const capacity = Number(design.capacity);
-  const type = String(design.type || '');
-  if (!Number.isInteger(capacity) || capacity < 1 || capacity > 5 || !['Batch', 'CSTR', 'PFR'].includes(type)) {
-    return res.status(400).json({ error: 'Invalid reactor design details.' });
-  }
-  const orderId = `RX-${crypto.randomUUID()}`;
-  try {
-    const response = await axios.post('https://api.nowpayments.io/v1/invoice', {
-      price_amount: REACTOR_PACKAGE_USD,
-      price_currency: 'usd',
-      pay_currency: NOWPAYMENTS_PAY_CURRENCY,
-      order_id: orderId,
-      order_description: `${capacity} ${type} reactor basic engineering package`,
-      ipn_callback_url: `${PUBLIC_API_URL}/api/payments/nowpayments/ipn`,
-      success_url: `${SITE_URL}/reactors?payment=return&order=${encodeURIComponent(orderId)}`,
-      cancel_url: `${SITE_URL}/reactors?payment=cancelled&order=${encodeURIComponent(orderId)}`,
-      is_fixed_rate: true,
-      is_fee_paid_by_user: true,
-    }, {
-      headers: { 'x-api-key': NOWPAYMENTS_API_KEY, 'Content-Type': 'application/json' },
-      timeout: 15_000,
-    });
-    if (!response.data?.invoice_url || !response.data?.id) throw new Error('NOWPayments returned an incomplete invoice.');
-    await savePaymentOrder(orderId, { invoiceId: String(response.data.id), status: 'waiting' });
-    return res.status(201).json({ orderId, invoiceId: String(response.data.id), invoiceUrl: response.data.invoice_url });
-  } catch (error) {
-    console.error('NOWPayments reactor invoice error:', error?.response?.status || error.message);
-    return res.status(502).json({ error: 'Could not create the secure BNB checkout. Please try again.' });
-  }
-});
-
-app.post('/api/payments/nowpayments/distillation/invoice', async (req, res) => {
-  if (!NOWPAYMENTS_API_KEY || !NOWPAYMENTS_IPN_SECRET) {
-    return res.status(503).json({ error: 'The BNB payment gateway is not configured yet.' });
-  }
-  if (!Number.isFinite(DISTILLATION_PACKAGE_USD) || DISTILLATION_PACKAGE_USD <= 0) {
-    return res.status(503).json({ error: 'The distillation package price is not configured.' });
-  }
-  const design = req.body?.design || {};
-  const feedFlow = Number(design.feedFlow);
-  const system = String(design.system || '').slice(0, 80);
-  if (!Number.isFinite(feedFlow) || feedFlow <= 0 || feedFlow > 5000 || !system) {
-    return res.status(400).json({ error: 'Invalid distillation design details.' });
-  }
-  const orderId = `DS-${crypto.randomUUID()}`;
-  try {
-    const response = await axios.post('https://api.nowpayments.io/v1/invoice', {
-      price_amount: DISTILLATION_PACKAGE_USD,
-      price_currency: 'usd',
-      pay_currency: NOWPAYMENTS_PAY_CURRENCY,
-      order_id: orderId,
-      order_description: `${system} industrial distillation basic engineering package`,
-      ipn_callback_url: `${PUBLIC_API_URL}/api/payments/nowpayments/ipn`,
-      success_url: `${SITE_URL}/distillation?payment=return&order=${encodeURIComponent(orderId)}`,
-      cancel_url: `${SITE_URL}/distillation?payment=cancelled&order=${encodeURIComponent(orderId)}`,
-      is_fixed_rate: true,
-      is_fee_paid_by_user: true,
-    }, {
-      headers: { 'x-api-key': NOWPAYMENTS_API_KEY, 'Content-Type': 'application/json' },
-      timeout: 15_000,
-    });
-    if (!response.data?.invoice_url || !response.data?.id) throw new Error('NOWPayments returned an incomplete invoice.');
-    await savePaymentOrder(orderId, { invoiceId: String(response.data.id), status: 'waiting' });
-    return res.status(201).json({ orderId, invoiceId: String(response.data.id), invoiceUrl: response.data.invoice_url });
-  } catch (error) {
-    console.error('NOWPayments distillation invoice error:', error?.response?.status || error.message);
-    return res.status(502).json({ error: 'Could not create the secure BNB checkout. Please try again.' });
-  }
-});
-
-app.post('/api/payments/nowpayments/process/invoice', async (req, res) => {
-  if (!NOWPAYMENTS_API_KEY || !NOWPAYMENTS_IPN_SECRET) {
-    return res.status(503).json({ error: 'The BNB payment gateway is not configured yet.' });
-  }
-  if (!Number.isFinite(PROCESS_PACKAGE_USD) || PROCESS_PACKAGE_USD <= 0) {
-    return res.status(503).json({ error: 'The process simulation price is not configured.' });
-  }
-  const design = req.body?.design || {};
-  const projectName = String(design.projectName || '').trim().slice(0, 80);
-  const blockCount = Number(design.blockCount);
-  if (!projectName || !Number.isInteger(blockCount) || blockCount < 1 || blockCount > 250) {
-    return res.status(400).json({ error: 'Invalid process simulation details.' });
-  }
-  const orderId = `PD-${crypto.randomUUID()}`;
-  try {
-    const response = await axios.post('https://api.nowpayments.io/v1/invoice', {
-      price_amount: PROCESS_PACKAGE_USD,
-      price_currency: 'usd',
-      pay_currency: NOWPAYMENTS_PAY_CURRENCY,
-      order_id: orderId,
-      order_description: `${projectName} process simulation export (${blockCount} blocks)`,
-      ipn_callback_url: `${PUBLIC_API_URL}/api/payments/nowpayments/ipn`,
-      success_url: `${SITE_URL}/process-design?payment=return&order=${encodeURIComponent(orderId)}`,
-      cancel_url: `${SITE_URL}/process-design?payment=cancelled&order=${encodeURIComponent(orderId)}`,
-      is_fixed_rate: true,
-      is_fee_paid_by_user: true,
-    }, {
-      headers: { 'x-api-key': NOWPAYMENTS_API_KEY, 'Content-Type': 'application/json' },
-      timeout: 15_000,
-    });
-    if (!response.data?.invoice_url || !response.data?.id) throw new Error('NOWPayments returned an incomplete invoice.');
-    await savePaymentOrder(orderId, { invoiceId: String(response.data.id), status: 'waiting' });
-    return res.status(201).json({ orderId, invoiceId: String(response.data.id), invoiceUrl: response.data.invoice_url });
-  } catch (error) {
-    console.error('NOWPayments process invoice error:', error?.response?.status || error.message);
-    return res.status(502).json({ error: 'Could not create the secure BNB checkout. Please try again.' });
-  }
-});
-
-app.post('/api/payments/nowpayments/ai-credits/invoice', async (req, res) => {
-  if (!NOWPAYMENTS_API_KEY || !NOWPAYMENTS_IPN_SECRET) {
-    return res.status(503).json({ error: 'The AI credit checkout is not configured yet.' });
-  }
-  if (!Number.isFinite(AI_CREDITS_PRICE_USD) || AI_CREDITS_PRICE_USD <= 0 || !Number.isInteger(AI_CREDITS_PER_PACK) || AI_CREDITS_PER_PACK <= 0) {
-    return res.status(503).json({ error: 'The AI credit pack is not configured.' });
-  }
-  const profile = await authenticatedProfile(req, res);
-  if (!profile) return undefined;
-  const accountId = String(profile.account_id);
-
-  const orderId = `AI-${crypto.randomUUID()}`;
-  try {
-    const response = await axios.post('https://api.nowpayments.io/v1/invoice', {
-      price_amount: AI_CREDITS_PRICE_USD,
-      price_currency: 'usd',
-      pay_currency: NOWPAYMENTS_PAY_CURRENCY,
-      order_id: orderId,
-      order_description: `${AI_CREDITS_PER_PACK} EDG AI engineering credits`,
-      ipn_callback_url: `${PUBLIC_API_URL}/api/payments/nowpayments/ipn`,
-      success_url: `${SITE_URL}/workspace?payment=return&order=${encodeURIComponent(orderId)}`,
-      cancel_url: `${SITE_URL}/workspace?payment=cancelled&order=${encodeURIComponent(orderId)}`,
-      is_fixed_rate: true,
-      is_fee_paid_by_user: true,
-    }, {
-      headers: { 'x-api-key': NOWPAYMENTS_API_KEY, 'Content-Type': 'application/json' },
-      timeout: 15_000,
-    });
-    if (!response.data?.invoice_url || !response.data?.id) throw new Error('NOWPayments returned an incomplete invoice.');
-    await aiService.savePaymentOrder({ orderId, accountId, credits: AI_CREDITS_PER_PACK, invoiceId: String(response.data.id) });
-    return res.status(201).json({ orderId, invoiceId: String(response.data.id), invoiceUrl: response.data.invoice_url, credits: AI_CREDITS_PER_PACK });
-  } catch (error) {
-    console.error('NOWPayments AI credit invoice error:', error?.response?.status || error.message);
-    return res.status(502).json({ error: 'Could not create the secure AI credit checkout. Please try again.' });
-  }
-});
-
-app.get('/api/payments/nowpayments/ai-credits/status/:orderId', async (req, res) => {
-  const orderId = String(req.params.orderId || '');
-  if (!/^AI-[0-9a-f-]{36}$/i.test(orderId)) return res.status(400).json({ error: 'Invalid AI credit order.' });
-  const profile = await authenticatedProfile(req, res);
-  if (!profile) return undefined;
-  const accountId = String(profile.account_id);
-  try {
-    const order = await aiService.getPaymentOrder(orderId);
-    if (!order || String(order.account_id || order.accountId) !== accountId) return res.status(404).json({ error: 'AI credit order was not found.' });
-    return res.json({ orderId, status: order.status, credits: Number(order.credits) });
-  } catch (error) {
-    console.error('AI credit payment status error:', error.message);
-    return res.status(503).json({ error: 'Payment verification storage is unavailable.' });
-  }
-});
-
-app.get('/api/payments/nowpayments/status/:orderId', async (req, res) => {
-  const orderId = String(req.params.orderId || '');
-  if (!/^(CD|EV|RX|DS|PD)-[0-9a-f-]{36}$/i.test(orderId)) {
-    return res.status(400).json({ error: 'Invalid payment order.' });
-  }
-  try {
-    const order = await getPaymentOrder(orderId);
-    if (!order) return res.status(404).json({ error: 'Payment order was not found or has expired.' });
-    return res.json({ orderId, status: order.status });
-  } catch (error) {
-    console.error('Payment status storage error:', error.message);
-    return res.status(503).json({ error: 'Payment verification storage is unavailable.' });
-  }
-});
-
-app.post('/api/payments/nowpayments/ipn', async (req, res) => {
-  const signature = req.get('x-nowpayments-sig');
-  if (!validNowPaymentsSignature(req.body, signature)) {
-    return res.status(401).json({ error: 'Invalid payment notification signature.' });
-  }
-  const orderId = String(req.body?.order_id || '');
-  const paymentStatus = String(req.body?.payment_status || '').toLowerCase();
-  if (!/^(CD|EV|RX|DS|PD|AI)-[0-9a-f-]{36}$/i.test(orderId)) return res.status(400).json({ error: 'Invalid order.' });
-
-  try {
-    if (orderId.startsWith('AI-')) {
-      const order = await aiService.getPaymentOrder(orderId);
-      const found = await aiService.applyPayment({
-        orderId,
-        paymentId: req.body?.payment_id ? String(req.body.payment_id) : null,
-        status: paymentStatus,
-      });
-      if (!found) return res.status(404).json({ error: 'AI credit order was not found.' });
-      if (order && ['confirmed', 'finished'].includes(paymentStatus)) {
-        const referral = await profileService.activateReferral(String(order.account_id || order.accountId));
-        if (referral?.credits > 0) {
-          await aiService.addCredits(referral.referrerId, referral.credits, 'qualified_referral', `referral-qualified:${referral.referredId}`);
-        }
-      }
-      return res.status(200).json({ received: true });
-    }
-    await savePaymentOrder(orderId, {
-      paymentId: req.body?.payment_id ? String(req.body.payment_id) : null,
-      status: paymentStatus,
-    });
-    return res.status(200).json({ received: true });
-  } catch (error) {
-    console.error('Payment notification storage error:', error.message);
-    return res.status(503).json({ error: 'Payment notification could not be stored.' });
-  }
-});
-
 async function ensureBinancePaymentsTable() {
   if (!sql || binancePaymentsTableReady) return;
   await sql`
@@ -767,10 +333,12 @@ async function ensureBinancePaymentsTable() {
       status TEXT NOT NULL DEFAULT 'INITIAL',
       transaction_id TEXT,
       checkout_url TEXT,
+      product_id TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `;
+  await sql`ALTER TABLE binance_payment_orders ADD COLUMN IF NOT EXISTS product_id TEXT`;
   binancePaymentsTableReady = true;
 }
 
@@ -780,11 +348,11 @@ async function saveBinanceOrder(order) {
   const rows = await sql`
     INSERT INTO binance_payment_orders (
       merchant_trade_no, prepay_id, clerk_user_id, fiat_amount, fiat_currency,
-      crypto_currency, crypto_amount, status, transaction_id, checkout_url
+      crypto_currency, crypto_amount, status, transaction_id, checkout_url, product_id
     ) VALUES (
       ${order.merchantTradeNo}, ${order.prepayId || null}, ${order.userId}, ${order.fiatAmount},
       ${order.fiatCurrency}, ${order.currency || null}, ${order.totalFee || null}, ${order.status || 'INITIAL'},
-      ${order.transactionId || null}, ${order.checkoutUrl || null}
+      ${order.transactionId || null}, ${order.checkoutUrl || null}, ${order.productId || null}
     )
     ON CONFLICT (merchant_trade_no) DO UPDATE SET
       prepay_id = COALESCE(EXCLUDED.prepay_id, binance_payment_orders.prepay_id),
@@ -793,6 +361,7 @@ async function saveBinanceOrder(order) {
       status = EXCLUDED.status,
       transaction_id = COALESCE(EXCLUDED.transaction_id, binance_payment_orders.transaction_id),
       checkout_url = COALESCE(EXCLUDED.checkout_url, binance_payment_orders.checkout_url),
+      product_id = COALESCE(EXCLUDED.product_id, binance_payment_orders.product_id),
       updated_at = NOW()
     RETURNING *
   `;
@@ -806,44 +375,59 @@ async function getBinanceOrder(merchantTradeNo) {
   return rows[0] || null;
 }
 
+async function finalizeAiCreditPayment(merchantTradeNo, paymentId) {
+  await aiService.applyPayment({ orderId: merchantTradeNo, paymentId: paymentId || null, status: 'finished' });
+  const aiOrder = await aiService.getPaymentOrder(merchantTradeNo);
+  const accountId = String(aiOrder?.account_id || aiOrder?.accountId || '');
+  if (!accountId) return;
+  const referral = await profileService.activateReferral(accountId);
+  if (referral?.credits > 0) {
+    await aiService.addCredits(referral.referrerId, referral.credits, 'referral_reward', `referral-reward:${accountId}`);
+  }
+}
+
 app.get('/api/payments/binance-pay/config', async (req, res) => {
-  const admin = await authenticatedAdmin(req, res);
-  if (!admin) return undefined;
   return res.json({
     enabled: binancePay.isConfigured(),
-    currencies: Array.from(BINANCE_PAY_ALLOWED_FIAT),
     payCurrencies: BINANCE_PAY_CURRENCIES.split(',').map((value) => value.trim()).filter(Boolean),
+    methods: { metamask: true, binancePay: binancePay.isConfigured(), upi: false },
   });
 });
 
 app.post('/api/payments/binance-pay/orders', async (req, res) => {
-  const admin = await authenticatedAdmin(req, res);
-  if (!admin) return undefined;
   if (!binancePay.isConfigured()) return res.status(503).json({ error: 'Binance Pay is disabled until merchant credentials are configured.' });
   if (!sql) return res.status(503).json({ error: 'Persistent payment storage is required before Binance Pay can be enabled.' });
-  const fiatCurrency = String(req.body?.fiatCurrency || '').trim().toUpperCase();
-  const fiatAmount = Number(req.body?.fiatAmount);
-  if (!BINANCE_PAY_ALLOWED_FIAT.has(fiatCurrency)) return res.status(400).json({ error: 'Unsupported fiat currency.' });
-  if (!Number.isFinite(fiatAmount) || fiatAmount <= 0 || fiatAmount > 1_000_000) return res.status(400).json({ error: 'Enter a valid payment amount.' });
+  const productId = String(req.body?.productId || '').trim().toLowerCase();
+  const product = BINANCE_PRODUCTS[productId];
+  if (!product || !Number.isFinite(product.amount) || product.amount <= 0) return res.status(400).json({ error: 'Invalid payment product.' });
+  let userId = authenticatedUserId(req) || 'guest';
+  let accountId = null;
+  if (product.credits) {
+    const profile = await authenticatedProfile(req, res);
+    if (!profile) return undefined;
+    userId = authenticatedUserId(req);
+    accountId = String(profile.account_id);
+  }
 
   const merchantTradeNo = `EDG${crypto.randomBytes(15).toString('hex').slice(0, 29)}`;
-  const amount = Number(fiatAmount.toFixed(2));
-  const description = 'EDG ecosystem payment';
+  const amount = Number(product.amount.toFixed(2));
+  const description = product.description;
   try {
     const data = await binancePay.createOrder({
       env: { terminalType: 'WEB', orderClientIp: req.ip },
       merchantTradeNo,
       fiatAmount: amount,
-      fiatCurrency,
+      fiatCurrency: 'USD',
       description,
-      goodsDetails: [{ goodsType: '02', goodsCategory: 'F000', referenceGoodsId: 'EDGPAY', goodsName: 'EDG ecosystem payment', goodsDetail: description }],
-      returnUrl: `${SITE_URL}/profile?payment=binance`,
-      cancelUrl: `${SITE_URL}/profile?payment=cancelled`,
+      goodsDetails: [{ goodsType: '02', goodsCategory: 'F000', referenceGoodsId: productId.replace(/[^a-z0-9]/g, '').toUpperCase(), goodsName: description, goodsDetail: description }],
+      returnUrl: `${SITE_URL}${product.returnPath}?payment=binance`,
+      cancelUrl: `${SITE_URL}${product.returnPath}?payment=cancelled`,
       webhookUrl: `${PUBLIC_API_URL}/api/payments/binance-pay/webhook`,
       supportPayCurrency: BINANCE_PAY_CURRENCIES,
-      passThroughInfo: JSON.stringify({ userId: admin.userId }),
+      passThroughInfo: JSON.stringify({ productId }),
     });
-    await saveBinanceOrder({ merchantTradeNo, userId: admin.userId, fiatAmount: amount, fiatCurrency, ...data, status: 'INITIAL' });
+    await saveBinanceOrder({ merchantTradeNo, userId, fiatAmount: amount, fiatCurrency: 'USD', productId, ...data, status: 'INITIAL' });
+    if (product.credits) await aiService.savePaymentOrder({ orderId: merchantTradeNo, accountId, credits: product.credits, invoiceId: data.prepayId });
     return res.status(201).json({
       merchantTradeNo, prepayId: data.prepayId, checkoutUrl: data.checkoutUrl,
       universalUrl: data.universalUrl, qrcodeLink: data.qrcodeLink, qrContent: data.qrContent,
@@ -856,19 +440,20 @@ app.post('/api/payments/binance-pay/orders', async (req, res) => {
 });
 
 app.get('/api/payments/binance-pay/orders/:merchantTradeNo', async (req, res) => {
-  const admin = await authenticatedAdmin(req, res);
-  if (!admin) return undefined;
   const merchantTradeNo = String(req.params.merchantTradeNo || '');
   if (!/^EDG[A-Za-z0-9]{29}$/.test(merchantTradeNo)) return res.status(400).json({ error: 'Invalid Binance Pay order.' });
   try {
     const stored = await getBinanceOrder(merchantTradeNo);
-    if (!stored || stored.clerk_user_id !== admin.userId) return res.status(404).json({ error: 'Payment order was not found.' });
+    if (!stored) return res.status(404).json({ error: 'Payment order was not found.' });
     if (binancePay.isConfigured() && !['PAID', 'CANCELED', 'EXPIRED', 'REFUNDED'].includes(stored.status)) {
       const current = await binancePay.queryOrder(merchantTradeNo);
       await saveBinanceOrder({
-        merchantTradeNo, userId: admin.userId, fiatAmount: stored.fiat_amount, fiatCurrency: stored.fiat_currency,
-        ...current, checkoutUrl: stored.checkout_url,
+        merchantTradeNo, userId: stored.clerk_user_id, fiatAmount: stored.fiat_amount, fiatCurrency: stored.fiat_currency,
+        productId: stored.product_id, ...current, checkoutUrl: stored.checkout_url,
       });
+      if (stored.product_id === 'ai-credits' && current.status === 'PAID') {
+        await finalizeAiCreditPayment(merchantTradeNo, current.transactionId);
+      }
       return res.json({ merchantTradeNo, status: current.status, currency: current.currency, totalFee: current.totalFee, transactionId: current.transactionId || null });
     }
     return res.json({ merchantTradeNo, status: stored.status, currency: stored.crypto_currency, totalFee: stored.crypto_amount, transactionId: stored.transaction_id });
@@ -894,8 +479,14 @@ app.post('/api/payments/binance-pay/webhook', async (req, res) => {
       merchantTradeNo, userId: stored.clerk_user_id, fiatAmount: stored.fiat_amount, fiatCurrency: stored.fiat_currency,
       prepayId: data.prepayId || stored.prepay_id, currency: data.currency || stored.crypto_currency,
       totalFee: data.totalFee || stored.crypto_amount, status: String(req.body?.bizStatus || data.status || stored.status).toUpperCase(),
-      transactionId: data.transactionId || stored.transaction_id, checkoutUrl: stored.checkout_url,
+      transactionId: data.transactionId || stored.transaction_id, checkoutUrl: stored.checkout_url, productId: stored.product_id,
     });
+    const notificationStatus = String(req.body?.bizStatus || data.status || '').toUpperCase();
+    const paid = ['PAID', 'SUCCESS', 'PAY_SUCCESS'].includes(notificationStatus);
+    if (stored.product_id === 'ai-credits') {
+      if (paid) await finalizeAiCreditPayment(merchantTradeNo, data.transactionId);
+      else await aiService.applyPayment({ orderId: merchantTradeNo, paymentId: data.transactionId || null, status: 'waiting' });
+    }
     return res.status(200).json({ returnCode: 'SUCCESS', returnMessage: null });
   } catch (error) {
     console.error('Binance Pay webhook storage error:', error.message);

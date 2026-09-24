@@ -1,3 +1,5 @@
+import { createBinancePayOrder, getBinancePayOrder } from './binancePay';
+
 const configuredApiBase = process.env.REACT_APP_API_BASE_URL || '';
 const API_BASE = /^https?:\/\//.test(configuredApiBase)
   ? configuredApiBase.replace(/\/$/, '')
@@ -63,12 +65,12 @@ export function getAiStatus(identity = {}) {
 }
 
 export async function buyAiCredits(identity = {}) {
-  const body = await request('/api/payments/nowpayments/ai-credits/invoice', { ...identity, method: 'POST', body: '{}' });
-  if (!body.invoiceUrl) throw new Error('The checkout provider returned no payment link.');
-  localStorage.setItem('edg-ai-payment-order', body.orderId);
-  window.location.assign(body.invoiceUrl);
+  const body = await createBinancePayOrder('ai-credits', identity.authToken);
+  if (!body.checkoutUrl && !body.universalUrl) throw new Error('Binance Pay returned no payment link.');
+  localStorage.setItem('edg-ai-payment-order', body.merchantTradeNo);
+  window.location.assign(body.checkoutUrl || body.universalUrl);
 }
 
 export function getAiPaymentStatus(orderId, identity = {}) {
-  return request(`/api/payments/nowpayments/ai-credits/status/${encodeURIComponent(orderId)}`, identity);
+  return getBinancePayOrder(identity.authToken, orderId);
 }

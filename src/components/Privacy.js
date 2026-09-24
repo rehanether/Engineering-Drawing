@@ -51,21 +51,7 @@ const Privacy = () => {
           <li>Comply with applicable legal obligations</li>
         </ul>
 
-        <h2 style={styles.heading}>3. SHOPLINE Integration</h2>
-
-        <p style={styles.text}>
-          EngineeringDrawing.io may integrate with SHOPLINE. When a merchant
-          installs or connects our application, we may receive information
-          authorized by that merchant through SHOPLINE APIs.
-        </p>
-
-        <p style={styles.text}>
-          We only access information required to provide the features requested
-          by the merchant and according to the permissions granted during app
-          authorization.
-        </p>
-
-        <h2 style={styles.heading}>4. Third-Party Services</h2>
+        <h2 style={styles.heading}>3. Third-Party Services</h2>
 
         <p style={styles.text}>
           We may use trusted third-party technology providers for hosting,
@@ -74,7 +60,7 @@ const Privacy = () => {
           only as necessary to provide their services.
         </p>
 
-        <h2 style={styles.heading}>5. Data Security</h2>
+        <h2 style={styles.heading}>4. Data Security</h2>
 
         <p style={styles.text}>
           We use reasonable technical and organizational safeguards designed
@@ -87,7 +73,7 @@ const Privacy = () => {
           Users are responsible for keeping their account credentials secure.
         </p>
 
-        <h2 style={styles.heading}>6. Data Retention</h2>
+        <h2 style={styles.heading}>5. Data Retention</h2>
 
         <p style={styles.text}>
           We retain information only for as long as reasonably necessary to
@@ -95,16 +81,16 @@ const Privacy = () => {
           maintain security, and comply with applicable law.
         </p>
 
-        <h2 style={styles.heading}>7. Data Deletion</h2>
+        <h2 style={styles.heading}>6. Data Deletion</h2>
 
         <p style={styles.text}>
           Users and merchants may request deletion of eligible personal
           information by contacting us. Where required by a connected platform,
-          including SHOPLINE, we will process valid customer or store data
-          deletion requests according to applicable requirements.
+          we will process valid customer or store data deletion requests according
+          to applicable requirements.
         </p>
 
-        <h2 style={styles.heading}>8. Cookies and Similar Technologies</h2>
+        <h2 style={styles.heading}>7. Cookies and Similar Technologies</h2>
 
         <p style={styles.text}>
           EngineeringDrawing.io may use cookies and similar technologies for
@@ -112,21 +98,21 @@ const Privacy = () => {
           functionality of the website.
         </p>
 
-        <h2 style={styles.heading}>9. Children's Privacy</h2>
+        <h2 style={styles.heading}>8. Children's Privacy</h2>
 
         <p style={styles.text}>
           Our services are intended for professional, commercial, and
           engineering use and are not directed toward children.
         </p>
 
-        <h2 style={styles.heading}>10. Changes to This Policy</h2>
+        <h2 style={styles.heading}>9. Changes to This Policy</h2>
 
         <p style={styles.text}>
           We may update this Privacy Policy from time to time. Changes will be
           published on this page with an updated revision date.
         </p>
 
-        <h2 style={styles.heading}>11. Contact Us</h2>
+        <h2 style={styles.heading}>10. Contact Us</h2>
 
         <p style={styles.text}>
           If you have questions, privacy requests, or data deletion requests,

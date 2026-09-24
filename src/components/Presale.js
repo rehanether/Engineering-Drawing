@@ -34,7 +34,6 @@ const TOKEN_ADDRESS   = tokenMeta.ADDRESS    || tokenMeta.address || FALLBACK_TO
 const TOKEN_ABI       = tokenMeta.ABI        || tokenMeta.abi;
 
 /* ========= MOBILE / WC ========= */
-const WC_PROJECT_ID = process.env.REACT_APP_WC_PROJECT_ID || ""; // optional
 const isMobileDevice = () =>
   typeof navigator !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
@@ -147,8 +146,6 @@ function walletErrorMessage(error, fallback = "The wallet request could not be c
 export default function Presale() {
   const [signer, setSigner]     = useState(null);
   const [account, setAccount]   = useState(null);
-  const [usingWC, setUsingWC]   = useState(false); // UI hint
-  const wcRef = useRef(null); // keep WalletConnect provider to cleanly disconnect
   const walletProviderRef = useRef(null);
   const walletListenersRef = useRef(null);
 
@@ -273,7 +270,6 @@ export default function Presale() {
       walletProviderRef.current = null;
       setSigner(null);
       setAccount(null);
-      setUsingWC(false);
       setNativeBalance(0n);
     };
 
@@ -283,170 +279,69 @@ export default function Presale() {
     walletListenersRef.current = { provider: eip1193, accountsChanged, chainChanged, disconnected };
   }, [clearWalletListeners, setActiveWalletAccount]);
 
-  /* ========= CONNECT (smart, mobile-aware) ========= */
-  const connect = useCallback(async (forceWalletConnect = false) => {
-    const useWalletConnect = forceWalletConnect === true;
+  /* ========= METAMASK CONNECTION ========= */
+  const connect = useCallback(async () => {
     setErr("");
-    setBusy("Connecting wallet...");
+    setBusy("Connecting MetaMask...");
     try {
-      // 1) Injected (desktop or MetaMask in-app)
-      const injectedProvider = getInjectedProvider();
-      if (injectedProvider && !useWalletConnect) {
-        // Mobile MetaMask must approve account access before it can reliably
-        // process a network-switch request. Reversing these calls can leave
-        // its "Connecting to MetaMask" sheet spinning indefinitely.
-        const accounts = await injectedProvider.request({ method: "eth_requestAccounts" });
-        await ensureChain(injectedProvider);
-        await setActiveWalletAccount(injectedProvider, accounts?.[0]);
-        bindWalletEvents(injectedProvider);
-        allowWalletReconnect();
-        setUsingWC(false);
-        return;
+      const provider = getInjectedProvider();
+      if (!provider?.isMetaMask) {
+        if (isMobileDevice()) { openMetaMaskDeepLink(); return; }
+        throw new Error("MetaMask was not detected. Install MetaMask to continue.");
       }
-
-      // 2) No injected provider — mobile path
-      // WalletConnect works on desktop (QR scan) and mobile (wallet app).
-      // It is deliberately available even when a browser wallet is not installed.
-      if (useWalletConnect || isMobileDevice()) {
-        if (WC_PROJECT_ID) {
-          // WalletConnect v2
-          const mod = await import("@walletconnect/ethereum-provider");
-          const EthereumProvider = mod?.default || mod?.EthereumProvider;
-          const wc = await EthereumProvider.init({
-            projectId: WC_PROJECT_ID,
-            chains: [CHAIN_ID_DEC],
-            rpcMap: { [CHAIN_ID_DEC]: READ_RPC },
-            showQrModal: true,
-            methods: [
-              "eth_accounts", "eth_requestAccounts", "eth_sendTransaction", "eth_signTransaction",
-              "eth_sign", "personal_sign", "eth_signTypedData", "eth_signTypedData_v3",
-              "eth_signTypedData_v4", "wallet_switchEthereumChain", "wallet_addEthereumChain",
-              "wallet_watchAsset"
-            ],
-            events: ["chainChanged", "accountsChanged", "disconnect"],
-            metadata: {
-              name: "Engineering Drawing — EDG Presale",
-              description: "EDG Presale on BSC Mainnet",
-              url: window.location.origin,
-              icons: ["https://www.engineeringdrawing.io/assets/edg_logo.svg"]
-            }
-          });
-          wcRef.current = wc;
-
-          setBusy("Open your wallet to continue...");
-          const accounts = await Promise.race([
-            wc.enable(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("WalletConnect timed out. Select a wallet and approve the connection, then try again.")), 60_000)),
-          ]);
-          await ensureChain(wc);
-          await setActiveWalletAccount(wc, accounts?.[0]);
-          bindWalletEvents(wc);
-          allowWalletReconnect();
-          setUsingWC(true);
-          return;
-        }
-
-        // 3) No WC Project ID → open MetaMask deep link
-        if (isMobileDevice()) {
-          openMetaMaskDeepLink();
-          return;
-        }
-      }
-
-      // 4) Fallback: tell user to install a wallet
-      throw new Error("No browser wallet detected. Install MetaMask or choose WalletConnect (QR).");
-    } catch (e) {
-      setErr(walletErrorMessage(e, "Wallet connection could not be completed."));
+      const accounts = await provider.request({ method: "eth_requestAccounts" });
+      await ensureChain(provider);
+      await setActiveWalletAccount(provider, accounts?.[0]);
+      bindWalletEvents(provider);
+      allowWalletReconnect();
+    } catch (error) {
+      setErr(walletErrorMessage(error, "MetaMask connection could not be completed."));
     } finally {
       setBusy("");
     }
   }, [allowWalletReconnect, bindWalletEvents, setActiveWalletAccount]);
 
   const disconnect = useCallback(async () => {
-    try {
-      if (wcRef.current?.disconnect) {
-        await wcRef.current.disconnect();
-      }
-    } catch {}
     setSigner(null);
     setAccount(null);
-    setUsingWC(false);
     setNativeBalance(0n);
-    wcRef.current = null;
     walletProviderRef.current = null;
     clearWalletListeners();
     blockWalletReconnect();
   }, [blockWalletReconnect, clearWalletListeners]);
 
-  // A refresh must not make an already-approved browser wallet look
-  // disconnected. eth_accounts is read-only: it restores only an account the
-  // user previously approved and never opens a wallet permission prompt.
   useEffect(() => {
     let active = true;
     const restoreApprovedWallet = async () => {
       if (wasManuallyDisconnected()) return;
       const provider = getInjectedProvider();
-      if (!provider?.request) return;
+      if (!provider?.isMetaMask) return;
       try {
-        const [accounts, chainId] = await Promise.all([
-          provider.request({ method: "eth_accounts" }),
-          provider.request({ method: "eth_chainId" }),
-        ]);
+        const [accounts, chainId] = await Promise.all([provider.request({ method: "eth_accounts" }), provider.request({ method: "eth_chainId" })]);
         if (!active || !accounts?.[0] || String(chainId).toLowerCase() !== CHAIN_ID_HEX) return;
         await setActiveWalletAccount(provider, accounts[0]);
-        if (!active) return;
-        bindWalletEvents(provider);
-        setUsingWC(false);
-      } catch {
-        // A wallet may be locked or unavailable during startup. The user can
-        // still connect normally from the button when it becomes available.
-      }
+        if (active) bindWalletEvents(provider);
+      } catch {}
     };
     restoreApprovedWallet();
     return () => { active = false; };
   }, [bindWalletEvents, setActiveWalletAccount]);
 
   const switchAccount = useCallback(async () => {
-    // WalletConnect account selection happens in the wallet app/QR flow.
-    if (usingWC) {
-      await disconnect();
-      await connect(true);
-      return;
-    }
-
     const provider = walletProviderRef.current || getInjectedProvider();
-    if (!provider?.request) {
-      setErr("Open your wallet and reconnect to choose the account you want to use.");
-      return;
-    }
-
-    setErr("");
-    setBusy("Choose the account you want to use in your wallet...");
+    if (!provider?.isMetaMask) return setErr("Open MetaMask to choose an account.");
+    setBusy("Choose an account in MetaMask...");
     try {
-      let accounts;
-      try {
-        await provider.request({
-          method: "wallet_requestPermissions",
-          params: [{ eth_accounts: {} }],
-        });
-      } catch (permissionError) {
-        if (!/unsupported|not supported|does not exist|-32601/i.test(String(permissionError?.message || permissionError))) {
-          throw permissionError;
-        }
-      }
-      accounts = await provider.request({ method: "eth_requestAccounts" });
-      if (!accounts?.[0]) throw new Error("No wallet account was selected.");
+      await provider.request({ method: "wallet_requestPermissions", params: [{ eth_accounts: {} }] });
+      const accounts = await provider.request({ method: "eth_requestAccounts" });
       await ensureChain(provider);
-      await setActiveWalletAccount(provider, accounts[0]);
+      await setActiveWalletAccount(provider, accounts?.[0]);
       bindWalletEvents(provider);
       setPurchaseComplete(null);
       setTxHash("");
-    } catch (error) {
-      setErr(walletErrorMessage(error, "Account switching could not be completed."));
-    } finally {
-      setBusy("");
-    }
-  }, [bindWalletEvents, connect, disconnect, setActiveWalletAccount, usingWC]);
+    } catch (error) { setErr(walletErrorMessage(error, "Account switching could not be completed.")); }
+    finally { setBusy(""); }
+  }, [bindWalletEvents, setActiveWalletAccount]);
 
   /* ========= LOAD (public RPC) ========= */
   const loadData = useCallback(async () => {
@@ -834,7 +729,7 @@ export default function Presale() {
                 Switch account
               </button>
               <button className={busy ? "btn disabled" : "btn secondary"} onClick={disconnect} disabled={Boolean(busy)}>
-                Disconnect{usingWC ? " (WC)" : ""}
+                Disconnect
               </button>
             </>
           ) : (
@@ -847,11 +742,6 @@ export default function Presale() {
                   Open MetaMask browser
                 </button>
               )}
-              {WC_PROJECT_ID && (
-                <button className="btn secondary" onClick={() => connect(true)} disabled={Boolean(busy)}>
-                  {mobile ? "Use WalletConnect" : "WalletConnect (QR)"}
-                </button>
-              )}
             </>
           )}
         </div>
@@ -860,7 +750,7 @@ export default function Presale() {
       {mobile && !account && (
         <div className="mobile-wallet-guide">
           <strong>Buying from your phone</strong>
-          <span>Use WalletConnect for MetaMask, Trust Wallet and other supported apps, or open the secure MetaMask in-app browser.</span>
+          <span>Open this page in the secure MetaMask mobile browser to connect and confirm the purchase.</span>
         </div>
       )}
 

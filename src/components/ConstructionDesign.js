@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { BrowserProvider, Contract, isAddress, parseUnits } from "ethers";
 import ConstructionModel3D from "./ConstructionModel3D";
+import { getBinancePayOrder, startBinanceCheckout } from "../services/binancePay";
 import "./ConstructionDesign.css";
 
 const EDG_CHAIN = process.env.REACT_APP_EDG_CHAIN_ID_HEX || "0x38";
@@ -16,10 +17,6 @@ const UPI_ENABLED = process.env.REACT_APP_ENABLE_UPI === "true";
 const EDG_ABI = ["function transfer(address to, uint256 value) returns (bool)"];
 const BRAND_EMAIL = "contact@engineeringdrawing.io";
 const BRAND_SITE = "https://engineeringdrawing.io";
-const configuredApiBase = process.env.REACT_APP_API_BASE_URL || "";
-const API_BASE = /^https?:\/\//.test(configuredApiBase) && !configuredApiBase.includes("localhost")
-  ? configuredApiBase.replace(/\/$/, "")
-  : "";
 const configuredConstructionPrice = process.env.REACT_APP_CONSTRUCTION_PRICE_USD || "";
 const CONSTRUCTION_PRICE_USD = /^\d+(?:\.\d{1,2})?$/.test(configuredConstructionPrice)
   ? configuredConstructionPrice
@@ -361,7 +358,7 @@ export default function ConstructionDesign() {
       setMessage("Payment was cancelled. Your design is still available to review.");
       return;
     }
-    if (paymentResult !== "return" || !orderId) return;
+    if (paymentResult !== "binance" || !orderId) return;
 
     setGenerated(true);
     setPaymentAsset("BNB");
@@ -372,17 +369,15 @@ export default function ConstructionDesign() {
     const checkStatus = async () => {
       attempts += 1;
       try {
-        const response = await fetch(`${API_BASE}/api/payments/nowpayments/status/${encodeURIComponent(orderId)}`);
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error || "Could not verify payment.");
-        if (result.status === "finished") {
-          localStorage.setItem("constructionPackagePaid", `NOWPAYMENTS-${orderId}`);
+        const result = await getBinancePayOrder('', orderId);
+        if (result.status === "PAID") {
+          localStorage.setItem("constructionPackagePaid", `BINANCE-${orderId}`);
           setStatus("paid");
           setMessage("BNB payment confirmed. Your complete package is unlocked.");
           window.history.replaceState({}, "", window.location.pathname);
           return;
         }
-        if (["failed", "expired", "refunded"].includes(result.status)) {
+        if (["ERROR", "CANCELED", "EXPIRED", "REFUNDED"].includes(result.status)) {
           setStatus("idle");
           setMessage(`Payment ${result.status}. Please create a new checkout.`);
           return;
@@ -465,24 +460,7 @@ export default function ConstructionDesign() {
     setMessage("");
     setStatus("pending");
     try {
-      const response = await fetch(`${API_BASE}/api/payments/nowpayments/invoice`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          design: {
-            width: design.width,
-            length: design.length,
-            floors: design.floors,
-            bedrooms: design.bedrooms,
-            facing: design.facing,
-            variant: design.variantName,
-          },
-        }),
-      });
-      const result = await response.json();
-      if (!response.ok || !result.invoiceUrl) throw new Error(result.error || "Could not create checkout.");
-      localStorage.setItem("constructionPaymentOrder", result.orderId);
-      window.location.assign(result.invoiceUrl);
+      await startBinanceCheckout('construction');
     } catch (error) {
       setStatus("idle");
       setMessage(error.message || "Could not open the secure BNB checkout.");
@@ -586,11 +564,12 @@ export default function ConstructionDesign() {
                 <button className={paymentAsset === "EDG" ? "active" : ""} onClick={() => setPaymentAsset("EDG")}><PaymentMark type="EDG" /><b>EDG</b><small>{EDG_PRICE} EDG</small></button>
                 {UPI_ENABLED && <button className={paymentAsset === "UPI" ? "active" : ""} onClick={() => setPaymentAsset("UPI")}><PaymentMark type="UPI" /><b>UPI</b><small>₹{UPI_PRICE}</small></button>}
               </div>
-              <div className="cd-price"><span>{paymentAsset === "UPI" ? "UPI design package" : paymentAsset === "EDG" ? "BSC Mainnet download" : "NOWPayments checkout"}</span><b>{paymentAsset === "BNB" ? `$${CONSTRUCTION_PRICE_USD}` : paymentAsset === "EDG" ? EDG_PRICE : `₹${UPI_PRICE}`} <small>{paymentAsset === "BNB" ? "USD" : paymentAsset === "EDG" ? "EDG" : ""}</small></b><em>{paymentAsset === "UPI" ? "Payment verification required" : paymentAsset === "EDG" ? "Real token transfer · verify before confirming" : "BNB on BSC · hosted secure checkout"}</em></div>
+              <div className="cd-price"><span>{paymentAsset === "UPI" ? "UPI design package" : paymentAsset === "EDG" ? "BSC Mainnet download" : "Binance Pay checkout"}</span><b>{paymentAsset === "BNB" ? `$${CONSTRUCTION_PRICE_USD}` : paymentAsset === "EDG" ? EDG_PRICE : `₹${UPI_PRICE}`} <small>{paymentAsset === "BNB" ? "USD" : paymentAsset === "EDG" ? "EDG" : ""}</small></b><em>{paymentAsset === "UPI" ? "Coming after verified UPI merchant setup" : paymentAsset === "EDG" ? "Real token transfer · verify before confirming" : "BNB, USDT or USDC · Binance-hosted checkout"}</em></div>
               {status === "paid" ? <button className="cd-download" onClick={download}>Download professional package ↓</button> : <button className="cd-download" disabled={status === "pending" || (paymentAsset === "EDG" && (!EDG_CONFIGURED || !BNB_CONFIGURED)) || (paymentAsset === "UPI" && !UPI_ID)} onClick={paymentAsset === "UPI" ? startUpiPayment : paymentAsset === "BNB" ? startBnbGateway : !account ? connect : payEdg}>{status === "pending" ? "Confirming transaction…" : paymentAsset === "UPI" ? UPI_ID ? `Pay ₹${UPI_PRICE} with UPI` : "Configure UPI ID" : paymentAsset === "EDG" && (!EDG_CONFIGURED || !BNB_CONFIGURED) ? "Configure EDG + admin wallet" : paymentAsset === "BNB" ? "Pay securely with BNB" : !account ? "Connect MetaMask" : `Pay ${EDG_PRICE} EDG & unlock`}</button>}
               {status === "upi_pending" && <div className="cd-upi-reference"><label>UPI TRANSACTION REFERENCE<input value={upiReference} onChange={(event) => setUpiReference(event.target.value)} placeholder="Enter UTR / transaction ID" /></label><button onClick={submitUpiReference}>{UPI_TEST_MODE ? "Verify test payment" : "Submit for verification"}</button></div>}
               {message && <p className="cd-message">{message}</p>}
               {paymentAsset === "EDG" && !BNB_CONFIGURED && <p className="cd-test-mode">A valid admin MetaMask address is required.</p>}
+              {!UPI_ENABLED && <p className="cd-test-mode">UPI is planned but remains disabled until merchant verification and webhook reconciliation are ready.</p>}
             </aside>
           </div>
           <p className="cd-disclaimer">Concept design only. Exact site conditions, structure, services and authority compliance require review by licensed local professionals.</p>

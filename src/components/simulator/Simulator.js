@@ -16,9 +16,8 @@ import "./MobileNarrow.css";
 import { useEdgLivePrice } from "../payments/useEdgLivePrice";
 import tokenMeta from "../../EnggDrawTokenABI.json";
 import { COMPONENT_DB } from "./simCore/thermo";
+import {getBinancePayOrder,startBinanceCheckout} from "../../services/binancePay";
 
-const configuredApiBase=process.env.REACT_APP_API_BASE_URL||"";
-const API_BASE=/^https?:\/\//.test(configuredApiBase)&&!configuredApiBase.includes("localhost")?configuredApiBase.replace(/\/$/,""):"";
 const EDG_CHAIN_ID="0x38";
 const EDG_AMOUNT="500";
 const EDG_ADMIN_WALLET="0xD9738cc53E9746a01cAC8EF01aF17fF4e88DD25F";
@@ -65,15 +64,15 @@ function InnerSim() {
   useEffect(()=>{
     const query=new URLSearchParams(window.location.search),result=query.get("payment"),order=query.get("order")||localStorage.getItem("processPaymentOrder");
     if(result==="cancelled"){setPaymentMessage("Payment cancelled; your simulation is preserved.");window.history.replaceState({},"",window.location.pathname);return undefined;}
-    if(result!=="return"||!order)return undefined;
+    if(result!=="binance"||!order)return undefined;
     setPaymentStatus("pending");setPaymentMessage("Checking secure payment status...");let stopped=false,attempts=0;
-    const check=async()=>{attempts+=1;try{const response=await fetch(`${API_BASE}/api/payments/nowpayments/status/${encodeURIComponent(order)}`),body=await response.json();if(!response.ok)throw new Error(body.error);if(body.status==="finished"){localStorage.setItem("processSimulationPaid",`NOWPAYMENTS-${order}`);setPaymentStatus("paid");setPaymentMessage("Payment confirmed. Case and stream exports are unlocked.");window.history.replaceState({},"",window.location.pathname);return;}if(["failed","expired","refunded"].includes(body.status)){setPaymentStatus("idle");setPaymentMessage(`Payment ${body.status}. Please create a new checkout.`);return;}if(!stopped&&attempts<30)window.setTimeout(check,4000);}catch(error){setPaymentStatus("idle");setPaymentMessage(error.message||"Could not verify payment.");}};
+    const check=async()=>{attempts+=1;try{const body=await getBinancePayOrder("",order),status=String(body.status||"").toUpperCase();if(status==="PAID"){localStorage.setItem("processSimulationPaid",`BINANCE-${order}`);setPaymentStatus("paid");setPaymentMessage("Payment confirmed. Case and stream exports are unlocked.");window.history.replaceState({},"",window.location.pathname);return;}if(["EXPIRED","CANCELED","CANCELLED","ERROR"].includes(status)){setPaymentStatus("idle");setPaymentMessage(`Payment ${status.toLowerCase()}. Please create a new checkout.`);return;}if(!stopped&&attempts<30)window.setTimeout(check,4000);}catch(error){setPaymentStatus("idle");setPaymentMessage(error.message||"Could not verify payment.");}};
     check();return()=>{stopped=true;};
   },[]);
 
   async function startBnb(){
     setPaymentStatus("pending");setPaymentMessage("");
-    try{const response=await fetch(`${API_BASE}/api/payments/nowpayments/process/invoice`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({design:{projectName:state.projectName,blockCount:state.nodes.length}})}),body=await response.json();if(!response.ok||!body.invoiceUrl)throw new Error(body.error||"Could not create checkout.");localStorage.setItem("processPaymentOrder",body.orderId);window.location.assign(body.invoiceUrl);}catch(error){setPaymentStatus("idle");setPaymentMessage(error.message||"Could not open secure BNB checkout.");}
+    try{await startBinanceCheckout("process");}catch(error){setPaymentStatus("idle");setPaymentMessage(error.message||"Could not open Binance Pay checkout.");}
   }
 
   async function payEdg(){

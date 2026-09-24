@@ -281,12 +281,12 @@ function createAiService(sql) {
   }
 
   function hashIp(ip) {
-    const salt = process.env.AI_USAGE_SALT || process.env.NOWPAYMENTS_IPN_SECRET || 'edg-local-development';
+    const salt = process.env.AI_USAGE_SALT || 'edg-local-development';
     return crypto.createHmac('sha256', salt).update(String(ip || 'unknown')).digest('hex');
   }
 
   function guestAccountId(clientId, ip) {
-    const salt = process.env.AI_USAGE_SALT || process.env.NOWPAYMENTS_IPN_SECRET || 'edg-local-development';
+    const salt = process.env.AI_USAGE_SALT || 'edg-local-development';
     const digest = crypto.createHmac('sha256', salt).update(`${String(clientId || '')}:${String(ip || 'unknown')}`).digest('hex');
     return `${digest.slice(0, 8)}-${digest.slice(8, 12)}-4${digest.slice(13, 16)}-a${digest.slice(17, 20)}-${digest.slice(20, 32)}`;
   }

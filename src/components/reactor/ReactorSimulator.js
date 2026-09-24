@@ -4,14 +4,12 @@ import ReactorPlant3D from "./ReactorPlant3D";
 import { calculateReactorDesign, REACTOR_PRESETS } from "./reactorDesignEngine";
 import { createReactorPackage } from "./downloadPackage";
 import tokenMeta from "../../EnggDrawTokenABI.json";
-import { openShoplineCheckout, shoplineCheckoutEnabled } from "../payments/shoplineCheckout";
+import { getBinancePayOrder, startBinanceCheckout } from "../../services/binancePay";
 import { useEdgLivePrice } from "../payments/useEdgLivePrice";
 import "./ReactorSimulator.css";
 import "../EngineeringProductParity.css";
 
 const DEFAULTS = { preset:"pharma", ...REACTOR_PRESETS.pharma, projectName:"Pharmaceutical API Intermediate Reactor", clientName:"Client / End User" };
-const configuredApiBase=process.env.REACT_APP_API_BASE_URL||"";
-const API_BASE=/^https?:\/\//.test(configuredApiBase)&&!configuredApiBase.includes("localhost")?configuredApiBase.replace(/\/$/,""):"";
 const EDG_CHAIN_ID="0x38";
 const EDG_AMOUNT="5000";
 const EDG_ADMIN_WALLET="0xD9738cc53E9746a01cAC8EF01aF17fF4e88DD25F";
@@ -28,7 +26,6 @@ export default function ReactorSimulator() {
   const [paymentStatus,setPaymentStatus]=useState(localStorage.getItem("reactorPackagePaid")?"paid":"idle");
   const [message,setMessage]=useState("");
   const edgLive=useEdgLivePrice(Number(EDG_AMOUNT));
-  const shoplineEnabled=shoplineCheckoutEnabled("reactor");
   const pfdRef=useRef(null);
   const design=useMemo(()=>calculateReactorDesign(inputs),[inputs]);
   const activePreset=REACTOR_PRESETS[inputs.preset]||REACTOR_PRESETS.pharma;
@@ -39,15 +36,15 @@ export default function ReactorSimulator() {
     const query=new URLSearchParams(window.location.search),result=query.get("payment");
     const order=query.get("order")||localStorage.getItem("reactorPaymentOrder");
     if(result==="cancelled"){setMessage("Payment cancelled; your simulation is preserved.");window.history.replaceState({},"",window.location.pathname);return undefined;}
-    if(result!=="return"||!order)return undefined;
+    if(result!=="binance"||!order)return undefined;
     setPaymentStatus("pending");setMessage("Checking secure payment status...");
     let stopped=false,attempts=0;
-    const check=async()=>{attempts+=1;try{const response=await fetch(`${API_BASE}/api/payments/nowpayments/status/${encodeURIComponent(order)}`);const body=await response.json();if(!response.ok)throw new Error(body.error);if(body.status==="finished"){localStorage.setItem("reactorPackagePaid",`NOWPAYMENTS-${order}`);setPaymentStatus("paid");setMessage("Payment confirmed. Professional reactor BEP unlocked.");window.history.replaceState({},"",window.location.pathname);return;}if(["failed","expired","refunded"].includes(body.status)){setPaymentStatus("idle");setMessage(`Payment ${body.status}.`);return;}if(!stopped&&attempts<30)window.setTimeout(check,4000);}catch(error){setPaymentStatus("idle");setMessage(error.message||"Could not verify payment.");}};
+    const check=async()=>{attempts+=1;try{const body=await getBinancePayOrder('',order);if(body.status==="PAID"){localStorage.setItem("reactorPackagePaid",`BINANCE-${order}`);setPaymentStatus("paid");setMessage("Payment confirmed. Professional reactor BEP unlocked.");window.history.replaceState({},"",window.location.pathname);return;}if(["ERROR","CANCELED","EXPIRED","REFUNDED"].includes(body.status)){setPaymentStatus("idle");setMessage(`Payment ${body.status.toLowerCase()}.`);return;}if(!stopped&&attempts<30)window.setTimeout(check,4000);}catch(error){setPaymentStatus("idle");setMessage(error.message||"Could not verify payment.");}};
     check();return()=>{stopped=true;};
   },[]);
   async function startBnb(){
     setPaymentStatus("pending");setMessage("");
-    try{const response=await fetch(`${API_BASE}/api/payments/nowpayments/reactor/invoice`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({design:{capacity:design.inputs.capacity,type:design.inputs.type}})});const body=await response.json();if(!response.ok||!body.invoiceUrl)throw new Error(body.error||"Could not create checkout.");localStorage.setItem("reactorPaymentOrder",body.orderId);window.location.assign(body.invoiceUrl);}catch(error){setPaymentStatus("idle");setMessage(error.message||"Could not open checkout.");}
+    try{await startBinanceCheckout('reactor');}catch(error){setPaymentStatus("idle");setMessage(error.message||"Could not open Binance Pay.");}
   }
   async function payEdg(){
     if(!window.ethereum){setMessage("Install MetaMask or open this page in its wallet browser.");return;}
@@ -61,10 +58,6 @@ export default function ReactorSimulator() {
       if(gas===0n)throw new Error("Add a small amount of BNB to this wallet for the network fee.");
       setMessage("Confirm the transfer of 5,000 EDG in your wallet...");const tx=await token.transfer(EDG_ADMIN_WALLET,amount);setMessage("Transaction submitted. Waiting for BNB Smart Chain confirmation...");const receipt=await tx.wait();if(!receipt||receipt.status!==1)throw new Error("The EDG transfer was not confirmed.");localStorage.setItem("reactorPackagePaid",`EDG-${tx.hash}`);setPaymentStatus("paid");setMessage("5,000 EDG confirmed. Professional reactor BEP unlocked.");
     }catch(error){setPaymentStatus("idle");const providerMessage=error.shortMessage||error.reason||error.message||"";setMessage(/insufficient funds/i.test(providerMessage)?"Insufficient BNB for the network fee. Add a small amount of BNB and try again.":/execution reverted|unknown custom error|call exception/i.test(providerMessage)?"The EDG contract rejected this transfer. Confirm the wallet holds at least 5,000 transferable EDG.":providerMessage||"Payment cancelled.");}
-  }
-  function payShopline(){
-    setMessage("");
-    try{openShoplineCheckout("reactor");}catch(error){setMessage(error.message);}
   }
   function downloadPackage(){
     const svg=pfdRef.current?new XMLSerializer().serializeToString(pfdRef.current):"<svg xmlns='http://www.w3.org/2000/svg'/>";
@@ -151,7 +144,7 @@ export default function ReactorSimulator() {
         <aside className="rx-side">
           <small>PROFESSIONAL BEP · SECURE CHECKOUT</small><h3>Complete reactor engineering package</h3>
           <ul className="rx-deliverables"><li>Controlled client document cover</li><li>Branded design report</li><li>Professional calculation workbook</li><li>Budgetary CAPEX estimate</li><li>Detailed preliminary P&amp;ID</li><li>Feed, component and heat balance</li><li>Equipment, line and valve schedules</li><li>Editable concept 3D model (.OBJ)</li><li>Design data JSON</li></ul>
-          <ReactorCheckout payment={payment} setPayment={setPayment} status={paymentStatus} message={message} startBnb={startBnb} payEdg={payEdg} payShopline={payShopline} shoplineEnabled={shoplineEnabled} download={downloadPackage} edgLive={edgLive}/>
+          <ReactorCheckout payment={payment} setPayment={setPayment} status={paymentStatus} message={message} startBnb={startBnb} payEdg={payEdg} download={downloadPackage} edgLive={edgLive}/>
           <p className="rx-private-note">Detailed operating overview, feed and component balance, equipment schedule, line list and valve basis are included only in the purchased BEP.</p>
           <p>Reaction kinetics, calorimetry, relief sizing, HAZOP, hazardous-area classification and code design require project-specific professional review.</p>
         </aside>
@@ -159,7 +152,7 @@ export default function ReactorSimulator() {
       <section className="rx-advisor"><div><span>AI ENGINEERING REVIEW</span><b>Calculation-led design check</b></div><ul>{design.advisor.slice(0,3).map(item=><li key={item}>{item}</li>)}</ul></section>
       <div className="rx-warnings">{design.warnings.length?design.warnings.map(w=><p key={w}>⚠ {w}</p>):<p className="ok">✓ Inputs are within the preliminary simulator envelope. Confirm laboratory and safety data before vendor issue.</p>}</div>
     </section>
-    <section className="rx-seo-content"><span className="rx-kicker">INDUSTRIAL REACTOR ENGINEERING</span><h2>From feed basis to a review-ready reactor concept</h2><p>The simulator connects reaction basis, preliminary kinetics, vessel geometry, agitation, heat-transfer duty, utilities and plant arrangement in one auditable workflow for early project decisions.</p><div><article><h3>Batch, CSTR and PFR workflows</h3><p>Compare reactor type, working capacity and conversion while keeping feed, duty and equipment results synchronized.</p></article><article><h3>Live PFD and 3D arrangement</h3><p>Review tagged equipment, process flow, utility connections, vessel proportions and access spacing before purchasing the controlled package.</p></article><article><h3>Professional BEP deliverables</h3><p>Download branded schedules and editable engineering files after secure BNB, EDG or configured SHOPLINE hosted checkout.</p></article></div><p className="rx-seo-note">Preliminary engineering only. Final reaction kinetics, pressure-relief, mechanical design, materials, controls, HAZOP and statutory compliance require project-specific data and authorized professional review.</p></section>
+    <section className="rx-seo-content"><span className="rx-kicker">INDUSTRIAL REACTOR ENGINEERING</span><h2>From feed basis to a review-ready reactor concept</h2><p>The simulator connects reaction basis, preliminary kinetics, vessel geometry, agitation, heat-transfer duty, utilities and plant arrangement in one auditable workflow for early project decisions.</p><div><article><h3>Batch, CSTR and PFR workflows</h3><p>Compare reactor type, working capacity and conversion while keeping feed, duty and equipment results synchronized.</p></article><article><h3>Live PFD and 3D arrangement</h3><p>Review tagged equipment, process flow, utility connections, vessel proportions and access spacing before purchasing the controlled package.</p></article><article><h3>Professional BEP deliverables</h3><p>Download branded schedules and editable engineering files after MetaMask EDG settlement or Binance Pay checkout.</p></article></div><p className="rx-seo-note">Preliminary engineering only. Final reaction kinetics, pressure-relief, mechanical design, materials, controls, HAZOP and statutory compliance require project-specific data and authorized professional review.</p></section>
   </main>;
 }
 
@@ -168,10 +161,10 @@ function Field({label,value,unit,min,max,step,onChange}) {
   return <label>{label}<small>{min}–{max}</small><span><input type="number" value={value} min={min} max={max} step={step} onChange={e=>onChange(e.target.value)} onBlur={blur}/>{unit}</span></label>;
 }
 function Kpi({name,value,unit}) { return <span><small>{name}</small><b>{value}</b><em>{unit}</em></span>; }
-function ReactorCheckout({payment,setPayment,status,message,startBnb,payEdg,payShopline,shoplineEnabled,download,edgLive}) {
-  const action=payment==="EDG"?payEdg:payment==="SHOPLINE"?payShopline:startBnb;
-  const cta=payment==="EDG"?"Pay 5,000 EDG with MetaMask":payment==="SHOPLINE"?"Continue to SHOPLINE checkout":"Pay securely with BNB · $100";
-  return <section className="rx-checkout"><div className={`rx-payment-choice ${shoplineEnabled?"has-shopline":""}`}><button className={payment==="BNB"?"active":""} onClick={()=>setPayment("BNB")}><i className="bnb">◆</i><b>BNB</b><em>Live $100 equivalent</em></button><button className={payment==="EDG"?"active":""} onClick={()=>setPayment("EDG")}><i className="edg"><img src="/assets/edg_logo.svg" alt="EDG"/></i><b>EDG</b><em>5,000 EDG</em></button>{shoplineEnabled&&<button className={payment==="SHOPLINE"?"active":""} onClick={()=>setPayment("SHOPLINE")}><i className="shopline">S</i><b>Card</b><em>SHOPLINE hosted</em></button>}</div><div className="rx-price"><span>Production reactor BEP</span><b>{payment==="EDG"?"5,000 EDG":"$100"} <small>{payment==="EDG"?`≈ ${edgLive.bnb.toFixed(3)} BNB`:"USD equivalent"}</small></b><em>{payment==="EDG"?`Live BNB Chain price${edgLive.stage?` · presale stage ${edgLive.stage}`:""} · refreshed every 60 seconds`:payment==="SHOPLINE"?"Secure hosted card checkout by SHOPLINE":"BNB on BSC · NOWPayments secure checkout"}</em></div>{status==="paid"?<button onClick={download}>Download professional BEP ↓</button>:<button disabled={status==="pending"} onClick={action}>{status==="pending"?"Confirming payment...":cta}</button>}{message&&<p className="rx-payment-message">{message}</p>}</section>;
+function ReactorCheckout({payment,setPayment,status,message,startBnb,payEdg,download,edgLive}) {
+  const action=payment==="EDG"?payEdg:startBnb;
+  const cta=payment==="EDG"?"Pay 5,000 EDG with MetaMask":"Pay with Binance Pay · $100";
+  return <section className="rx-checkout"><div className="rx-payment-choice"><button className={payment==="BNB"?"active":""} onClick={()=>setPayment("BNB")}><i className="bnb">◆</i><b>Binance Pay</b><em>BNB, USDT or USDC</em></button><button className={payment==="EDG"?"active":""} onClick={()=>setPayment("EDG")}><i className="edg"><img src="/assets/edg_logo.svg" alt="EDG"/></i><b>MetaMask</b><em>5,000 EDG</em></button></div><div className="rx-price"><span>Production reactor BEP</span><b>{payment==="EDG"?"5,000 EDG":"$100"} <small>{payment==="EDG"?`≈ ${edgLive.bnb.toFixed(3)} BNB`:"USD equivalent"}</small></b><em>{payment==="EDG"?`Live BNB Chain price${edgLive.stage?` · presale stage ${edgLive.stage}`:""} · refreshed every 60 seconds`:"Binance-hosted checkout with signed order verification"}</em></div>{status==="paid"?<button onClick={download}>Download professional BEP ↓</button>:<button disabled={status==="pending"} onClick={action}>{status==="pending"?"Confirming payment...":cta}</button>}{message&&<p className="rx-payment-message">{message}</p>}</section>;
 }
 
 function ReactorPfd({design,pfdRef}) {

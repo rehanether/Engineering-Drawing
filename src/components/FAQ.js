@@ -22,16 +22,6 @@ const faqData = [
       "No. EngineeringDrawing.io is an engineering assistance platform. Results should be reviewed and validated by qualified engineers before being used for fabrication, construction, procurement, operation, safety decisions, or regulatory submissions.",
   },
   {
-    question: "What is the SHOPLINE integration?",
-    answer:
-      "EngineeringDrawing AI can integrate with SHOPLINE to provide engineering and technical capabilities for merchants, manufacturers, and industrial businesses using the SHOPLINE ecosystem.",
-  },
-  {
-    question: "What information does the SHOPLINE app access?",
-    answer:
-      "The app only requests information and permissions required to provide its enabled features. The exact permissions are shown to merchants during the SHOPLINE authorization and installation process.",
-  },
-  {
     question: "Do you sell customer information?",
     answer:
       "No. EngineeringDrawing.io does not sell personal customer information.",

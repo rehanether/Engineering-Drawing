@@ -1,27 +1,23 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BrowserProvider, Contract, JsonRpcProvider, formatEther, formatUnits } from 'ethers';
 import tokenMeta from '../EnggDrawTokenABI.json';
 import { clearPendingReferralCode, pendingReferralCode, useEdgAuth } from '../auth/EdgAuth';
 import { bootstrapProfile, createWalletChallenge, verifyWallet } from '../services/profile';
 import { buyAiCredits } from '../services/edgAi';
-import { createBinancePayOrder, getBinancePayConfig } from '../services/binancePay';
 import './Profile.css';
 
 const BSC_RPC = process.env.REACT_APP_BSC_RPC || 'https://bsc-dataseed.bnbchain.org';
-const WC_PROJECT_ID = process.env.REACT_APP_WC_PROJECT_ID || '';
 const EDG_PAY_URL = process.env.REACT_APP_EDG_PAY_URL || 'https://edgpay.engineeringdrawing.io';
 const EDG_ADMIN_EMAILS = new Set((process.env.REACT_APP_EDG_ADMIN_EMAILS || 'admin@engineeringdrawing.io,rehan.uddin2121@gmail.com').split(',').map((email) => email.trim().toLowerCase()).filter(Boolean));
 const TOKEN_ABI = ['function balanceOf(address) view returns (uint256)', 'function decimals() view returns (uint8)'];
 const emptyBalances = { bnb: '—', edg: '—' };
 
-function injectedWallet(kind) {
+function injectedWallet() {
   const ethereum = window.ethereum;
   if (!ethereum) return null;
   const providers = ethereum.providers || [ethereum];
-  if (kind === 'metamask') return providers.find((provider) => provider.isMetaMask) || null;
-  if (kind === 'coinbase') return providers.find((provider) => provider.isCoinbaseWallet) || null;
-  return providers[0] || ethereum;
+  return providers.find((provider) => provider.isMetaMask) || (ethereum.isMetaMask ? ethereum : null);
 }
 
 function shortAddress(address) {
@@ -46,12 +42,6 @@ export default function Profile() {
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [walletMethod, setWalletMethod] = useState('metamask');
-  const [binanceAmount, setBinanceAmount] = useState('100');
-  const [binanceCurrency, setBinanceCurrency] = useState('INR');
-  const [binanceConfig, setBinanceConfig] = useState(null);
-  const [binanceLoading, setBinanceLoading] = useState(false);
-  const walletConnectRef = useRef(null);
 
   const loadProfile = useCallback(async () => {
     if (!isSignedIn) return;
@@ -105,35 +95,9 @@ export default function Profile() {
     setLoading(true);
     setStatus('Choose your wallet account, then sign the verification message. No payment will be made.');
     try {
-      let eip1193;
-      if (walletMethod === 'walletconnect') {
-        if (!WC_PROJECT_ID) throw new Error('WalletConnect is not configured for this environment.');
-        const module = await import('@walletconnect/ethereum-provider');
-        const EthereumProvider = module.default || module.EthereumProvider;
-        eip1193 = await EthereumProvider.init({
-          projectId: WC_PROJECT_ID,
-          chains: [56],
-          rpcMap: { 56: BSC_RPC },
-          showQrModal: true,
-          methods: ['eth_accounts', 'eth_requestAccounts', 'personal_sign'],
-          events: ['accountsChanged', 'chainChanged', 'disconnect'],
-          metadata: {
-            name: 'Engineering Drawing',
-            description: 'Securely link a wallet to your Engineering Drawing account',
-            url: window.location.origin,
-            icons: [`${window.location.origin}/assets/edg_logo.svg`],
-          },
-        });
-        walletConnectRef.current = eip1193;
-        await eip1193.enable();
-      } else {
-        eip1193 = injectedWallet(walletMethod);
-        if (!eip1193) {
-          const walletName = walletMethod === 'coinbase' ? 'Coinbase Wallet' : 'MetaMask';
-          throw new Error(`${walletName} was not detected. Install it or choose WalletConnect.`);
-        }
-        await eip1193.request({ method: 'eth_requestAccounts' });
-      }
+      const eip1193 = injectedWallet();
+      if (!eip1193) throw new Error('MetaMask was not detected. Install MetaMask or open this page in its mobile browser.');
+      await eip1193.request({ method: 'eth_requestAccounts' });
       const provider = new BrowserProvider(eip1193);
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
@@ -179,7 +143,7 @@ export default function Profile() {
   if (!auth.isLoaded) return <main className="profile-page"><p className="profile-loading">Loading secure account…</p></main>;
   if (!auth.isSignedIn) return (
     <main className="profile-page">
-      <section className="profile-auth-card"><span>ENGINEERING DRAWING ACCOUNT</span><h1>One secure account for every engineering project</h1><p>Sign in to save designs, manage AI credits and connect your Web3 wallet.</p><div className="account-steps"><div><b>1</b><span><strong>Sign in securely</strong><small>Google, GitHub or verified email</small></span></div><div><b>2</b><span><strong>Connect Web3 wallet</strong><small>MetaMask, Coinbase or WalletConnect</small></span></div></div><div className="signin-actions"><button className="google-signin" onClick={continueWithGoogle}><AuthProviderIcon provider="google"/><span>Continue with Google</span></button><button className="other-signin" onClick={auth.signIn}><AuthProviderIcon provider="github"/><span>GitHub or email sign-in</span></button></div>{status && <div className="profile-status" role="status">{status}</div>}<small>Authentication is handled by Clerk. Engineering Drawing never receives your Google password. Wallet connection is a separate, non-custodial step.</small></section>
+      <section className="profile-auth-card"><span>ENGINEERING DRAWING ACCOUNT</span><h1>One secure account for every engineering project</h1><p>Sign in to save designs, manage AI credits and connect MetaMask.</p><div className="account-steps"><div><b>1</b><span><strong>Sign in securely</strong><small>Google, GitHub or verified email</small></span></div><div><b>2</b><span><strong>Connect MetaMask</strong><small>Non-custodial BNB Smart Chain wallet</small></span></div></div><div className="signin-actions"><button className="google-signin" onClick={continueWithGoogle}><AuthProviderIcon provider="google"/><span>Continue with Google</span></button><button className="other-signin" onClick={auth.signIn}><AuthProviderIcon provider="github"/><span>GitHub or email sign-in</span></button></div>{status && <div className="profile-status" role="status">{status}</div>}<small>Authentication is handled by Clerk. Engineering Drawing never receives your Google password. MetaMask connection is a separate, non-custodial step.</small></section>
     </main>
   );
 
@@ -188,19 +152,6 @@ export default function Profile() {
   const isEdgAdmin = auth.user?.publicMetadata?.role === 'admin' || EDG_ADMIN_EMAILS.has(accountEmail);
   const rewards = data?.campaign?.rewards || {};
   const policy = data?.campaign?.policy || {};
-  const loadBinanceConfig = async () => {
-    try { setBinanceConfig(await getBinancePayConfig(await auth.getToken())); }
-    catch (error) { setStatus(error.message); }
-  };
-  const openBinancePay = async () => {
-    setBinanceLoading(true);
-    setStatus('Creating a signed Binance Pay order…');
-    try {
-      const order = await createBinancePayOrder(await auth.getToken(), Number(binanceAmount), binanceCurrency);
-      localStorage.setItem('edg-binance-payment-order', order.merchantTradeNo);
-      window.location.assign(order.checkoutUrl || order.universalUrl);
-    } catch (error) { setStatus(error.message); setBinanceLoading(false); }
-  };
   return (
     <main className="profile-page">
       <section className="profile-hero">
@@ -222,12 +173,10 @@ export default function Profile() {
         <article><span>Linked wallet</span><strong className="wallet-address">{shortAddress(data?.profile?.walletAddress)}</strong><small>{data?.profile?.walletAddress ? 'Ownership verified' : 'No wallet connected'}</small></article>
       </section>
       <section className="wallet-connect-card" aria-labelledby="wallet-connect-title">
-        <div className="wallet-connect-copy"><span>CONNECTED WALLETS</span><h2 id="wallet-connect-title">Connect your Web3 wallet</h2><p>Choose a provider and sign a short-lived verification message. This does not send a transaction, approve token spending, or give Engineering Drawing access to your funds.</p></div>
+        <div className="wallet-connect-copy"><span>METAMASK WALLET</span><h2 id="wallet-connect-title">Connect MetaMask</h2><p>Sign a short-lived verification message. This does not send a transaction, approve token spending, or give Engineering Drawing access to your funds.</p></div>
         <div className="wallet-provider-panel">
           <div className="wallet-provider-grid" role="group" aria-label="Wallet provider">
-            <button className={walletMethod === 'metamask' ? 'active' : ''} onClick={() => setWalletMethod('metamask')}><b>MetaMask</b><small>Browser or mobile app</small></button>
-            <button className={walletMethod === 'coinbase' ? 'active' : ''} onClick={() => setWalletMethod('coinbase')}><b>Coinbase Wallet</b><small>Extension wallet</small></button>
-            <button className={walletMethod === 'walletconnect' ? 'active' : ''} onClick={() => setWalletMethod('walletconnect')}><b>WalletConnect</b><small>QR · Trust Wallet & more</small></button>
+            <button className="active"><b>MetaMask</b><small>Browser extension or mobile app</small></button>
           </div>
           <button className="wallet-connect-action" onClick={linkWallet} disabled={loading}>{loading ? 'Waiting for wallet…' : data?.profile?.walletAddress ? 'Verify and replace linked wallet' : 'Connect and verify wallet'}</button>
           <div className="wallet-safety"><span>✓ No private keys</span><span>✓ No token approval</span><span>✓ BNB Smart Chain balances</span></div>
@@ -241,10 +190,6 @@ export default function Profile() {
           <article><span>EDG PAY</span><h3>Wallet & payments</h3><p>Private transaction lab for scan, fiat conversion and EDG settlement testing.</p><a href={EDG_PAY_URL} target="_blank" rel="noopener noreferrer">Open or install EDG Pay →</a></article>
         </div>
         <div className="edg-test-flow"><b>Private transaction loop</b><span>Connect wallet</span><i>→</i><span>Review EDG</span><i>→</i><span>Sign in wallet</span><i>→</i><span>Confirm on BSC</span></div>
-        <div className="binance-pay-console">
-          <div><span>BINANCE PAY</span><h3>Production gateway readiness</h3><p>Signed orders, verified webhooks, persistent reconciliation and Binance-hosted checkout. Restricted to authorized administrators until launch approval.</p></div>
-          {!binanceConfig ? <button onClick={loadBinanceConfig}>Check gateway</button> : <div className="binance-pay-controls"><label>Amount<input type="number" min="1" step="0.01" value={binanceAmount} onChange={(event) => setBinanceAmount(event.target.value)}/></label><label>Currency<select value={binanceCurrency} onChange={(event) => setBinanceCurrency(event.target.value)}>{binanceConfig.currencies.map((currency) => <option key={currency}>{currency}</option>)}</select></label><button disabled={!binanceConfig.enabled || binanceLoading} onClick={openBinancePay}>{binanceLoading ? 'Opening…' : binanceConfig.enabled ? 'Pay with Binance Pay' : 'Merchant keys not configured'}</button></div>}
-        </div>
       </section>}
       <section className="profile-columns">
         <article className="referral-card">

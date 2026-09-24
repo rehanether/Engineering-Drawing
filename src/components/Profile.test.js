@@ -34,9 +34,7 @@ test('offers the protected wallet and profile controls for a signed-in user', as
   render(<MemoryRouter><Profile /></MemoryRouter>);
 
   expect(await screen.findByRole('button', { name: 'Connect and verify wallet' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'MetaMask Browser or mobile app' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Coinbase Wallet Extension wallet' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'WalletConnect QR · Trust Wallet & more' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'MetaMask Browser extension or mobile app' })).toBeInTheDocument();
   expect(screen.getByText('✓ No private keys')).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Manage sign-in methods' }));

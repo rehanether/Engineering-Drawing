@@ -6,11 +6,8 @@ import { calculateEvaporatorDesign } from "./evaporator/designEngine";
 import { createBepPackage } from "./evaporator/downloadPackage";
 import presaleMeta from "../EDGPresaleABI.json";
 import tokenMeta from "../EnggDrawTokenABI.json";
+import { getBinancePayOrder, startBinanceCheckout } from "../services/binancePay";
 
-const configuredApiBase = process.env.REACT_APP_API_BASE_URL || "";
-const API_BASE = /^https?:\/\//.test(configuredApiBase) && !configuredApiBase.includes("localhost")
-  ? configuredApiBase.replace(/\/$/, "")
-  : "";
 const EVAPORATOR_PRICE_USD = "100";
 const EDG_CHAIN_ID = "0x38";
 const EDG_AMOUNT = "5000";
@@ -76,7 +73,7 @@ export default function Evaporators() {
       window.history.replaceState({}, "", window.location.pathname);
       return undefined;
     }
-    if (paymentResult !== "return" || !orderId) return undefined;
+    if (paymentResult !== "binance" || !orderId) return undefined;
 
     setPayment("BNB");
     setPaymentStatus("pending");
@@ -86,18 +83,16 @@ export default function Evaporators() {
     const checkStatus = async () => {
       attempts += 1;
       try {
-        const response = await fetch(`${API_BASE}/api/payments/nowpayments/status/${encodeURIComponent(orderId)}`);
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error || "Could not verify payment.");
-        if (result.status === "finished") {
-          localStorage.setItem("evaporatorPackagePaid", `NOWPAYMENTS-${orderId}`);
+        const result = await getBinancePayOrder('', orderId);
+        if (result.status === "PAID") {
+          localStorage.setItem("evaporatorPackagePaid", `BINANCE-${orderId}`);
           localStorage.removeItem("evaporatorPaymentOrder");
           setPaymentStatus("paid");
           setMessage("BNB payment confirmed. Your professional BEP is unlocked.");
           window.history.replaceState({}, "", window.location.pathname);
           return;
         }
-        if (["failed", "expired", "refunded"].includes(result.status)) {
+        if (["ERROR", "CANCELED", "EXPIRED", "REFUNDED"].includes(result.status)) {
           setPaymentStatus("idle");
           setMessage(`Payment ${result.status}. Please create a new checkout.`);
           return;
@@ -155,21 +150,7 @@ export default function Evaporators() {
     setMessage("");
     setPaymentStatus("pending");
     try {
-      const response = await fetch(`${API_BASE}/api/payments/nowpayments/evaporator/invoice`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          design: {
-            capacityTph: Number(design.inputs.capacityTph),
-            feedConc: Number(design.inputs.feedConc),
-            finalConc: Number(design.inputs.finalConc),
-          },
-        }),
-      });
-      const result = await response.json();
-      if (!response.ok || !result.invoiceUrl) throw new Error(result.error || "Could not create checkout.");
-      localStorage.setItem("evaporatorPaymentOrder", result.orderId);
-      window.location.assign(result.invoiceUrl);
+      await startBinanceCheckout('evaporator');
     } catch (error) {
       setPaymentStatus("idle");
       setMessage(error.message || "Could not open the secure BNB checkout.");
@@ -331,10 +312,10 @@ export default function Evaporators() {
                 <button className={payment === "BNB" ? "active" : ""} onClick={() => setPayment("BNB")}><i className="bnb">◆</i><b>BNB</b><small>Live $100 equivalent</small></button>
                 <button className={payment === "EDG" ? "active" : ""} onClick={() => { setPayment("EDG"); setMessage(""); }}><i className="edg"><img src="/assets/edg_logo.svg" alt="EDG" /></i><b>EDG</b><small>5,000 EDG</small></button>
               </div>
-              <div className="ev-price"><span>Production BEP</span><b>{payment === "EDG" ? `${Number(EDG_AMOUNT).toLocaleString()} EDG` : `$${EVAPORATOR_PRICE_USD}`} <small>{payment === "EDG" ? `≈ ${edgLive.bnb.toFixed(3)} BNB` : "USD equivalent"}</small></b><em>{payment === "BNB" ? "BNB on BSC · NOWPayments secure checkout" : `Live BNB Chain price${edgLive.stage ? ` · presale stage ${edgLive.stage}` : ""} · refreshed every 60 seconds`}</em></div>
+              <div className="ev-price"><span>Production BEP</span><b>{payment === "EDG" ? `${Number(EDG_AMOUNT).toLocaleString()} EDG` : `$${EVAPORATOR_PRICE_USD}`} <small>{payment === "EDG" ? `≈ ${edgLive.bnb.toFixed(3)} BNB` : "USD equivalent"}</small></b><em>{payment === "BNB" ? "BNB, USDT or USDC · Binance Pay" : `Live BNB Chain price${edgLive.stage ? ` · presale stage ${edgLive.stage}` : ""} · refreshed every 60 seconds`}</em></div>
               {paymentStatus === "paid"
                 ? <button className="ev-download" onClick={downloadLocalPackage}>Download professional BEP ↓</button>
-                : <button className="ev-download" disabled={paymentStatus === "pending"} onClick={payment === "EDG" ? payWithEdg : startBnbGateway}>{paymentStatus === "pending" ? "Confirming payment..." : payment === "EDG" ? "Pay 5,000 EDG with MetaMask" : "Pay securely with BNB · $100"}</button>}
+                : <button className="ev-download" disabled={paymentStatus === "pending"} onClick={payment === "EDG" ? payWithEdg : startBnbGateway}>{paymentStatus === "pending" ? "Confirming payment..." : payment === "EDG" ? "Pay 5,000 EDG with MetaMask" : "Pay with Binance Pay · $100"}</button>}
               {message && <p className="ev-message">{message}</p>}
               <p className="ev-private-note">Detailed operating overview, stream balance, equipment schedule, line list and valve list are included only in the purchased BEP.</p>
               <p className="ev-safety">Preliminary design only. Final mechanical, process safety, structural, electrical and statutory design requires licensed professional review.</p>
