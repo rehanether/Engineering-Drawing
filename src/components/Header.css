@@ -86,22 +86,6 @@
   text-decoration: underline;
 }
 
-.site-header nav .edg-pay-nav {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  border-radius: 10px;
-  background: #eef5ff;
-  color: #1559c5;
-  text-decoration: none;
-}
-
-.site-header nav .edg-pay-nav img {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-}
-
 .site-header a:focus-visible,
 .site-header button:focus-visible {
   outline: 3px solid #2563eb;
