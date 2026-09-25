@@ -5,7 +5,7 @@ import tokenMeta from '../EnggDrawTokenABI.json';
 import { clearPendingReferralCode, pendingReferralCode, useEdgAuth } from '../auth/EdgAuth';
 import { bootstrapProfile, createWalletChallenge, verifyWallet } from '../services/profile';
 import { buyAiCredits } from '../services/edgAi';
-import { connectEdgWallet, restoreEdgWallet, savedEdgWalletAccount, watchEdgWallet } from '../services/edgWallet';
+import { connectEdgWallet, disconnectEdgWallet, restoreEdgWallet, savedEdgWalletAccount, switchEdgWallet, watchEdgWallet } from '../services/edgWallet';
 import './Profile.css';
 
 const BSC_RPC = process.env.REACT_APP_BSC_RPC || 'https://bsc-dataseed.bnbchain.org';
@@ -121,6 +121,33 @@ export default function Profile() {
     }
   };
 
+  const switchWallet = async () => {
+    setLoading(true);
+    setStatus('Choose another MetaMask account. No transaction will be made.');
+    try {
+      const { account } = await switchEdgWallet();
+      setActiveWallet(account.toLowerCase());
+      setStatus('Wallet account switched across the EDG ecosystem. Verify ownership below if this is a new profile wallet.');
+    } catch (error) {
+      setStatus(error.shortMessage || error.message || 'Wallet switching was cancelled.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const disconnectWallet = async () => {
+    setLoading(true);
+    try {
+      await disconnectEdgWallet();
+      setActiveWallet('');
+      setStatus('MetaMask disconnected from this EDG ecosystem session. Your previously verified wallet remains safely linked to your account.');
+    } catch (error) {
+      setStatus(error.shortMessage || error.message || 'Could not disconnect MetaMask.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const addAiFunds = async () => {
     setCheckoutLoading(true);
     setStatus('Opening secure crypto checkout…');
@@ -159,7 +186,6 @@ export default function Profile() {
   const isEdgAdmin = auth.user?.publicMetadata?.role === 'admin' || EDG_ADMIN_EMAILS.has(accountEmail);
   const rewards = data?.campaign?.rewards || {};
   const policy = data?.campaign?.policy || {};
-  const displayedWallet = activeWallet || data?.profile?.walletAddress;
   const walletVerified = Boolean(activeWallet && data?.profile?.walletAddress && activeWallet.toLowerCase() === data.profile.walletAddress.toLowerCase());
   return (
     <main className="profile-page">
@@ -179,7 +205,7 @@ export default function Profile() {
         <article><span>AI credits</span><strong>{data?.entitlement?.paidCredits ?? '—'}</strong><small>{data?.entitlement ? `${data.entitlement.freeRemaining} free uses remaining today` : 'Loading ledger'}</small><button onClick={addAiFunds} disabled={checkoutLoading || !auth.accountId}>{checkoutLoading ? 'Opening…' : 'Add 100 credits · $19'}</button></article>
         <article><span>BNB balance</span><strong>{balances.bnb}</strong><small>BNB Smart Chain</small></article>
         <article><span>EDG balance</span><strong>{balances.edg}</strong><small>Official EDG contract</small></article>
-        <article><span>Active wallet</span><strong className="wallet-address">{shortAddress(displayedWallet)}</strong><small>{walletVerified || (!activeWallet && data?.profile?.walletAddress) ? 'Connected and ownership verified' : activeWallet ? 'Connected · verification available below' : 'No wallet connected'}</small></article>
+        <article><span>Active wallet</span><strong className="wallet-address">{shortAddress(activeWallet)}</strong><small>{walletVerified ? 'Connected and ownership verified' : activeWallet ? 'Connected · verification available below' : data?.profile?.walletAddress ? `Disconnected · verified ${shortAddress(data.profile.walletAddress)}` : 'No wallet connected'}</small></article>
       </section>
       <section className="wallet-connect-card" aria-labelledby="wallet-connect-title">
         <div className="wallet-connect-copy"><span>METAMASK WALLET</span><h2 id="wallet-connect-title">{activeWallet ? `Connected · ${shortAddress(activeWallet)}` : 'Connect MetaMask'}</h2><p>{activeWallet ? 'This wallet was restored from your EDG ecosystem session. Verify ownership once to link it securely to your profile.' : 'Sign a short-lived verification message. This does not send a transaction, approve token spending, or give Engineering Drawing access to your funds.'}</p></div>
@@ -187,7 +213,11 @@ export default function Profile() {
           <div className="wallet-provider-grid" role="group" aria-label="Wallet provider">
             <button className="active"><b>MetaMask</b><small>Browser extension or mobile app</small></button>
           </div>
-          <button className="wallet-connect-action" onClick={linkWallet} disabled={loading}>{loading ? 'Waiting for MetaMask…' : walletVerified ? 'Connected and verified' : activeWallet ? 'Verify wallet ownership' : data?.profile?.walletAddress ? 'Connect or replace linked wallet' : 'Connect and verify wallet'}</button>
+          <div className="wallet-session-actions">
+            <button className="wallet-connect-action" onClick={linkWallet} disabled={loading || walletVerified}>{loading ? 'Waiting for MetaMask…' : walletVerified ? 'Connected and verified' : activeWallet ? 'Verify wallet ownership' : data?.profile?.walletAddress ? 'Connect verified wallet' : 'Connect and verify wallet'}</button>
+            {activeWallet && <button className="wallet-switch-action" onClick={switchWallet} disabled={loading}>Switch account</button>}
+            {activeWallet && <button className="wallet-disconnect-action" onClick={disconnectWallet} disabled={loading}>Disconnect</button>}
+          </div>
           <div className="wallet-safety"><span>✓ No private keys</span><span>✓ No token approval</span><span>✓ BNB Smart Chain balances</span></div>
         </div>
       </section>

@@ -10,7 +10,7 @@ import {
 } from "ethers";
 import presaleMeta from "../EDGPresaleABI.json";
 import tokenMeta   from "../EnggDrawTokenABI.json";
-import { connectEdgWallet, restoreEdgWallet } from "../services/edgWallet";
+import { connectEdgWallet, disconnectEdgWallet, restoreEdgWallet } from "../services/edgWallet";
 import "./Presale.css";
 
 /* ========= NETWORK ========= */
@@ -279,12 +279,15 @@ export default function Presale() {
   }, [allowWalletReconnect, bindWalletEvents, setActiveWalletAccount]);
 
   const disconnect = useCallback(async () => {
-    setSigner(null);
-    setAccount(null);
-    setNativeBalance(0n);
-    walletProviderRef.current = null;
-    clearWalletListeners();
-    blockWalletReconnect();
+    try { await disconnectEdgWallet(); }
+    finally {
+      setSigner(null);
+      setAccount(null);
+      setNativeBalance(0n);
+      walletProviderRef.current = null;
+      clearWalletListeners();
+      blockWalletReconnect();
+    }
   }, [blockWalletReconnect, clearWalletListeners]);
 
   useEffect(() => {

@@ -3,7 +3,7 @@ export const EDG_BSC_RPC = process.env.REACT_APP_BSC_RPC || 'https://bsc-datasee
 
 let clientPromise;
 let connectedProvider;
-let providerEventsBound = false;
+const boundProviders = new WeakSet();
 const ACCOUNT_KEY = 'edg-ecosystem-wallet-address';
 const ACCOUNT_EVENT = 'edg:wallet-account';
 
@@ -18,10 +18,13 @@ function publishAccount(account = '') {
 }
 
 function bindProviderEvents(provider) {
-  if (providerEventsBound || typeof provider?.on !== 'function') return;
-  providerEventsBound = true;
+  if (!provider || boundProviders.has(provider) || typeof provider.on !== 'function') return;
+  boundProviders.add(provider);
   provider.on('accountsChanged', (accounts) => publishAccount(accounts?.[0] || ''));
   provider.on('disconnect', () => publishAccount(''));
+  provider.on('chainChanged', (chainId) => {
+    if (String(chainId).toLowerCase() !== EDG_CHAIN_ID) publishAccount('');
+  });
 }
 
 async function createClient() {
@@ -82,12 +85,43 @@ export async function connectEdgWallet() {
 export async function restoreEdgWallet() {
   const client = await getEdgWalletClient();
   const provider = connectedProvider || client.getProvider();
-  const accounts = await provider.request({ method: 'eth_accounts' });
-  if (!accounts?.[0]) return null;
+  if (!provider) { publishAccount(''); return null; }
+  const [accounts, chainId] = await Promise.all([
+    provider.request({ method: 'eth_accounts' }),
+    provider.request({ method: 'eth_chainId' }),
+  ]);
+  if (!accounts?.[0] || String(chainId).toLowerCase() !== EDG_CHAIN_ID) {
+    publishAccount('');
+    return null;
+  }
   connectedProvider = provider;
   bindProviderEvents(provider);
   publishAccount(accounts[0]);
   return { client, provider, accounts, account: accounts[0] };
+}
+
+export async function switchEdgWallet() {
+  const client = await getEdgWalletClient();
+  const provider = connectedProvider || client.getProvider();
+  if (!provider) return connectEdgWallet();
+  connectedProvider = provider;
+  bindProviderEvents(provider);
+  await provider.request({ method: 'wallet_requestPermissions', params: [{ eth_accounts: {} }] });
+  const accounts = await provider.request({ method: 'eth_requestAccounts' });
+  await ensureEdgChain(provider);
+  if (!accounts?.[0]) throw new Error('No MetaMask account was selected.');
+  publishAccount(accounts[0]);
+  try { window.sessionStorage.removeItem('edg-presale-manually-disconnected'); } catch {}
+  return { client, provider, accounts, account: accounts[0] };
+}
+
+export async function disconnectEdgWallet() {
+  const client = await getEdgWalletClient();
+  try { await client.disconnect(); } finally {
+    connectedProvider = undefined;
+    publishAccount('');
+    try { window.sessionStorage.setItem('edg-presale-manually-disconnected', 'true'); } catch {}
+  }
 }
 
 export function currentEdgWalletProvider() {
