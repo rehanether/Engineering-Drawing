@@ -264,7 +264,7 @@ export default function Presale() {
   /* ========= METAMASK CONNECTION ========= */
   const connect = useCallback(async () => {
     setErr("");
-    setBusy("Connecting MetaMask...");
+    setBusy("Approve in MetaMask — returning here automatically...");
     try {
       const { provider, accounts } = await connectEdgWallet();
       await ensureChain(provider);

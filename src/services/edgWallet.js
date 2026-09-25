@@ -9,7 +9,7 @@ async function createClient() {
   return createEVMClient({
     dapp: {
       name: 'EDG Ecosystem',
-      url: window.location.origin,
+      url: window.location.href,
       iconUrl: `${window.location.origin}/assets/edg-192.png`,
     },
     api: { supportedNetworks: { [EDG_CHAIN_ID]: EDG_BSC_RPC } },
