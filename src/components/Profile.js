@@ -5,7 +5,7 @@ import tokenMeta from '../EnggDrawTokenABI.json';
 import { clearPendingReferralCode, pendingReferralCode, useEdgAuth } from '../auth/EdgAuth';
 import { bootstrapProfile, createWalletChallenge, verifyWallet } from '../services/profile';
 import { buyAiCredits } from '../services/edgAi';
-import { connectEdgWallet } from '../services/edgWallet';
+import { connectEdgWallet, restoreEdgWallet, savedEdgWalletAccount, watchEdgWallet } from '../services/edgWallet';
 import './Profile.css';
 
 const BSC_RPC = process.env.REACT_APP_BSC_RPC || 'https://bsc-dataseed.bnbchain.org';
@@ -36,6 +36,20 @@ export default function Profile() {
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [activeWallet, setActiveWallet] = useState(savedEdgWalletAccount);
+
+  useEffect(() => {
+    let active = true;
+    const stopWatching = watchEdgWallet((account) => {
+      if (active) setActiveWallet(account);
+    });
+    restoreEdgWallet()
+      .then((wallet) => {
+        if (active && wallet?.account) setActiveWallet(wallet.account.toLowerCase());
+      })
+      .catch(() => {});
+    return () => { active = false; stopWatching(); };
+  }, []);
 
   const loadProfile = useCallback(async () => {
     if (!isSignedIn) return;
@@ -56,7 +70,7 @@ export default function Profile() {
   useEffect(() => { loadProfile(); }, [loadProfile]);
 
   useEffect(() => {
-    const address = data?.profile?.walletAddress;
+    const address = activeWallet || data?.profile?.walletAddress;
     if (!address) { setBalances(emptyBalances); return undefined; }
     let active = true;
     (async () => {
@@ -70,7 +84,7 @@ export default function Profile() {
       }
     })();
     return () => { active = false; };
-  }, [data?.profile?.walletAddress]);
+  }, [activeWallet, data?.profile?.walletAddress]);
 
   const referralLink = useMemo(() => data?.profile?.referralCode ? `${window.location.origin}/?ref=${data.profile.referralCode}` : '', [data?.profile?.referralCode]);
 
@@ -89,7 +103,8 @@ export default function Profile() {
     setLoading(true);
     setStatus('Choose your wallet account, then sign the verification message. No payment will be made.');
     try {
-      const { provider: eip1193 } = await connectEdgWallet();
+      const { provider: eip1193, account } = await connectEdgWallet();
+      setActiveWallet(account);
       const provider = new BrowserProvider(eip1193);
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
@@ -144,6 +159,8 @@ export default function Profile() {
   const isEdgAdmin = auth.user?.publicMetadata?.role === 'admin' || EDG_ADMIN_EMAILS.has(accountEmail);
   const rewards = data?.campaign?.rewards || {};
   const policy = data?.campaign?.policy || {};
+  const displayedWallet = activeWallet || data?.profile?.walletAddress;
+  const walletVerified = Boolean(activeWallet && data?.profile?.walletAddress && activeWallet.toLowerCase() === data.profile.walletAddress.toLowerCase());
   return (
     <main className="profile-page">
       <section className="profile-hero">
@@ -162,15 +179,15 @@ export default function Profile() {
         <article><span>AI credits</span><strong>{data?.entitlement?.paidCredits ?? '—'}</strong><small>{data?.entitlement ? `${data.entitlement.freeRemaining} free uses remaining today` : 'Loading ledger'}</small><button onClick={addAiFunds} disabled={checkoutLoading || !auth.accountId}>{checkoutLoading ? 'Opening…' : 'Add 100 credits · $19'}</button></article>
         <article><span>BNB balance</span><strong>{balances.bnb}</strong><small>BNB Smart Chain</small></article>
         <article><span>EDG balance</span><strong>{balances.edg}</strong><small>Official EDG contract</small></article>
-        <article><span>Linked wallet</span><strong className="wallet-address">{shortAddress(data?.profile?.walletAddress)}</strong><small>{data?.profile?.walletAddress ? 'Ownership verified' : 'No wallet connected'}</small></article>
+        <article><span>Active wallet</span><strong className="wallet-address">{shortAddress(displayedWallet)}</strong><small>{walletVerified || (!activeWallet && data?.profile?.walletAddress) ? 'Connected and ownership verified' : activeWallet ? 'Connected · verification available below' : 'No wallet connected'}</small></article>
       </section>
       <section className="wallet-connect-card" aria-labelledby="wallet-connect-title">
-        <div className="wallet-connect-copy"><span>METAMASK WALLET</span><h2 id="wallet-connect-title">Connect MetaMask</h2><p>Sign a short-lived verification message. This does not send a transaction, approve token spending, or give Engineering Drawing access to your funds.</p></div>
+        <div className="wallet-connect-copy"><span>METAMASK WALLET</span><h2 id="wallet-connect-title">{activeWallet ? `Connected · ${shortAddress(activeWallet)}` : 'Connect MetaMask'}</h2><p>{activeWallet ? 'This wallet was restored from your EDG ecosystem session. Verify ownership once to link it securely to your profile.' : 'Sign a short-lived verification message. This does not send a transaction, approve token spending, or give Engineering Drawing access to your funds.'}</p></div>
         <div className="wallet-provider-panel">
           <div className="wallet-provider-grid" role="group" aria-label="Wallet provider">
             <button className="active"><b>MetaMask</b><small>Browser extension or mobile app</small></button>
           </div>
-          <button className="wallet-connect-action" onClick={linkWallet} disabled={loading}>{loading ? 'Waiting for wallet…' : data?.profile?.walletAddress ? 'Verify and replace linked wallet' : 'Connect and verify wallet'}</button>
+          <button className="wallet-connect-action" onClick={linkWallet} disabled={loading}>{loading ? 'Waiting for MetaMask…' : walletVerified ? 'Connected and verified' : activeWallet ? 'Verify wallet ownership' : data?.profile?.walletAddress ? 'Connect or replace linked wallet' : 'Connect and verify wallet'}</button>
           <div className="wallet-safety"><span>✓ No private keys</span><span>✓ No token approval</span><span>✓ BNB Smart Chain balances</span></div>
         </div>
       </section>
