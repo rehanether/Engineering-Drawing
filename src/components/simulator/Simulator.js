@@ -18,6 +18,8 @@ import tokenMeta from "../../EnggDrawTokenABI.json";
 import { COMPONENT_DB } from "./simCore/thermo";
 import {getBinancePayOrder,startBinanceCheckout} from "../../services/binancePay";
 import {connectEdgWallet} from "../../services/edgWallet";
+import {verifyEdgPurchase} from "../../services/commerce";
+import useProductEntitlement from "../../services/useProductEntitlement";
 
 const EDG_AMOUNT="500";
 const EDG_ADMIN_WALLET="0xD9738cc53E9746a01cAC8EF01aF17fF4e88DD25F";
@@ -37,8 +39,9 @@ function EngineeringWorkspace({tab,state,dispatch}){
 function InnerSim() {
   const { state, dispatch } = useSim();
   const [payment,setPayment]=useState("BNB");
-  const [paymentStatus,setPaymentStatus]=useState(localStorage.getItem("processSimulationPaid")?"paid":"idle");
+  const [paymentStatus,setPaymentStatus]=useState("idle");
   const [paymentMessage,setPaymentMessage]=useState("");
+  useProductEntitlement("process",setPaymentStatus);
   const edgLive=useEdgLivePrice(Number(EDG_AMOUNT));
   const [workspaceTab,setWorkspaceTab]=useState("Flowsheet");
   const [runState,setRunState]=useState("Solved");
@@ -63,9 +66,9 @@ function InnerSim() {
   useEffect(()=>{
     const query=new URLSearchParams(window.location.search),result=query.get("payment"),order=query.get("order")||localStorage.getItem("processPaymentOrder");
     if(result==="cancelled"){setPaymentMessage("Payment cancelled; your simulation is preserved.");window.history.replaceState({},"",window.location.pathname);return undefined;}
-    if(result!=="binance"||!order)return undefined;
+    if(!order)return undefined;
     setPaymentStatus("pending");setPaymentMessage("Checking secure payment status...");let stopped=false,attempts=0;
-    const check=async()=>{attempts+=1;try{const body=await getBinancePayOrder("",order),status=String(body.status||"").toUpperCase();if(status==="PAID"){localStorage.setItem("processSimulationPaid",`BINANCE-${order}`);setPaymentStatus("paid");setPaymentMessage("Payment confirmed. Case and stream exports are unlocked.");window.history.replaceState({},"",window.location.pathname);return;}if(["EXPIRED","CANCELED","CANCELLED","ERROR"].includes(status)){setPaymentStatus("idle");setPaymentMessage(`Payment ${status.toLowerCase()}. Please create a new checkout.`);return;}if(!stopped&&attempts<30)window.setTimeout(check,4000);}catch(error){setPaymentStatus("idle");setPaymentMessage(error.message||"Could not verify payment.");}};
+    const check=async()=>{attempts+=1;try{const body=await getBinancePayOrder("",order),status=String(body.status||"").toUpperCase();if(status==="PAID"){setPaymentStatus("paid");setPaymentMessage("Payment confirmed. Case and stream exports are unlocked.");window.history.replaceState({},"",window.location.pathname);return;}if(["EXPIRED","CANCELED","CANCELLED","ERROR"].includes(status)){setPaymentStatus("idle");setPaymentMessage(`Payment ${status.toLowerCase()}. Please create a new checkout.`);return;}if(!stopped&&attempts<30)window.setTimeout(check,4000);}catch(error){setPaymentStatus("idle");setPaymentMessage(error.message||"Could not verify payment.");}};
     check();return()=>{stopped=true;};
   },[]);
 
@@ -76,7 +79,7 @@ function InnerSim() {
 
   async function payEdg(){
     setPaymentStatus("pending");setPaymentMessage("");
-    try{const {provider:eip1193}=await connectEdgWallet(),provider=new BrowserProvider(eip1193),signer=await provider.getSigner(),buyer=await signer.getAddress(),token=new Contract(tokenMeta.ADDRESS,EDG_ABI,signer),amount=parseUnits(EDG_AMOUNT,18);const [balance,gas]=await Promise.all([token.balanceOf(buyer),provider.getBalance(buyer)]);if(balance<amount){const available=Number(formatUnits(balance,18)).toLocaleString(undefined,{maximumFractionDigits:2});throw new Error(`Insufficient EDG balance. This wallet has ${available} EDG.`);}if(gas===0n)throw new Error("Add a small amount of BNB for the network fee.");setPaymentMessage(`Confirm ${Number(EDG_AMOUNT).toLocaleString()} EDG in your wallet...`);const transaction=await token.transfer(EDG_ADMIN_WALLET,amount),receipt=await transaction.wait();if(!receipt||receipt.status!==1)throw new Error("The EDG transfer was not confirmed.");localStorage.setItem("processSimulationPaid",`EDG-${transaction.hash}`);setPaymentStatus("paid");setPaymentMessage("EDG payment confirmed. Case and stream exports are unlocked.");
+    try{const {provider:eip1193}=await connectEdgWallet(),provider=new BrowserProvider(eip1193),signer=await provider.getSigner(),buyer=await signer.getAddress(),token=new Contract(tokenMeta.ADDRESS,EDG_ABI,signer),amount=parseUnits(EDG_AMOUNT,18);const [balance,gas]=await Promise.all([token.balanceOf(buyer),provider.getBalance(buyer)]);if(balance<amount){const available=Number(formatUnits(balance,18)).toLocaleString(undefined,{maximumFractionDigits:2});throw new Error(`Insufficient EDG balance. This wallet has ${available} EDG.`);}if(gas===0n)throw new Error("Add a small amount of BNB for the network fee.");setPaymentMessage(`Confirm ${Number(EDG_AMOUNT).toLocaleString()} EDG in your wallet...`);const transaction=await token.transfer(EDG_ADMIN_WALLET,amount),receipt=await transaction.wait();if(!receipt||receipt.status!==1)throw new Error("The EDG transfer was not confirmed.");await verifyEdgPurchase("process",transaction.hash,buyer);setPaymentStatus("paid");setPaymentMessage("EDG payment verified and recorded from BNB Smart Chain. Case and stream exports are unlocked.");
     }catch(error){setPaymentStatus("idle");setPaymentMessage(error.shortMessage||error.reason||error.message||"Payment cancelled.");}
   }
 

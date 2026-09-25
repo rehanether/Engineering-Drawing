@@ -6,12 +6,13 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const crypto = require('crypto');
-const { verifyMessage, isAddress, getAddress } = require('ethers');
+const { verifyMessage, isAddress, getAddress, JsonRpcProvider } = require('ethers');
 const { neon } = require('@neondatabase/serverless');
 const { clerkMiddleware, getAuth } = require('@clerk/express');
 const { createAiService, AI_MODEL } = require('./ai-service');
 const { createProfileService } = require('./profile-service');
 const binancePay = require('./binance-pay');
+const { PRODUCTS: COMMERCE_PRODUCTS, createCommerceService } = require('./commerce-service');
 const { allowedOriginsFor, privateApiResponse, apiMethodGuard, jsonRequestGuard, apiErrorHandler } = require('./security-policy');
 
 dotenv.config();
@@ -31,6 +32,9 @@ const PROCESS_PACKAGE_USD = Number(process.env.PROCESS_PACKAGE_USD || 10);
 const AI_CREDITS_PRICE_USD = Number(process.env.AI_CREDITS_PRICE_USD || 19);
 const AI_CREDITS_PER_PACK = Number(process.env.AI_CREDITS_PER_PACK || 100);
 const BINANCE_PAY_CURRENCIES = process.env.BINANCE_PAY_CURRENCIES || 'BNB,USDT,USDC';
+const EDG_TOKEN_ADDRESS = process.env.EDG_TOKEN_ADDRESS || '0xa90Cc0137FDA4285Eaa6da0f7a5118A1432b2a76';
+const EDG_PAYMENT_RECEIVER = process.env.EDG_PAYMENT_RECEIVER || '0xD9738cc53E9746a01cAC8EF01aF17fF4e88DD25F';
+const BSC_RPC_URL = process.env.BSC_RPC_URL || 'https://bsc-dataseed.bnbchain.org';
 const BINANCE_PRODUCTS = Object.freeze({
   construction: { amount: CONSTRUCTION_PACKAGE_USD, description: 'Construction design professional package', returnPath: '/construction-design' },
   evaporator: { amount: EVAPORATOR_PACKAGE_USD, description: 'MVR evaporator basic engineering package', returnPath: '/evaporators' },
@@ -42,6 +46,12 @@ const BINANCE_PRODUCTS = Object.freeze({
 const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
 const sql = databaseUrl ? neon(databaseUrl) : null;
 const aiService = createAiService(sql);
+const commerceService = createCommerceService(sql, {
+  provider: new JsonRpcProvider(BSC_RPC_URL, 56, { staticNetwork: true }),
+  tokenAddress: EDG_TOKEN_ADDRESS,
+  receiverAddress: EDG_PAYMENT_RECEIVER,
+  minConfirmations: Math.max(1, Number(process.env.EDG_PAYMENT_CONFIRMATIONS || 1)),
+});
 const clerkPublishableKey = process.env.CLERK_PUBLISHABLE_KEY || process.env.REACT_APP_CLERK_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || '';
 const clerkProductionReady = process.env.VERCEL_ENV !== 'production' || clerkPublishableKey.startsWith('pk_live_');
 const clerkConfigured = Boolean(clerkPublishableKey && process.env.CLERK_SECRET_KEY && clerkProductionReady);
@@ -99,7 +109,7 @@ app.use(
   })
 );
 app.use(
-  ['/api/generate-image', '/api/payments/binance-pay/orders'],
+  ['/api/generate-image', '/api/payments/binance-pay/orders', '/api/commerce/edg/verify'],
   rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 8,
@@ -386,6 +396,74 @@ async function finalizeAiCreditPayment(merchantTradeNo, paymentId) {
   }
 }
 
+async function recordBinanceProductPurchase(stored, current) {
+  if (!stored?.product_id || stored.product_id === 'ai-credits') return;
+  await commerceService.recordProviderPurchase({
+    productId: stored.product_id,
+    providerName: 'binance_pay',
+    reference: `binance:${stored.merchant_trade_no}`,
+    amount: current.totalFee || stored.crypto_amount || stored.fiat_amount,
+    currency: current.currency || stored.crypto_currency || stored.fiat_currency,
+    clerkUserId: stored.clerk_user_id === 'guest' ? '' : stored.clerk_user_id,
+  });
+}
+
+function isPaidStatus(status) {
+  return ['PAID', 'SUCCESS', 'PAY_SUCCESS'].includes(String(status || '').toUpperCase());
+}
+
+app.get('/api/commerce/products', (_req, res) => {
+  const products = Object.entries(COMMERCE_PRODUCTS).map(([id, product]) => ({
+    id, title: product.title, edgAmount: product.edgAmount, chainId: 56,
+    tokenAddress: EDG_TOKEN_ADDRESS, receiverAddress: EDG_PAYMENT_RECEIVER,
+  }));
+  res.set('Cache-Control', 'public, max-age=300');
+  return res.json({ products, explorer: 'https://bscscan.com/tx/' });
+});
+
+app.post('/api/commerce/edg/verify', async (req, res) => {
+  const productId = String(req.body?.productId || '').trim().toLowerCase();
+  const txHash = String(req.body?.txHash || '').trim();
+  const walletAddress = String(req.body?.walletAddress || '').trim();
+  if (!COMMERCE_PRODUCTS[productId]) return res.status(400).json({ error: 'Unknown product.' });
+  if (!/^0x[0-9a-f]{64}$/i.test(txHash) || !isAddress(walletAddress)) return res.status(400).json({ error: 'A valid transaction hash and wallet are required.' });
+  try {
+    const purchase = await commerceService.verifyEdgPurchase({
+      productId, txHash, expectedWallet: walletAddress, clerkUserId: authenticatedUserId(req),
+    });
+    res.set('Cache-Control', 'no-store');
+    return res.status(201).json({
+      confirmed: true, productId, txHash: purchase.provider_reference,
+      walletAddress: purchase.payer_address, verifiedAt: purchase.verified_at,
+      explorerUrl: `https://bscscan.com/tx/${purchase.provider_reference}`,
+    });
+  } catch (error) {
+    const clientError = /valid|required|unknown|already|confirmations|sender|does not contain/i.test(error.message || '');
+    if (!clientError) console.error('EDG purchase verification error:', error.message);
+    return res.status(clientError ? 400 : 503).json({ error: clientError ? error.message : 'Purchase verification is temporarily unavailable.' });
+  }
+});
+
+app.get('/api/commerce/entitlements/:productId', async (req, res) => {
+  const productId = String(req.params.productId || '').trim().toLowerCase();
+  const walletAddress = String(req.query.wallet || '').trim();
+  if (!COMMERCE_PRODUCTS[productId]) return res.status(404).json({ error: 'Unknown product.' });
+  if (walletAddress && !isAddress(walletAddress)) return res.status(400).json({ error: 'Invalid wallet.' });
+  try {
+    const purchase = await commerceService.entitlement({ productId, walletAddress, clerkUserId: authenticatedUserId(req) });
+    res.set('Cache-Control', 'no-store');
+    return res.json({ entitled: Boolean(purchase), productId, transaction: purchase ? {
+      provider: purchase.payment_provider,
+      reference: purchase.provider_reference,
+      explorerUrl: purchase.payment_provider === 'edg_bsc' ? `https://bscscan.com/tx/${purchase.provider_reference}` : null,
+      verifiedAt: purchase.verified_at,
+    } : null });
+  } catch (error) {
+    console.error('Commerce entitlement error:', error.message);
+    return res.status(503).json({ error: 'Purchase entitlement is temporarily unavailable.' });
+  }
+});
+
 app.get('/api/payments/binance-pay/config', async (req, res) => {
   return res.json({
     enabled: binancePay.isConfigured(),
@@ -451,10 +529,11 @@ app.get('/api/payments/binance-pay/orders/:merchantTradeNo', async (req, res) =>
         merchantTradeNo, userId: stored.clerk_user_id, fiatAmount: stored.fiat_amount, fiatCurrency: stored.fiat_currency,
         productId: stored.product_id, ...current, checkoutUrl: stored.checkout_url,
       });
-      if (stored.product_id === 'ai-credits' && current.status === 'PAID') {
+      if (stored.product_id === 'ai-credits' && isPaidStatus(current.status)) {
         await finalizeAiCreditPayment(merchantTradeNo, current.transactionId);
       }
-      return res.json({ merchantTradeNo, status: current.status, currency: current.currency, totalFee: current.totalFee, transactionId: current.transactionId || null });
+      if (isPaidStatus(current.status)) await recordBinanceProductPurchase(stored, current);
+      return res.json({ merchantTradeNo, status: isPaidStatus(current.status) ? 'PAID' : current.status, currency: current.currency, totalFee: current.totalFee, transactionId: current.transactionId || null });
     }
     return res.json({ merchantTradeNo, status: stored.status, currency: stored.crypto_currency, totalFee: stored.crypto_amount, transactionId: stored.transaction_id });
   } catch (error) {
@@ -475,18 +554,19 @@ app.post('/api/payments/binance-pay/webhook', async (req, res) => {
     const merchantTradeNo = String(data.merchantTradeNo || '');
     const stored = await getBinanceOrder(merchantTradeNo);
     if (!stored) return res.status(404).json({ returnCode: 'FAIL', returnMessage: 'Order not found' });
+    const notificationStatus = String(req.body?.bizStatus || data.status || '').toUpperCase();
+    const paid = isPaidStatus(notificationStatus);
     await saveBinanceOrder({
       merchantTradeNo, userId: stored.clerk_user_id, fiatAmount: stored.fiat_amount, fiatCurrency: stored.fiat_currency,
       prepayId: data.prepayId || stored.prepay_id, currency: data.currency || stored.crypto_currency,
-      totalFee: data.totalFee || stored.crypto_amount, status: String(req.body?.bizStatus || data.status || stored.status).toUpperCase(),
+      totalFee: data.totalFee || stored.crypto_amount, status: paid ? 'PAID' : String(req.body?.bizStatus || data.status || stored.status).toUpperCase(),
       transactionId: data.transactionId || stored.transaction_id, checkoutUrl: stored.checkout_url, productId: stored.product_id,
     });
-    const notificationStatus = String(req.body?.bizStatus || data.status || '').toUpperCase();
-    const paid = ['PAID', 'SUCCESS', 'PAY_SUCCESS'].includes(notificationStatus);
     if (stored.product_id === 'ai-credits') {
       if (paid) await finalizeAiCreditPayment(merchantTradeNo, data.transactionId);
       else await aiService.applyPayment({ orderId: merchantTradeNo, paymentId: data.transactionId || null, status: 'waiting' });
     }
+    if (paid) await recordBinanceProductPurchase(stored, data);
     return res.status(200).json({ returnCode: 'SUCCESS', returnMessage: null });
   } catch (error) {
     console.error('Binance Pay webhook storage error:', error.message);

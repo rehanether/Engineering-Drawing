@@ -8,6 +8,8 @@ import presaleMeta from "../EDGPresaleABI.json";
 import tokenMeta from "../EnggDrawTokenABI.json";
 import { getBinancePayOrder, startBinanceCheckout } from "../services/binancePay";
 import { connectEdgWallet } from "../services/edgWallet";
+import { verifyEdgPurchase } from "../services/commerce";
+import useProductEntitlement from "../services/useProductEntitlement";
 
 const EVAPORATOR_PRICE_USD = "100";
 const EDG_AMOUNT = "5000";
@@ -32,11 +34,10 @@ export default function Evaporators() {
   const [generated, setGenerated] = useState(true);
   const [tab, setTab] = useState("pfd");
   const [payment, setPayment] = useState("BNB");
-  const [paymentStatus, setPaymentStatus] = useState(
-    localStorage.getItem("evaporatorPackagePaid") ? "paid" : "idle"
-  );
+  const [paymentStatus, setPaymentStatus] = useState("idle");
   const [edgLive, setEdgLive] = useState({ loading: true, bnb: 0.18, stage: null });
   const [message, setMessage] = useState("");
+  useProductEntitlement("evaporator", setPaymentStatus);
   const pfdRef = useRef(null);
   const design = useMemo(() => calculateEvaporatorDesign(inputs), [inputs]);
 
@@ -73,7 +74,7 @@ export default function Evaporators() {
       window.history.replaceState({}, "", window.location.pathname);
       return undefined;
     }
-    if (paymentResult !== "binance" || !orderId) return undefined;
+    if (!orderId) return undefined;
 
     setPayment("BNB");
     setPaymentStatus("pending");
@@ -85,7 +86,6 @@ export default function Evaporators() {
       try {
         const result = await getBinancePayOrder('', orderId);
         if (result.status === "PAID") {
-          localStorage.setItem("evaporatorPackagePaid", `BINANCE-${orderId}`);
           localStorage.removeItem("evaporatorPaymentOrder");
           setPaymentStatus("paid");
           setMessage("BNB payment confirmed. Your professional BEP is unlocked.");
@@ -184,9 +184,9 @@ export default function Evaporators() {
       setMessage("Transaction submitted. Waiting for BNB Smart Chain confirmation...");
       const receipt = await transaction.wait();
       if (!receipt || receipt.status !== 1) throw new Error("The EDG transfer was not confirmed.");
-      localStorage.setItem("evaporatorPackagePaid", `EDG-${transaction.hash}`);
+      await verifyEdgPurchase("evaporator", transaction.hash, buyer);
       setPaymentStatus("paid");
-      setMessage("5,000 EDG payment confirmed on BNB Smart Chain. Your professional BEP is unlocked.");
+      setMessage("5,000 EDG payment verified and recorded from BNB Smart Chain. Your professional BEP is unlocked.");
     } catch (error) {
       setPaymentStatus("idle");
       const providerMessage = error.shortMessage || error.reason || error.message || "";

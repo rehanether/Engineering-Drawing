@@ -30,7 +30,7 @@
     "server": "node server/index.js",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "test:server": "node --test server/ai-service.test.js server/profile-service.test.js server/security-policy.test.js server/brand-assets.test.js server/binance-pay.test.js",
+    "test:server": "node --test server/ai-service.test.js server/profile-service.test.js server/security-policy.test.js server/brand-assets.test.js server/binance-pay.test.js server/commerce-service.test.js",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

@@ -7,6 +7,8 @@ import tokenMeta from "../../EnggDrawTokenABI.json";
 import { getBinancePayOrder, startBinanceCheckout } from "../../services/binancePay";
 import { useEdgLivePrice } from "../payments/useEdgLivePrice";
 import { connectEdgWallet } from "../../services/edgWallet";
+import { verifyEdgPurchase } from "../../services/commerce";
+import useProductEntitlement from "../../services/useProductEntitlement";
 import "./ReactorSimulator.css";
 import "../EngineeringProductParity.css";
 
@@ -22,8 +24,9 @@ export default function ReactorSimulator() {
   const [inputs,setInputs]=useState(DEFAULTS);
   const [tab,setTab]=useState("pfd");
   const [payment,setPayment]=useState("BNB");
-  const [paymentStatus,setPaymentStatus]=useState(localStorage.getItem("reactorPackagePaid")?"paid":"idle");
+  const [paymentStatus,setPaymentStatus]=useState("idle");
   const [message,setMessage]=useState("");
+  useProductEntitlement("reactor",setPaymentStatus);
   const edgLive=useEdgLivePrice(Number(EDG_AMOUNT));
   const pfdRef=useRef(null);
   const design=useMemo(()=>calculateReactorDesign(inputs),[inputs]);
@@ -35,10 +38,10 @@ export default function ReactorSimulator() {
     const query=new URLSearchParams(window.location.search),result=query.get("payment");
     const order=query.get("order")||localStorage.getItem("reactorPaymentOrder");
     if(result==="cancelled"){setMessage("Payment cancelled; your simulation is preserved.");window.history.replaceState({},"",window.location.pathname);return undefined;}
-    if(result!=="binance"||!order)return undefined;
+    if(!order)return undefined;
     setPaymentStatus("pending");setMessage("Checking secure payment status...");
     let stopped=false,attempts=0;
-    const check=async()=>{attempts+=1;try{const body=await getBinancePayOrder('',order);if(body.status==="PAID"){localStorage.setItem("reactorPackagePaid",`BINANCE-${order}`);setPaymentStatus("paid");setMessage("Payment confirmed. Professional reactor BEP unlocked.");window.history.replaceState({},"",window.location.pathname);return;}if(["ERROR","CANCELED","EXPIRED","REFUNDED"].includes(body.status)){setPaymentStatus("idle");setMessage(`Payment ${body.status.toLowerCase()}.`);return;}if(!stopped&&attempts<30)window.setTimeout(check,4000);}catch(error){setPaymentStatus("idle");setMessage(error.message||"Could not verify payment.");}};
+    const check=async()=>{attempts+=1;try{const body=await getBinancePayOrder('',order);if(body.status==="PAID"){setPaymentStatus("paid");setMessage("Payment confirmed. Professional reactor BEP unlocked.");window.history.replaceState({},"",window.location.pathname);return;}if(["ERROR","CANCELED","EXPIRED","REFUNDED"].includes(body.status)){setPaymentStatus("idle");setMessage(`Payment ${body.status.toLowerCase()}.`);return;}if(!stopped&&attempts<30)window.setTimeout(check,4000);}catch(error){setPaymentStatus("idle");setMessage(error.message||"Could not verify payment.");}};
     check();return()=>{stopped=true;};
   },[]);
   async function startBnb(){
@@ -52,7 +55,7 @@ export default function ReactorSimulator() {
       const [balance,gas]=await Promise.all([token.balanceOf(buyer),provider.getBalance(buyer)]);
       if(balance<amount){const available=Number(formatUnits(balance,18)).toLocaleString(undefined,{maximumFractionDigits:2}),shortfall=Number(formatUnits(amount-balance,18)).toLocaleString(undefined,{maximumFractionDigits:2});throw new Error(`Insufficient EDG balance. This wallet has ${available} EDG and needs ${shortfall} more EDG.`);}
       if(gas===0n)throw new Error("Add a small amount of BNB to this wallet for the network fee.");
-      setMessage("Confirm the transfer of 5,000 EDG in your wallet...");const tx=await token.transfer(EDG_ADMIN_WALLET,amount);setMessage("Transaction submitted. Waiting for BNB Smart Chain confirmation...");const receipt=await tx.wait();if(!receipt||receipt.status!==1)throw new Error("The EDG transfer was not confirmed.");localStorage.setItem("reactorPackagePaid",`EDG-${tx.hash}`);setPaymentStatus("paid");setMessage("5,000 EDG confirmed. Professional reactor BEP unlocked.");
+      setMessage("Confirm the transfer of 5,000 EDG in your wallet...");const tx=await token.transfer(EDG_ADMIN_WALLET,amount);setMessage("Transaction submitted. Waiting for BNB Smart Chain confirmation...");const receipt=await tx.wait();if(!receipt||receipt.status!==1)throw new Error("The EDG transfer was not confirmed.");await verifyEdgPurchase("reactor",tx.hash,buyer);setPaymentStatus("paid");setMessage("5,000 EDG verified and recorded from BNB Smart Chain. Professional reactor BEP unlocked.");
     }catch(error){setPaymentStatus("idle");const providerMessage=error.shortMessage||error.reason||error.message||"";setMessage(/insufficient funds/i.test(providerMessage)?"Insufficient BNB for the network fee. Add a small amount of BNB and try again.":/execution reverted|unknown custom error|call exception/i.test(providerMessage)?"The EDG contract rejected this transfer. Confirm the wallet holds at least 5,000 transferable EDG.":providerMessage||"Payment cancelled.");}
   }
   function downloadPackage(){

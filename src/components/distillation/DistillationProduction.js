@@ -8,6 +8,8 @@ import {useEdgLivePrice} from "../payments/useEdgLivePrice";
 import {getBinancePayOrder,startBinanceCheckout} from "../../services/binancePay";
 import tokenMeta from "../../EnggDrawTokenABI.json";
 import {connectEdgWallet} from "../../services/edgWallet";
+import {verifyEdgPurchase} from "../../services/commerce";
+import useProductEntitlement from "../../services/useProductEntitlement";
 import "./DistillationProduction.css";
 import "../EngineeringProductParity.css";
 
@@ -20,8 +22,9 @@ export default function DistillationProduction(){
   const [inputs,setInputs]=useState(DISTILLATION_DEFAULTS);
   const [tab,setTab]=useState("pfd");
   const [payment,setPayment]=useState("BNB");
-  const [paymentStatus,setPaymentStatus]=useState(localStorage.getItem("distillationPackagePaid")?"paid":"idle");
+  const [paymentStatus,setPaymentStatus]=useState("idle");
   const [message,setMessage]=useState("");
+  useProductEntitlement("distillation",setPaymentStatus);
   const edgLive=useEdgLivePrice(Number(EDG_AMOUNT));
   const pfdRef=useRef(null);
   const design=useMemo(()=>calculateDistillationDesign(inputs),[inputs]);
@@ -32,9 +35,9 @@ export default function DistillationProduction(){
   useEffect(()=>{
     const query=new URLSearchParams(window.location.search),result=query.get("payment"),order=query.get("order")||localStorage.getItem("distillationPaymentOrder");
     if(result==="cancelled"){setMessage("Payment cancelled; your simulation is preserved.");window.history.replaceState({},"",window.location.pathname);return undefined;}
-    if(result!=="binance"||!order)return undefined;
+    if(!order)return undefined;
     setPaymentStatus("pending");setMessage("Checking secure payment status...");let stopped=false,attempts=0;
-    const check=async()=>{attempts+=1;try{const body=await getBinancePayOrder("",order),status=String(body.status||"").toUpperCase();if(status==="PAID"){localStorage.setItem("distillationPackagePaid",`BINANCE-${order}`);setPaymentStatus("paid");setMessage("Payment confirmed. Professional distillation BEP unlocked.");window.history.replaceState({},"",window.location.pathname);return;}if(["EXPIRED","CANCELED","CANCELLED","ERROR"].includes(status)){setPaymentStatus("idle");setMessage(`Payment ${status.toLowerCase()}. Please create a new checkout.`);return;}if(!stopped&&attempts<30)window.setTimeout(check,4000);}catch(error){setPaymentStatus("idle");setMessage(error.message||"Could not verify payment.");}};
+    const check=async()=>{attempts+=1;try{const body=await getBinancePayOrder("",order),status=String(body.status||"").toUpperCase();if(status==="PAID"){setPaymentStatus("paid");setMessage("Payment confirmed. Professional distillation BEP unlocked.");window.history.replaceState({},"",window.location.pathname);return;}if(["EXPIRED","CANCELED","CANCELLED","ERROR"].includes(status)){setPaymentStatus("idle");setMessage(`Payment ${status.toLowerCase()}. Please create a new checkout.`);return;}if(!stopped&&attempts<30)window.setTimeout(check,4000);}catch(error){setPaymentStatus("idle");setMessage(error.message||"Could not verify payment.");}};
     check();return()=>{stopped=true;};
   },[]);
 
@@ -49,7 +52,7 @@ export default function DistillationProduction(){
       const [balance,gas]=await Promise.all([token.balanceOf(buyer),provider.getBalance(buyer)]);
       if(balance<amount){const available=Number(formatUnits(balance,18)).toLocaleString(undefined,{maximumFractionDigits:2}),shortfall=Number(formatUnits(amount-balance,18)).toLocaleString(undefined,{maximumFractionDigits:2});throw new Error(`Insufficient EDG balance. This wallet has ${available} EDG and needs ${shortfall} more EDG.`);}
       if(gas===0n)throw new Error("Add a small amount of BNB to this wallet for the network fee.");
-      setMessage("Confirm the transfer of 5,000 EDG in your wallet...");const transaction=await token.transfer(EDG_ADMIN_WALLET,amount);setMessage("Transaction submitted. Waiting for BNB Smart Chain confirmation...");const receipt=await transaction.wait();if(!receipt||receipt.status!==1)throw new Error("The EDG transfer was not confirmed.");localStorage.setItem("distillationPackagePaid",`EDG-${transaction.hash}`);setPaymentStatus("paid");setMessage("5,000 EDG confirmed. Professional distillation BEP unlocked.");
+      setMessage("Confirm the transfer of 5,000 EDG in your wallet...");const transaction=await token.transfer(EDG_ADMIN_WALLET,amount);setMessage("Transaction submitted. Waiting for BNB Smart Chain confirmation...");const receipt=await transaction.wait();if(!receipt||receipt.status!==1)throw new Error("The EDG transfer was not confirmed.");await verifyEdgPurchase("distillation",transaction.hash,buyer);setPaymentStatus("paid");setMessage("5,000 EDG verified and recorded from BNB Smart Chain. Professional distillation BEP unlocked.");
     }catch(error){setPaymentStatus("idle");const providerMessage=error.shortMessage||error.reason||error.message||"";setMessage(/insufficient funds/i.test(providerMessage)?"Insufficient BNB for the network fee. Add a small amount of BNB and try again.":/execution reverted|unknown custom error|call exception/i.test(providerMessage)?"The EDG contract rejected this transfer. Confirm the wallet holds at least 5,000 transferable EDG.":providerMessage||"Payment cancelled.");}
   }
   function downloadPackage(){const svgNode=pfdRef.current?.querySelector("svg"),svg=svgNode?new XMLSerializer().serializeToString(svgNode):"<svg xmlns='http://www.w3.org/2000/svg'/>",blob=createDistillationPackage(design.inputs,design,svg),url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download=`engineering-drawing-${design.inputs.system.toLowerCase().replace(/[^a-z]+/g,"-")}-distillation-bep.zip`;link.click();URL.revokeObjectURL(url);}

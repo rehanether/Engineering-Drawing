@@ -3,10 +3,13 @@ import { BrowserProvider, Contract, isAddress, parseUnits } from "ethers";
 import ConstructionModel3D from "./ConstructionModel3D";
 import { getBinancePayOrder, startBinanceCheckout } from "../services/binancePay";
 import { connectEdgWallet } from "../services/edgWallet";
+import { verifyEdgPurchase } from "../services/commerce";
+import useProductEntitlement from "../services/useProductEntitlement";
+import tokenMeta from "../EnggDrawTokenABI.json";
 import "./ConstructionDesign.css";
 
-const RECEIVER = process.env.REACT_APP_BNB_TESTNET_RECEIVER;
-const EDG_TOKEN = process.env.REACT_APP_EDG_TESTNET_TOKEN;
+const RECEIVER = process.env.REACT_APP_EDG_PAYMENT_RECEIVER || "0xD9738cc53E9746a01cAC8EF01aF17fF4e88DD25F";
+const EDG_TOKEN = tokenMeta.ADDRESS;
 const EDG_PRICE = process.env.REACT_APP_EDG_DOWNLOAD_PRICE || "100";
 const EDG_DECIMALS = Number(process.env.REACT_APP_EDG_TOKEN_DECIMALS || 18);
 const UPI_ID = process.env.REACT_APP_UPI_ID;
@@ -343,10 +346,11 @@ export default function ConstructionDesign() {
   const [generated, setGenerated] = useState(false);
   const [tab, setTab] = useState("plan");
   const [account, setAccount] = useState("");
-  const [status, setStatus] = useState(localStorage.getItem("constructionPackagePaid") ? "paid" : "idle");
+  const [status, setStatus] = useState("idle");
   const [paymentAsset, setPaymentAsset] = useState("BNB");
   const [upiReference, setUpiReference] = useState("");
   const [message, setMessage] = useState("");
+  useProductEntitlement("construction", setStatus);
   const design = useMemo(() => createDesign(width, length, bedrooms, floors, facing, variant), [width, length, bedrooms, floors, facing, variant]);
 
   useEffect(() => {
@@ -358,7 +362,7 @@ export default function ConstructionDesign() {
       setMessage("Payment was cancelled. Your design is still available to review.");
       return;
     }
-    if (paymentResult !== "binance" || !orderId) return;
+    if (!orderId) return;
 
     setGenerated(true);
     setPaymentAsset("BNB");
@@ -371,7 +375,6 @@ export default function ConstructionDesign() {
       try {
         const result = await getBinancePayOrder('', orderId);
         if (result.status === "PAID") {
-          localStorage.setItem("constructionPackagePaid", `BINANCE-${orderId}`);
           setStatus("paid");
           setMessage("BNB payment confirmed. Your complete package is unlocked.");
           window.history.replaceState({}, "", window.location.pathname);
@@ -427,9 +430,9 @@ export default function ConstructionDesign() {
       const transaction = await token.transfer(RECEIVER, parseUnits(EDG_PRICE, EDG_DECIMALS));
       const receipt = await transaction.wait();
       if (!receipt || receipt.status !== 1) throw new Error("The EDG transaction was not confirmed.");
-      localStorage.setItem("constructionPackagePaid", transaction.hash);
+      await verifyEdgPurchase("construction", transaction.hash, from);
       setStatus("paid");
-      setMessage("EDG payment confirmed. Your complete package is unlocked.");
+      setMessage("EDG payment verified on BNB Smart Chain. Your complete package is unlocked.");
     } catch (error) {
       setStatus("idle");
       setMessage(error.shortMessage || error.message || "EDG payment was cancelled.");
@@ -469,13 +472,9 @@ export default function ConstructionDesign() {
       return;
     }
     localStorage.setItem("constructionUpiReference", reference);
-    if (UPI_TEST_MODE) {
-      localStorage.setItem("constructionPackagePaid", `UPI-TEST-${reference}`);
-      setStatus("paid");
-      setMessage("Local UPI test approved. Your package is unlocked.");
-    } else {
-      setMessage(`UPI reference ${reference} submitted. The download unlocks after payment verification.`);
-    }
+    setMessage(UPI_TEST_MODE
+      ? `UPI test reference ${reference} captured. Production downloads remain locked until server verification is available.`
+      : `UPI reference ${reference} submitted. The download unlocks after payment verification.`);
   }
 
   function download() {
