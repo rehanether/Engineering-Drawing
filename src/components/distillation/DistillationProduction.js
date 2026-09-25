@@ -1,5 +1,5 @@
 import React,{useEffect,useMemo,useRef,useState} from "react";
-import {BrowserProvider,Contract,formatUnits,parseUnits} from "ethers";
+import {BrowserProvider,Contract,parseUnits} from "ethers";
 import DistillationHMBD from "./DistillationHMBD";
 import DistillationPlant3D from "./DistillationPlant3D";
 import {createDistillationPackage} from "./downloadPackage";
@@ -15,7 +15,7 @@ import "../EngineeringProductParity.css";
 
 const EDG_AMOUNT="5000";
 const EDG_ADMIN_WALLET="0xD9738cc53E9746a01cAC8EF01aF17fF4e88DD25F";
-const EDG_ABI=["function balanceOf(address) view returns (uint256)","function transfer(address,uint256) returns (bool)"];
+const EDG_ABI=["function transfer(address,uint256) returns (bool)"];
 const format=value=>Number(value||0).toLocaleString("en-US",{maximumFractionDigits:2});
 
 export default function DistillationProduction(){
@@ -49,9 +49,6 @@ export default function DistillationProduction(){
     setPaymentStatus("pending");setMessage("");
     try{
       const {provider:eip1193}=await connectEdgWallet(),provider=new BrowserProvider(eip1193),signer=await provider.getSigner(),buyer=await signer.getAddress(),token=new Contract(tokenMeta.ADDRESS,EDG_ABI,signer),amount=parseUnits(EDG_AMOUNT,18);
-      const [balance,gas]=await Promise.all([token.balanceOf(buyer),provider.getBalance(buyer)]);
-      if(balance<amount){const available=Number(formatUnits(balance,18)).toLocaleString(undefined,{maximumFractionDigits:2}),shortfall=Number(formatUnits(amount-balance,18)).toLocaleString(undefined,{maximumFractionDigits:2});throw new Error(`Insufficient EDG balance. This wallet has ${available} EDG and needs ${shortfall} more EDG.`);}
-      if(gas===0n)throw new Error("Add a small amount of BNB to this wallet for the network fee.");
       setMessage("Confirm the transfer of 5,000 EDG in your wallet...");const transaction=await token.transfer(EDG_ADMIN_WALLET,amount);setMessage("Transaction submitted. Waiting for BNB Smart Chain confirmation...");const receipt=await transaction.wait();if(!receipt||receipt.status!==1)throw new Error("The EDG transfer was not confirmed.");await verifyEdgPurchase("distillation",transaction.hash,buyer);setPaymentStatus("paid");setMessage("5,000 EDG verified and recorded from BNB Smart Chain. Professional distillation BEP unlocked.");
     }catch(error){setPaymentStatus("idle");const providerMessage=error.shortMessage||error.reason||error.message||"";setMessage(/insufficient funds/i.test(providerMessage)?"Insufficient BNB for the network fee. Add a small amount of BNB and try again.":/execution reverted|unknown custom error|call exception/i.test(providerMessage)?"The EDG contract rejected this transfer. Confirm the wallet holds at least 5,000 transferable EDG.":providerMessage||"Payment cancelled.");}
   }

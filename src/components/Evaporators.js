@@ -17,7 +17,6 @@ const EDG_ADMIN_WALLET = "0xD9738cc53E9746a01cAC8EF01aF17fF4e88DD25F";
 const EDG_TOKEN_ADDRESS = tokenMeta.ADDRESS;
 const EDG_PRESALE_ADDRESS = presaleMeta.ADDRESS;
 const EDG_TRANSFER_ABI = [
-  "function balanceOf(address account) view returns (uint256)",
   "function transfer(address to, uint256 value) returns (bool)",
 ];
 const BSC_RPC = process.env.REACT_APP_BSC_RPC || "https://bsc-dataseed.bnbchain.org";
@@ -167,18 +166,6 @@ export default function Evaporators() {
       const buyer = await signer.getAddress();
       const token = new Contract(EDG_TOKEN_ADDRESS, EDG_TRANSFER_ABI, signer);
       const requiredEdg = parseUnits(EDG_AMOUNT, 18);
-      const [edgBalance, bnbBalance] = await Promise.all([
-        token.balanceOf(buyer),
-        provider.getBalance(buyer),
-      ]);
-      if (edgBalance < requiredEdg) {
-        const available = Number(formatUnits(edgBalance, 18)).toLocaleString(undefined, { maximumFractionDigits: 2 });
-        const shortfall = Number(formatUnits(requiredEdg - edgBalance, 18)).toLocaleString(undefined, { maximumFractionDigits: 2 });
-        throw new Error(`Insufficient EDG balance. This wallet has ${available} EDG and needs ${shortfall} more EDG.`);
-      }
-      if (bnbBalance === 0n) {
-        throw new Error("Add a small amount of BNB to this wallet to pay the BNB Smart Chain network fee.");
-      }
       setMessage(`Confirm the transfer of ${Number(EDG_AMOUNT).toLocaleString()} EDG in your wallet...`);
       const transaction = await token.transfer(EDG_ADMIN_WALLET, requiredEdg);
       setMessage("Transaction submitted. Waiting for BNB Smart Chain confirmation...");
